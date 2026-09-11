@@ -1,0 +1,31 @@
+# Docs locales (contexto agente, no versionar)
+docs/
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.vite/
+*.local
+
+# Spring Boot / Env
+.env
+*.env
+application-local.properties
+application-local.yml
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs
+*.log
+logs/
