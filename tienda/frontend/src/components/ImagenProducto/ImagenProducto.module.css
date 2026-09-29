@@ -1,0 +1,18 @@
+.contenedor {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: var(--radio-md);
+  background-color: var(--color-fondo);
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: var(--tamano-xl);
+  font-weight: var(--peso-negrita);
+  letter-spacing: 0.02em;
+  user-select: none;
+}

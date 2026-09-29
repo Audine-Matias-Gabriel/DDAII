@@ -1,0 +1,42 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-5);
+}
+
+.encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-4);
+  flex-wrap: wrap;
+}
+
+.titulo {
+  font-size: var(--tamano-xl);
+}
+
+.publicar {
+  padding: var(--espacio-3) var(--espacio-5);
+  border-radius: var(--radio-md);
+  background-color: var(--color-primario);
+  color: #ffffff;
+  font-size: var(--tamano-sm);
+  font-weight: var(--peso-negrita);
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.publicar:hover {
+  background-color: var(--color-primario-oscuro);
+}
+
+.buscador {
+  max-width: 420px;
+}
+
+.grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--espacio-4);
+}

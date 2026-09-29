@@ -1,0 +1,21 @@
+.contenedor {
+  text-align: center;
+  padding: var(--espacio-6) var(--espacio-4);
+  border: 1px dashed var(--color-borde);
+  border-radius: var(--radio-lg);
+  background-color: var(--color-superficie);
+}
+
+.titulo {
+  font-size: var(--tamano-lg);
+  margin-bottom: var(--espacio-2);
+}
+
+.descripcion {
+  color: var(--color-texto-suave);
+  font-size: var(--tamano-sm);
+}
+
+.accion {
+  margin-top: var(--espacio-4);
+}
