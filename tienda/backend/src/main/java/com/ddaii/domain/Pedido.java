@@ -10,7 +10,7 @@ import java.util.List;
 
 @Data
 @Entity
-public class Pedido {
+public class Pedido{
     private long id;
     private long clientId;
     private long tiendaId;
@@ -24,9 +24,17 @@ public class Pedido {
         detalles.add(detalle);
     }
 
-    public List<DetallePedido> obtenerDetalles(){
+    public List<DetallePedido> getDetalles(){
         return detalles;
     }
+
+    public long getId(){
+        return this.id;
+    }
+
+    public void calcularTotal(){}
+
+    public void setEstado(String hecho){}
 
 
 
