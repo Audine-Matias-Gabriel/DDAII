@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "name": "tienda-frontend",
+=======
+  "name": "frontend",
+>>>>>>> luciano/backend_2&4
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,8 +15,12 @@
   },
   "dependencies": {
     "react": "^19.2.8",
+<<<<<<< HEAD
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4"
+=======
+    "react-dom": "^19.2.8"
+>>>>>>> luciano/backend_2&4
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

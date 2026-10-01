@@ -22,8 +22,18 @@ import java.util.List;
 
 @Data
 @Entity
+<<<<<<< HEAD
 @Table(name = "pedidos")
 public class Pedido {
+=======
+public class Pedido{
+    private long id;
+    private long clientId;
+    private long tiendaId;
+    private LocalDateTime fecha;
+    private EstadoPedido estadoPedido;
+    private BigDecimal total;
+>>>>>>> luciano/backend_2&4
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,6 +69,7 @@ public class Pedido {
         detalles.add(detalle);
     }
 
+<<<<<<< HEAD
     public void calcularTotal() {
         BigDecimal suma = BigDecimal.ZERO;
         for (DetallePedido detalle : detalles) {
@@ -67,4 +78,20 @@ public class Pedido {
         }
         this.total = suma;
     }
+=======
+    public List<DetallePedido> getDetalles(){
+        return detalles;
+    }
+
+    public long getId(){
+        return this.id;
+    }
+
+    public void calcularTotal(){}
+
+    public void setEstado(String hecho){}
+
+
+
+>>>>>>> luciano/backend_2&4
 }

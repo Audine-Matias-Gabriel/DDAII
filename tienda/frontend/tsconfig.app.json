@@ -8,11 +8,14 @@
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
 
+<<<<<<< HEAD
     /* Alias de imports: @/components, @/services, ... */
     "paths": {
       "@/*": ["./src/*"]
     },
 
+=======
+>>>>>>> luciano/backend_2&4
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

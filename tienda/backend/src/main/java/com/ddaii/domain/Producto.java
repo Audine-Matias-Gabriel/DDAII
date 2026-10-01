@@ -27,9 +27,13 @@ public class Producto {
 
     @Enumerated(EnumType.STRING)
     private Categoria categoria;
+<<<<<<< HEAD
 
     private Long tiendaId;
 
+=======
+    private long tiendaId;
+>>>>>>> luciano/backend_2&4
     private String imagenUrl;
 
     public Producto() {
@@ -59,22 +63,37 @@ public class Producto {
         return stock != null && stock > 0;
     }
 
+<<<<<<< HEAD
+=======
+    /**
+     * Descuenta del stock la cantidad indicada.
+     */
+>>>>>>> luciano/backend_2&4
     public void actualizarStock(Integer cantidad) {
 
         if (cantidad == null || cantidad <= 0) {
             throw new IllegalArgumentException(
+<<<<<<< HEAD
                     "La cantidad debe ser mayor a 0"
             );
+=======
+                    "La cantidad debe ser mayor a 0");
+>>>>>>> luciano/backend_2&4
         }
 
         if (stock == null || cantidad > stock) {
             throw new IllegalStateException(
+<<<<<<< HEAD
                     "Stock insuficiente para el producto " + id
             );
+=======
+                    "Stock insuficiente para el producto " + id);
+>>>>>>> luciano/backend_2&4
         }
 
         stock -= cantidad;
     }
+<<<<<<< HEAD
 //
 //    public Long getId() {
 //        return id;
@@ -139,5 +158,71 @@ public class Producto {
 //    public void setImagenUrl(String imagenUrl) {
 //        this.imagenUrl = imagenUrl;
 //    }
+=======
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public BigDecimal getPrecio() {
+        return precio;
+    }
+
+    public void setPrecio(BigDecimal precio) {
+        this.precio = precio;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+
+    public Categoria getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(Categoria categoria) {
+        this.categoria = categoria;
+    }
+
+    public Long getTiendaId() {
+        return tiendaId;
+    }
+
+    public void setTiendaId(Long tiendaId) {
+        this.tiendaId = tiendaId;
+    }
+
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
+
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
+    }
+>>>>>>> luciano/backend_2&4
 }
 
