@@ -30,7 +30,7 @@ public class PedidoService {
 
     public Pedido confirmarCompra(Pedido pedido) {
 
-        // 1. Validar todo el stock antes de confirmar.
+        
         for (var detalle : pedido.getDetalles()) {
             inventarioService.verificarStock(
                     detalle.getProductoId(),
@@ -38,15 +38,10 @@ public class PedidoService {
             );
         }
 
-        // 2. Calcular el total y marcar como confirmado.
+      
         pedido.calcularTotal();
         pedido.setEstado(EstadoPedido.PENDIENTE);
 
-        // 3. Persistir el pedido.
-        // Reemplazar por pedidoRepository.save(pedido).
-        // El pedido debe tener un ID antes de publicar el evento.
-
-        // 4. Publicar el evento de pedido creado.
         List<ItemPedido> items = pedido.getDetalles()
                 .stream()
                 .map(detalle -> {
@@ -68,4 +63,4 @@ public class PedidoService {
 
         return pedido;
     }
-}
+}
