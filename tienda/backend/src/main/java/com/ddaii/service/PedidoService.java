@@ -1,5 +1,6 @@
 package com.ddaii.service;
 
+import com.ddaii.domain.EstadoPedido;
 import com.ddaii.domain.Pedido;
 import com.ddaii.events.PedidoCreadoEvent;
 import com.ddaii.events.PedidoCreadoEvent.ItemPedido;
@@ -39,7 +40,7 @@ public class PedidoService {
 
         // 2. Calcular el total y marcar como confirmado.
         pedido.calcularTotal();
-        pedido.setEstado("CONFIRMADO");
+        pedido.setEstado(EstadoPedido.PENDIENTE);
 
         // 3. Persistir el pedido.
         // Reemplazar por pedidoRepository.save(pedido).
@@ -67,4 +68,4 @@ public class PedidoService {
 
         return pedido;
     }
-}
+}
