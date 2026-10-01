@@ -44,24 +44,4 @@ public class DetallePedido {
     public BigDecimal calcularSubtotal() {
         return precioUnitario.multiply(BigDecimal.valueOf(cantidad));
     }
-
-    public void setProductoId(long productoId){
-        this.productoId = productoId;
-    }
-
-    public void setCantidad(Integer cantidad){
-        this.cantidad = cantidad;
-    }
-
-    public void setPrecioUnitario(BigDecimal precioUnitario){
-        this.precioUnitario = precioUnitario;
-    }
-
-    public long getProductoId(){
-        return this.productoId;
-    }
-
-    public Integer getCantidad(){
-        return this.cantidad;
-    }
 }

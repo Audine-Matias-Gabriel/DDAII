@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 
-@Service("pedidoQueryService")
+@Service
 public class PedidoService {
 
     private final PedidoRepository pedidoRepository;

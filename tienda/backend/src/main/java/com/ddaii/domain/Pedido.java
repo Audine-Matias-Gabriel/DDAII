@@ -1,5 +1,6 @@
 package com.ddaii.domain;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,8 +12,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.math.BigDecimal;
@@ -22,18 +25,8 @@ import java.util.List;
 
 @Data
 @Entity
-<<<<<<< HEAD
 @Table(name = "pedidos")
 public class Pedido {
-=======
-public class Pedido{
-    private long id;
-    private long clientId;
-    private long tiendaId;
-    private LocalDateTime fecha;
-    private EstadoPedido estadoPedido;
-    private BigDecimal total;
->>>>>>> luciano/backend_2&4
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,6 +45,7 @@ public class Pedido{
 
     private BigDecimal total = BigDecimal.ZERO;
 
+    @Setter(AccessLevel.NONE) // la deserialización la maneja reemplazarDetalles
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
@@ -69,7 +63,21 @@ public class Pedido{
         detalles.add(detalle);
     }
 
-<<<<<<< HEAD
+    /**
+     * Jackson deserializa "detalles" por acá en lugar del setDetalleList que
+     * genera Lombok: este delega en agregarDetalle para no dejar el lado
+     * dueño (FK) en null, que el @ManyToOne(optional = false) rechaza.
+     */
+    @JsonSetter("detalles")
+    public void reemplazarDetalles(List<DetallePedido> nuevos) {
+        detalles.clear();
+        if (nuevos != null) {
+            for (DetallePedido detalle : nuevos) {
+                agregarDetalle(detalle);
+            }
+        }
+    }
+
     public void calcularTotal() {
         BigDecimal suma = BigDecimal.ZERO;
         for (DetallePedido detalle : detalles) {
@@ -78,20 +86,4 @@ public class Pedido{
         }
         this.total = suma;
     }
-=======
-    public List<DetallePedido> getDetalles(){
-        return detalles;
-    }
-
-    public long getId(){
-        return this.id;
-    }
-
-    public void calcularTotal(){}
-
-    public void setEstado(String hecho){}
-
-
-
->>>>>>> luciano/backend_2&4
 }

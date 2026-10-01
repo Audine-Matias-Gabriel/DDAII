@@ -1,5 +1,4 @@
-package com.ddaii.service;
-
+package com.ddaii.services;
 
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -11,9 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.ddaii.domain.Producto;
-import com.ddaii.domain.Pedido;
 import com.ddaii.events.PedidoCreadoEvent;
-import com.ddaii.events.PedidoCreadoEvent.ItemPedido;
 import com.ddaii.repositories.ProductoRepository;
 import com.ddaii.events.StockActualizadoEvent;
 

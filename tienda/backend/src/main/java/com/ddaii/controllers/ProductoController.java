@@ -21,9 +21,11 @@ public class ProductoController {
             ProductoService productoService) {
 
         this.productoService = productoService;
-<<<<<<< HEAD
     }
 
+    /**
+     * GET /api/productos
+     */
     @GetMapping
     public ResponseEntity<List<Producto>> obtenerTodos() {
 
@@ -32,43 +34,18 @@ public class ProductoController {
         );
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerPorId(
-=======
-
-    }
-
-    /**
-     * GET /api/productos
-     */
-    @GetMapping
-    public ResponseEntity<List<Producto>> listarProductos() {
-
-        return ResponseEntity.ok(
-                productoService.listarProductos()
-        );
-    }
-
     /**
      * GET /api/productos/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerProducto(
->>>>>>> luciano/backend_2&4
+    public ResponseEntity<?> obtenerPorId(
             @PathVariable Long id) {
 
         try {
 
-<<<<<<< HEAD
             return ResponseEntity.ok(
                     productoService.obtenerPorId(id)
             );
-=======
-            Producto producto =
-                    productoService.obtenerProducto(id);
-
-            return ResponseEntity.ok(producto);
->>>>>>> luciano/backend_2&4
 
         } catch (NoSuchElementException e) {
 
@@ -81,25 +58,15 @@ public class ProductoController {
         }
     }
 
-<<<<<<< HEAD
+    /**
+     * GET /api/productos/tienda/{tiendaId}
+     */
     @GetMapping("/tienda/{tiendaId}")
     public ResponseEntity<List<Producto>> buscarPorTienda(
             @PathVariable Long tiendaId) {
 
         return ResponseEntity.ok(
                 productoService.buscarPorTienda(tiendaId)
-        );
-    }
-=======
-    /**
-     * GET /api/productos/tienda/{id}
-     */
-    @GetMapping("/tienda/{id}")
-    public ResponseEntity<List<Producto>> buscarPorTienda(
-            @PathVariable Long id) {
-
-        return ResponseEntity.ok(
-                productoService.buscarPorTienda(id)
         );
     }
 
@@ -151,8 +118,4 @@ public class ProductoController {
                     ));
         }
     }
->>>>>>> luciano/backend_2&4
 }
-
-
-
