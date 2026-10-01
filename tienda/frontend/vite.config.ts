@@ -12,6 +12,9 @@ export default defineConfig({
     },
   },
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/catalogo
 })
 =======
 })
