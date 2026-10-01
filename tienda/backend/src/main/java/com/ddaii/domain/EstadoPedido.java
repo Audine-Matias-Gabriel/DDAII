@@ -1,6 +1,6 @@
 package com.ddaii.domain;
 
-enum EstadoPedido {
+public enum EstadoPedido {
     PENDIENTE,
     PAGADO,
     ENVIADO,

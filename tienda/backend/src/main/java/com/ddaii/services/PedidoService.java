@@ -6,9 +6,14 @@ import com.ddaii.domain.Producto;
 import com.ddaii.repositories.PedidoRepository;
 import com.ddaii.repositories.ProductoRepository;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.NoSuchElementException;
 
+
+@Service("pedidoQueryService")
 public class PedidoService {
 
     private final PedidoRepository pedidoRepository;
@@ -33,6 +38,7 @@ public class PedidoService {
         return pedidos;
     }
 
+    @Transactional
     public void agregarProducto(Long pedidoId, Long productoId, Integer cantidad) {
         Pedido pedido = pedidoRepository.findById(pedidoId).orElseThrow();
 
@@ -44,7 +50,8 @@ public class PedidoService {
         detalle.setCantidad(cantidad);
         detalle.setPrecioUnitario(producto.getPrecio());
 
-        pedido.getDetalles().add(detalle);
+        pedido.agregarDetalle(detalle);
+        pedido.calcularTotal();
 
         pedidoRepository.save(pedido);
     }

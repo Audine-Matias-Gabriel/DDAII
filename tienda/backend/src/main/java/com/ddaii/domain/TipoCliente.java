@@ -1,6 +1,6 @@
 package com.ddaii.domain;
 
-enum TipoCliente {
+public enum TipoCliente {
     REGULAR,
     PREMIUM,
     EMPRESA

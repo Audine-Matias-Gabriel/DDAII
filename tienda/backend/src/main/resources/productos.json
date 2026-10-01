@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "nombre": "Remera Nike",
+    "descripcion": "Remera deportiva de algodon",
+    "precio": 25000.00,
+    "stock": 10,
+    "categoria": "ROPA_HOMBRE",
+    "tiendaId": 1,
+    "imagenUrl": ""
+  },
+  {
+    "id": 2,
+    "nombre": "Remera Adidas",
+    "descripcion": "Remera deportiva clasica",
+    "precio": 28000.00,
+    "stock": 7,
+    "categoria": "ROPA_HOMBRE",
+    "tiendaId": 1,
+    "imagenUrl": ""
+  },
+  {
+    "id": 3,
+    "nombre": "Pantalon Cargo",
+    "descripcion": "Pantalon cargo de vestir",
+    "precio": 45000.00,
+    "stock": 5,
+    "categoria": "ROPA_HOMBRE",
+    "tiendaId": 1,
+    "imagenUrl": ""
+  },
+  {
+    "id": 4,
+    "nombre": "Campera Adidas",
+    "descripcion": "Campera deportiva con cierre",
+    "precio": 72000.00,
+    "stock": 4,
+    "categoria": "ROPA_HOMBRE",
+    "tiendaId": 1,
+    "imagenUrl": ""
+  }
+]
