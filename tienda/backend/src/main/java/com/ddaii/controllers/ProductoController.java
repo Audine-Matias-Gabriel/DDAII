@@ -21,33 +21,25 @@ public class ProductoController {
             ProductoService productoService) {
 
         this.productoService = productoService;
-
     }
 
-    /**
-     * GET /api/productos
-     */
     @GetMapping
-    public ResponseEntity<List<Producto>> listarProductos() {
+    public ResponseEntity<List<Producto>> obtenerTodos() {
 
         return ResponseEntity.ok(
-                productoService.listarProductos()
+                productoService.obtenerTodos()
         );
     }
 
-    /**
-     * GET /api/productos/{id}
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerProducto(
+    public ResponseEntity<?> obtenerPorId(
             @PathVariable Long id) {
 
         try {
 
-            Producto producto =
-                    productoService.obtenerProducto(id);
-
-            return ResponseEntity.ok(producto);
+            return ResponseEntity.ok(
+                    productoService.obtenerPorId(id)
+            );
 
         } catch (NoSuchElementException e) {
 
@@ -60,65 +52,13 @@ public class ProductoController {
         }
     }
 
-    /**
-     * GET /api/productos/tienda/{id}
-     */
-    @GetMapping("/tienda/{id}")
+    @GetMapping("/tienda/{tiendaId}")
     public ResponseEntity<List<Producto>> buscarPorTienda(
-            @PathVariable Long id) {
+            @PathVariable Long tiendaId) {
 
         return ResponseEntity.ok(
-                productoService.buscarPorTienda(id)
+                productoService.buscarPorTienda(tiendaId)
         );
-    }
-
-    /**
-     * PUT /api/productos/{id}/stock?cantidad=2
-     *
-     * Descuenta "cantidad" unidades del stock.
-     */
-    @PutMapping("/{id}/stock")
-    public ResponseEntity<?> actualizarStock(
-            @PathVariable Long id,
-            @RequestParam Integer cantidad) {
-
-        try {
-
-            Producto producto =
-                    productoService.actualizarStock(
-                            id,
-                            cantidad
-                    );
-
-            return ResponseEntity.ok(producto);
-
-        } catch (NoSuchElementException e) {
-
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(Map.of(
-                            "error",
-                            e.getMessage()
-                    ));
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity
-                    .badRequest()
-                    .body(Map.of(
-                            "error",
-                            e.getMessage()
-                    ));
-
-        } catch (IllegalStateException e) {
-
-            return ResponseEntity
-                    .status(HttpStatus.CONFLICT)
-                    .body(Map.of(
-                            "error",
-                            e.getMessage()
-                    ));
-        }
     }
 }
 

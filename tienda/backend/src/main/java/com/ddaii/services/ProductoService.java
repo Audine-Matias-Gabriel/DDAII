@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+
 @Service
 public class ProductoService {
 
@@ -17,12 +18,12 @@ public class ProductoService {
         this.productoRepository = productoRepository;
     }
 
-    public List<Producto> listarProductos() {
+    public List<Producto> obtenerTodos() {
 
         return productoRepository.findAll();
     }
 
-    public Producto obtenerProducto(Long id) {
+    public Producto obtenerPorId(Long id) {
 
         return productoRepository.findById(id)
                 .orElseThrow(() ->
@@ -41,7 +42,7 @@ public class ProductoService {
             Long id,
             Integer cantidad) {
 
-        Producto producto = obtenerProducto(id);
+        Producto producto = obtenerPorId(id);
 
         producto.actualizarStock(cantidad);
 

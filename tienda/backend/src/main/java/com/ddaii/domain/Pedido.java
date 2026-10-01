@@ -2,6 +2,7 @@ package com.ddaii.domain;
 
 import jakarta.persistence.Entity;
 import lombok.Data;
+import jakarta.persistence.Id;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,7 +12,9 @@ import java.util.List;
 @Data
 @Entity
 public class Pedido{
-    private long id;
+
+    @Id
+    private Long id;
     private long clientId;
     private long tiendaId;
     private LocalDateTime fecha;

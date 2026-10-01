@@ -1,11 +1,13 @@
 package com.ddaii.domain;
 
+import jakarta.persistence.Id;
 import lombok.Data;
 
 import java.math.BigDecimal;
 
 @Data
 public class DetallePedido {
+    @Id
     private long id;
     private long productoId;
     private Integer cantidad;

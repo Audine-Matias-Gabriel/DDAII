@@ -6,17 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface ProductoRepository {
+import com.ddaii.domain.Producto;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-    Optional<Producto> findById(Long id);
+import java.util.List;
+
+public interface ProductoRepository
+        extends JpaRepository<Producto, Long> {
 
     List<Producto> findByTiendaId(Long tiendaId);
-
-    List<Producto> findAll();
-
-    Producto save(Producto producto);
-
-    void delete(Long id);
-
-
 }
