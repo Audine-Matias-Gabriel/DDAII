@@ -27,11 +27,4 @@ export function App() {
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
-<<<<<<< HEAD
 }
-<<<<<<< HEAD
-=======
-}
->>>>>>> 20b688efdfededbfb9bce2fd8c393b1d893622c4
-=======
->>>>>>> origin/catalogo
