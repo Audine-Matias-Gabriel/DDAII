@@ -32,10 +32,7 @@ public class InventarioService {
         this.eventPublisher = eventPublisher;
     }
 
-    /**
-     * Verifica que exista stock suficiente.
-     * No modifica el inventario.
-     */
+
     public synchronized void verificarStock(
             Long productoId,
             int cantidad) {
@@ -59,10 +56,7 @@ public class InventarioService {
         }
     }
 
-    /**
-     * Descuenta unidades del stock y publica
-     * un evento con el resultado.
-     */
+   
     public synchronized StockActualizadoEvent actualizarStock(
             Long pedidoId,
             Long productoId,
@@ -97,15 +91,12 @@ public class InventarioService {
         return evento;
     }
 
-    /**
-     * Observer: escucha los pedidos confirmados.
-     * Se ejecuta sincrónicamente al publicar el evento.
-     */
+    
     @EventListener
     public synchronized void alCrearPedido(
             PedidoCreadoEvent evento) {
 
-        // Agrupa artículos repetidos del mismo producto.
+        
         Map<Long, Integer> cantidades = new HashMap<>();
 
         for (var item : evento.items()) {
@@ -116,12 +107,11 @@ public class InventarioService {
             );
         }
 
-        // Primera pasada: validar todos los productos.
+
         for (var entry : cantidades.entrySet()) {
             verificarStock(entry.getKey(), entry.getValue());
         }
 
-        // Segunda pasada: actualizar el inventario.
         for (var entry : cantidades.entrySet()) {
             actualizarStock(
                     evento.pedidoId(),
