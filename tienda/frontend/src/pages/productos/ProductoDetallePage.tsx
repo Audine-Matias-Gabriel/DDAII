@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
-import { PRODUCTOS, obtenerTienda } from '@/data'
+import { obtenerTienda } from '@/data'
 import { useCarrito } from '@/hooks/useCarrito'
+import { useProducto } from '@/hooks/useProducto'
 import { formatFecha, formatMoneda } from '@/lib/formatters'
 import { Badge } from '@/components/Badge/Badge'
 import { Button } from '@/components/Button/Button'
@@ -12,17 +13,36 @@ export function ProductoDetallePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { agregar } = useCarrito()
+  const { producto, cargando, error, recargar } = useProducto(id)
 
-  const producto = PRODUCTOS.find((p) => p.id === id)
+  const volver = () => navigate('/')
 
-  if (!producto) {
+  if (cargando) {
+    return <p className={styles.estado}>Cargando producto...</p>
+  }
+
+  if (error?.status === 404) {
     return (
       <EmptyState
         titulo="Producto no encontrado"
         descripcion="El artículo que buscás no existe."
         accion={
-          <Button variante="secundario" onClick={() => navigate('/')}>
+          <Button variante="secundario" onClick={volver}>
             Volver al catálogo
+          </Button>
+        }
+      />
+    )
+  }
+
+  if (error || !producto) {
+    return (
+      <EmptyState
+        titulo="No se pudo cargar el producto"
+        descripcion={error?.message ?? 'Error inesperado.'}
+        accion={
+          <Button variante="secundario" onClick={recargar}>
+            Reintentar
           </Button>
         }
       />
@@ -33,7 +53,7 @@ export function ProductoDetallePage() {
 
   return (
     <div className={styles.pagina}>
-      <Button variante="secundario" tamano="sm" onClick={() => navigate('/')}>
+      <Button variante="secundario" tamano="sm" onClick={volver}>
         Volver
       </Button>
 

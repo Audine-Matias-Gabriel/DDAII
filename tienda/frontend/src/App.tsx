@@ -4,7 +4,6 @@ import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ProductoDetallePage } from '@/pages/productos/ProductoDetallePage'
-import { ProductoFormPage } from '@/pages/productos/ProductoFormPage'
 import { ShopPage } from '@/pages/productos/ShopPage'
 
 export function App() {
@@ -20,7 +19,6 @@ export function App() {
         }
       >
         <Route path="/" element={<ShopPage />} />
-        <Route path="/productos/nuevo" element={<ProductoFormPage />} />
         <Route path="/productos/:id" element={<ProductoDetallePage />} />
       </Route>
 

@@ -22,7 +22,7 @@
   top: calc(100% + var(--espacio-2));
   right: 0;
   z-index: 20;
-  width: 260px;
+  width: 320px;
   padding: var(--espacio-4);
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-md);
@@ -43,18 +43,42 @@
   font-size: var(--tamano-sm);
 }
 
+.exito,
+.error {
+  margin-bottom: var(--espacio-3);
+  padding: var(--espacio-2) var(--espacio-3);
+  border-radius: var(--radio-sm);
+  font-size: var(--tamano-sm);
+}
+
+.exito {
+  background-color: var(--color-primario-suave);
+  color: var(--color-exito);
+}
+
+.error {
+  background-color: var(--color-error-suave);
+  color: var(--color-error);
+}
+
 .lista {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--espacio-2);
+  gap: var(--espacio-3);
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--espacio-1) var(--espacio-2);
+  align-items: center;
   font-size: var(--tamano-sm);
-  padding-bottom: var(--espacio-2);
+  padding-bottom: var(--espacio-3);
   border-bottom: 1px solid var(--color-borde);
 }
 
@@ -63,11 +87,104 @@
   padding-bottom: 0;
 }
 
-.vaciar {
-  margin-top: var(--espacio-4);
-  width: 100%;
+.itemInfo {
+  min-width: 0;
+}
+
+.itemNombre {
+  font-weight: var(--peso-negrita);
+  line-height: 1.3;
+}
+
+.itemPrecio {
+  color: var(--color-texto-suave);
+  font-size: var(--tamano-xs);
+  margin-top: var(--espacio-1);
+}
+
+.controles {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.cantidad {
+  min-width: 1.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.paso {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-full);
+  background-color: var(--color-superficie);
+  color: var(--color-texto);
+  font-size: var(--tamano-sm);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.paso:hover:not(:disabled) {
+  border-color: var(--color-primario);
+  color: var(--color-primario);
+}
+
+.paso:disabled {
+  color: var(--color-texto-suave);
+  cursor: not-allowed;
+}
+
+.subtotal {
+  text-align: right;
+  font-weight: var(--peso-negrita);
+  font-variant-numeric: tabular-nums;
+}
+
+.quitar {
+  justify-self: end;
   background: none;
   border: none;
+  padding: 0;
+  color: var(--color-texto-suave);
+  font-size: var(--tamano-xs);
+  cursor: pointer;
+}
+
+.quitar:hover {
+  color: var(--color-error);
+  text-decoration: underline;
+}
+
+.pie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  margin-top: var(--espacio-4);
+  padding-top: var(--espacio-3);
+  border-top: 1px solid var(--color-borde);
+}
+
+.totalFila {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-weight: var(--peso-negrita);
+  font-variant-numeric: tabular-nums;
+}
+
+.confirmar {
+  width: 100%;
+}
+
+.vaciar {
+  background: none;
+  border: none;
+  padding: 0;
   color: var(--color-error);
   font-size: var(--tamano-sm);
   cursor: pointer;

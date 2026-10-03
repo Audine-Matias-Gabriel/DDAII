@@ -1,13 +1,20 @@
 package com.ddaii.domain;
 
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "productos")
@@ -28,9 +35,24 @@ public class Producto {
     @Enumerated(EnumType.STRING)
     private Categoria categoria;
 
+    @Enumerated(EnumType.STRING)
+    private Genero genero;
+
+    @Enumerated(EnumType.STRING)
+    private EstadoProducto estado = EstadoProducto.NUEVO;
+
+    // EAGER porque open-in-view=false: los controllers devuelven la entidad
+    // y Jackson no podría inicializar la colección al serializar el JSON.
+    @ElementCollection(fetch = FetchType.EAGER)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<String> talles = new ArrayList<>();
+
     private Long tiendaId;
 
     private String imagenUrl;
+
+    private LocalDateTime creadoEn = LocalDateTime.now();
 
     public Producto() {
     }

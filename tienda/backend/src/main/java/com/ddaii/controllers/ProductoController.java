@@ -12,7 +12,10 @@ import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/productos")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "http://localhost:4173"
+})
 public class ProductoController {
 
     private final ProductoService productoService;

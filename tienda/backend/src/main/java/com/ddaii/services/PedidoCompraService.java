@@ -2,6 +2,7 @@ package com.ddaii.services;
 
 import com.ddaii.domain.EstadoPedido;
 import com.ddaii.domain.Pedido;
+import com.ddaii.domain.Producto;
 import com.ddaii.events.PedidoCreadoEvent;
 import com.ddaii.events.PedidoCreadoEvent.ItemPedido;
 import com.ddaii.repositories.PedidoRepository;
@@ -11,7 +12,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class PedidoCompraService {
@@ -41,7 +44,37 @@ public class PedidoCompraService {
                     "El pedido debe tener al menos un detalle");
         }
 
-        // 1. Validar todo el stock antes de confirmar.
+        // 1. Validar cada detalle y resolver el precio desde la base: el
+        //    cliente manda productoId y cantidad, nunca el precio.
+        Map<Long, Producto> productos = new LinkedHashMap<>();
+
+        for (var detalle : pedido.getDetalles()) {
+
+            if (detalle.getProductoId() == null) {
+                throw new IllegalArgumentException(
+                        "Cada detalle debe indicar el productoId");
+            }
+
+            if (detalle.getCantidad() == null
+                    || detalle.getCantidad() <= 0) {
+
+                throw new IllegalArgumentException(
+                        "La cantidad debe ser mayor a cero para el producto "
+                                + detalle.getProductoId());
+            }
+
+            Producto producto = productoRepository
+                    .findById(detalle.getProductoId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Producto inexistente: "
+                                    + detalle.getProductoId()));
+
+            detalle.setPrecioUnitario(producto.getPrecio());
+
+            productos.put(producto.getId(), producto);
+        }
+
+        // 2. Verificar todo el stock antes de confirmar.
         for (var detalle : pedido.getDetalles()) {
             inventarioService.verificarStock(
                     detalle.getProductoId(),
@@ -49,34 +82,32 @@ public class PedidoCompraService {
             );
         }
 
-        // 2. Calcular el total y marcar como confirmado.
+        // 3. Calcular el total y tomar la tienda del primer producto.
         pedido.calcularTotal();
+        pedido.setTiendaId(
+                productos.values().iterator().next().getTiendaId());
         pedido.setEstado(EstadoPedido.PENDIENTE);
 
-        // 3. Persistir el pedido para que tenga ID antes de publicar el
+        // 4. Persistir el pedido para que tenga ID antes de publicar el
         // evento, que lo usa como clave del descuento de stock.
-        pedido = pedidoRepository.save(pedido);
+        Pedido guardado = pedidoRepository.save(pedido);
 
-        // 4. Publicar el evento de pedido creado.
+        // 5. Publicar el evento de pedido creado.
         List<ItemPedido> items = pedido.getDetalles()
                 .stream()
-                .map(detalle -> {
-                    var producto = productoRepository
-                            .findById(detalle.getProductoId())
-                            .orElseThrow();
-
-                    return new ItemPedido(
-                            producto.getId(),
-                            producto.getNombre(),
-                            detalle.getCantidad()
-                    );
-                })
+                .map(detalle -> new ItemPedido(
+                        detalle.getProductoId(),
+                        productos.get(
+                                detalle.getProductoId()
+                        ).getNombre(),
+                        detalle.getCantidad()
+                ))
                 .toList();
 
         eventPublisher.publishEvent(
-                new PedidoCreadoEvent(pedido.getId(), items)
+                new PedidoCreadoEvent(guardado.getId(), items)
         );
 
-        return pedido;
+        return guardado;
     }
 }

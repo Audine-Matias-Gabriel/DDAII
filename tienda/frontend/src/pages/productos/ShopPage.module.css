@@ -16,19 +16,9 @@
   font-size: var(--tamano-xl);
 }
 
-.publicar {
-  padding: var(--espacio-3) var(--espacio-5);
-  border-radius: var(--radio-md);
-  background-color: var(--color-primario);
-  color: #ffffff;
+.estado {
+  color: var(--color-texto-suave);
   font-size: var(--tamano-sm);
-  font-weight: var(--peso-negrita);
-  text-decoration: none;
-  transition: background-color 0.15s ease;
-}
-
-.publicar:hover {
-  background-color: var(--color-primario-oscuro);
 }
 
 .buscador {

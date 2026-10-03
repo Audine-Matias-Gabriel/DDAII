@@ -5,6 +5,11 @@
   gap: var(--espacio-4);
 }
 
+.estado {
+  color: var(--color-texto-suave);
+  font-size: var(--tamano-sm);
+}
+
 .detalle {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

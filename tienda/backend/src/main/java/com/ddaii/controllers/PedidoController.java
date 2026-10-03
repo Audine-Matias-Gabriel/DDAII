@@ -6,7 +6,6 @@ import com.ddaii.services.PedidoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.stereotype.Controller;
 
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,10 @@ import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/pedidos")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "http://localhost:4173"
+})
 public class PedidoController {
 
     private final PedidoService pedidoService;

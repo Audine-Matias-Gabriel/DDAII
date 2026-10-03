@@ -19,9 +19,6 @@ export function Header({ usuario, onLogout }: HeaderProps) {
         <NavLink to="/" end className={styles.enlace}>
           Shop
         </NavLink>
-        <NavLink to="/productos/nuevo" className={styles.enlace}>
-          Publicar
-        </NavLink>
       </nav>
 
       <div className={styles.acciones}>
