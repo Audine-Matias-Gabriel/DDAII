@@ -2,9 +2,16 @@
 
 Java 17 + Spring Boot 4.1 + Maven + PostgreSQL. Expone la API REST que consume el frontend.
 
+Maven se corre con el **wrapper** del repo (`.\mvnw`): no hay que instalar `mvn`. Requiere
+un **JDK 17+** con `JAVA_HOME` apuntando a él (el wrapper baja Maven 3.9.16 solo).
+
 ## Estructura
 
 ```
+mvnw / mvnw.cmd              # Maven Wrapper (only-script, sin .jar)
+.mvn/wrapper/
+└── maven-wrapper.properties # distributionUrl → Maven 3.9.16
+
 src/main/java/com/ddaii/
 ├── Main.java             # @SpringBootApplication
 ├── domain/               # Producto, Pedido, DetallePedido, Cliente
@@ -50,15 +57,15 @@ Errores: `400` por payload inválido o producto inexistente, `409` por stock ins
 
 PostgreSQL primero (el `docker-compose.yml` de la raíz lo levanta en el puerto **5433**):
 
-```bash
+```powershell
 docker compose down -v    # resetea el volumen: NECESARIO si cambiás productos.json
 docker compose up -d
 ```
 
-Luego:
+Luego (PowerShell, desde este directorio):
 
-```bash
-mvn spring-boot:run
+```powershell
+.\mvnw spring-boot:run
 ```
 
 Queda en `http://localhost:8080`.
@@ -87,14 +94,25 @@ CompraLogger                            Observer: loguea ====COMPRA REALIZADA===
 
 ## Comandos
 
-```bash
-mvn test              # no hay tests todavía: src/test/java está vacío
-mvn spring-boot:run
+```powershell
+.\mvnw test             # 55 tests (servicios, controllers, dominio) — JUnit 5 + Mockito
+.\mvnw spring-boot:run
 ```
+
+## Tests
+
+`src/test/java/com/ddaii/` — unitarios con Mockito, sin DB:
+
+| Clase | Qué cubre |
+|---|---|
+| `services/InventarioServiceTest` | Los 3 casos del enunciado: compra válida, stock insuficiente, producto inexistente |
+| `services/PedidoCompraServiceTest` | `confirmarCompra`: precios desde la base, validaciones, evento |
+| `services/ProductoServiceTest` · `PedidoServiceTest` | Delegación a repositorio y excepciones |
+| `controllers/*ControllerTest` | MockMvc standalone: códigos 200/201/400/404/409 |
+| `domain/ProductoTest` | Descuento de stock y `estaDisponible` |
 
 ## Pendiente
 
-- Tests JUnit (compra válida, stock insuficiente, producto inexistente).
 - Swagger/OpenAPI: falta la dependencia `springdoc`.
 - `util/` (validación, logging, config) del enunciado.
 - P1-P2: Factory, Strategy, Facade, `ClienteService`, RabbitMQ, SOAP, API externa,

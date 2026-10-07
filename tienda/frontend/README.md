@@ -48,10 +48,22 @@ Los controllers del backend tienen CORS para `localhost:5173` y `localhost:4173`
 ## Otros comandos
 
 ```bash
-npm run build     # tsc -b && vite build
-npm run lint      # oxlint
-npm run preview   # sirve el build de dist/
+npm run build       # tsc -b && vite build
+npm run lint        # oxlint
+npm run preview     # sirve el build de dist/
+npm run test        # vitest run: 111 tests en 24 archivos
+npm run test:watch  # vitest en watch
 ```
+
+## Tests
+
+Vitest + Testing Library (jsdom). Los tests van **colocalizados** junto al código que
+prueban (`X.test.tsx` dentro de `src/`); el helper compartido está en `src/test/`
+(`setup.ts`, `test-utils.tsx` con `renderConProviders` y la factory `producto()`).
+
+Cubren `lib/`, `data/`, `services/`, `hooks/`, `context/`, los 9 componentes, las 4
+páginas y el ruteo de `App`. La red se simula con `vi.mock` de módulos (sin MSW).
+
 
 ## Consumo de la API
 
@@ -86,4 +98,3 @@ el carrito **solo se vacía si la compra se confirmó**.
 - Alta de producto: no hay `POST /api/productos`, así que se eliminó la pantalla.
 - "Mis pedidos".
 - Refetch automático del stock sin navegar: el catálogo se vuelve a pedir en cada mount.
-- Tests: no hay runner configurado.
