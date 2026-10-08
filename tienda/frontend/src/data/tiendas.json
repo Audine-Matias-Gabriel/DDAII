@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "nombre": "Indumentaria Sur",
+    "rubro": "Indumentaria",
+    "ubicacion": "Buenos Aires"
+  },
+  {
+    "id": "2",
+    "nombre": "Urban Thread",
+    "rubro": "Indumentaria",
+    "ubicacion": "Córdoba"
+  },
+  {
+    "id": "3",
+    "nombre": "Calzados Pampa",
+    "rubro": "Calzados",
+    "ubicacion": "Santa Fe"
+  },
+  {
+    "id": "4",
+    "nombre": "Kessler Accesorios",
+    "rubro": "Accesorios",
+    "ubicacion": "Rosario"
+  }
+]

@@ -1,0 +1,69 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espacio-4);
+}
+
+.estado {
+  color: var(--color-texto-suave);
+  font-size: var(--tamano-sm);
+}
+
+.detalle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--espacio-6);
+  align-items: start;
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .detalle {
+    grid-template-columns: 1fr;
+  }
+}
+
+.imagen {
+  border-radius: var(--radio-lg);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espacio-3);
+}
+
+.tienda {
+  font-size: var(--tamano-xs);
+  font-weight: var(--peso-negrita);
+  color: var(--color-texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.nombre {
+  font-size: var(--tamano-xl);
+}
+
+.precio {
+  font-size: calc(var(--tamano-xl) * 1.2);
+  font-weight: var(--peso-negrita);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+}
+
+.meta {
+  font-size: var(--tamano-sm);
+  color: var(--color-texto-suave);
+}
+
+.descripcion {
+  color: var(--color-texto);
+  line-height: 1.6;
+}

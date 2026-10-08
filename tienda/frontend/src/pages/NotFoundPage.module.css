@@ -1,0 +1,21 @@
+.pagina {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-3);
+  padding: var(--espacio-5);
+  text-align: center;
+}
+
+.codigo {
+  font-size: calc(var(--tamano-xl) * 3);
+  line-height: 1;
+  color: var(--color-primario);
+}
+
+.mensaje {
+  color: var(--color-texto-suave);
+  margin-bottom: var(--espacio-2);
+}

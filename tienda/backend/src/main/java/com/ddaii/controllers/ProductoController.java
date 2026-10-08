@@ -12,7 +12,10 @@ import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/productos")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "http://localhost:4173"
+})
 public class ProductoController {
 
     private final ProductoService productoService;
@@ -23,6 +26,9 @@ public class ProductoController {
         this.productoService = productoService;
     }
 
+    /**
+     * GET /api/productos
+     */
     @GetMapping
     public ResponseEntity<List<Producto>> obtenerTodos() {
 
@@ -31,6 +37,9 @@ public class ProductoController {
         );
     }
 
+    /**
+     * GET /api/productos/{id}
+     */
     @GetMapping("/{id}")
     public ResponseEntity<?> obtenerPorId(
             @PathVariable Long id) {
@@ -52,6 +61,9 @@ public class ProductoController {
         }
     }
 
+    /**
+     * GET /api/productos/tienda/{tiendaId}
+     */
     @GetMapping("/tienda/{tiendaId}")
     public ResponseEntity<List<Producto>> buscarPorTienda(
             @PathVariable Long tiendaId) {
@@ -60,7 +72,53 @@ public class ProductoController {
                 productoService.buscarPorTienda(tiendaId)
         );
     }
+
+    /**
+     * PUT /api/productos/{id}/stock?cantidad=2
+     *
+     * Descuenta "cantidad" unidades del stock.
+     */
+    @PutMapping("/{id}/stock")
+    public ResponseEntity<?> actualizarStock(
+            @PathVariable Long id,
+            @RequestParam Integer cantidad) {
+
+        try {
+
+            Producto producto =
+                    productoService.actualizarStock(
+                            id,
+                            cantidad
+                    );
+
+            return ResponseEntity.ok(producto);
+
+        } catch (NoSuchElementException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(Map.of(
+                            "error",
+                            e.getMessage()
+                    ));
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of(
+                            "error",
+                            e.getMessage()
+                    ));
+
+        } catch (IllegalStateException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(Map.of(
+                            "error",
+                            e.getMessage()
+                    ));
+        }
+    }
 }
-
-
-

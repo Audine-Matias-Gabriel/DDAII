@@ -1,10 +1,25 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import { BrowserRouter } from 'react-router-dom'
+import { App } from './App'
+import { AuthProvider } from '@/context/AuthContext'
+import { CarritoProvider } from '@/context/CarritoContext'
+import './styles/global.css'
 
-createRoot(document.getElementById('root')!).render(
+const contenedor = document.getElementById('root')
+
+if (!contenedor) {
+  throw new Error('No se encontró el elemento #root en index.html')
+}
+
+createRoot(contenedor).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <AuthProvider>
+        <CarritoProvider>
+          <App />
+        </CarritoProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </StrictMode>,
 )

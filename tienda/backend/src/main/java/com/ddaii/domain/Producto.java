@@ -1,13 +1,20 @@
 package com.ddaii.domain;
 
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "productos")
@@ -28,9 +35,24 @@ public class Producto {
     @Enumerated(EnumType.STRING)
     private Categoria categoria;
 
+    @Enumerated(EnumType.STRING)
+    private Genero genero;
+
+    @Enumerated(EnumType.STRING)
+    private EstadoProducto estado = EstadoProducto.NUEVO;
+
+    // EAGER porque open-in-view=false: los controllers devuelven la entidad
+    // y Jackson no podría inicializar la colección al serializar el JSON.
+    @ElementCollection(fetch = FetchType.EAGER)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<String> talles = new ArrayList<>();
+
     private Long tiendaId;
 
     private String imagenUrl;
+
+    private LocalDateTime creadoEn = LocalDateTime.now();
 
     public Producto() {
     }
@@ -59,85 +81,21 @@ public class Producto {
         return stock != null && stock > 0;
     }
 
+    /**
+     * Descuenta del stock la cantidad indicada.
+     */
     public void actualizarStock(Integer cantidad) {
 
         if (cantidad == null || cantidad <= 0) {
             throw new IllegalArgumentException(
-                    "La cantidad debe ser mayor a 0"
-            );
+                    "La cantidad debe ser mayor a 0");
         }
 
         if (stock == null || cantidad > stock) {
             throw new IllegalStateException(
-                    "Stock insuficiente para el producto " + id
-            );
+                    "Stock insuficiente para el producto " + id);
         }
 
         stock -= cantidad;
     }
-//
-//    public Long getId() {
-//        return id;
-//    }
-//
-//    public void setId(Long id) {
-//        this.id = id;
-//    }
-//
-//    public String getNombre() {
-//        return nombre;
-//    }
-//
-//    public void setNombre(String nombre) {
-//        this.nombre = nombre;
-//    }
-//
-//    public String getDescripcion() {
-//        return descripcion;
-//    }
-//
-//    public void setDescripcion(String descripcion) {
-//        this.descripcion = descripcion;
-//    }
-//
-//    public BigDecimal getPrecio() {
-//        return precio;
-//    }
-//
-//    public void setPrecio(BigDecimal precio) {
-//        this.precio = precio;
-//    }
-//
-//    public Integer getStock() {
-//        return stock;
-//    }
-//
-//    public void setStock(Integer stock) {
-//        this.stock = stock;
-//    }
-//
-//    public Categoria getCategoria() {
-//        return categoria;
-//    }
-//
-//    public void setCategoria(Categoria categoria) {
-//        this.categoria = categoria;
-//    }
-//
-//    public Long getTiendaId() {
-//        return tiendaId;
-//    }
-//
-//    public void setTiendaId(Long tiendaId) {
-//        this.tiendaId = tiendaId;
-//    }
-//
-//    public String getImagenUrl() {
-//        return imagenUrl;
-//    }
-//
-//    public void setImagenUrl(String imagenUrl) {
-//        this.imagenUrl = imagenUrl;
-//    }
 }
-
