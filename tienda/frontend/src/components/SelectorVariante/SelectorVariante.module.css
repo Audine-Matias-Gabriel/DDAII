@@ -1,0 +1,52 @@
+.selector {
+  display: flex;
+  gap: var(--espacio-3);
+  width: 100%;
+}
+
+.selector.compacto {
+  gap: var(--espacio-2);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--tamano-xs);
+  font-weight: var(--peso-negrita);
+  color: var(--color-texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.select {
+  width: 100%;
+  padding: var(--espacio-2);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-md);
+  background-color: var(--color-superficie);
+  color: var(--color-texto);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.compacto .select {
+  padding: var(--espacio-1) var(--espacio-2);
+  font-size: var(--tamano-sm);
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.generoUnico {
+  align-self: flex-end;
+  font-size: var(--tamano-xs);
+  color: var(--color-texto-suave);
+}

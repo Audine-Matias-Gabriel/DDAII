@@ -1,3 +1,5 @@
+import type { Genero } from './Producto'
+
 export type EstadoPedido =
   | 'PENDIENTE'
   | 'PAGADO'
@@ -11,6 +13,8 @@ export type DetallePedido = {
   cantidad: number
   precioUnitario: number
   subtotal: number
+  genero?: Genero
+  talle?: string
 }
 
 /** Respuesta de POST /api/pedidos: el backend ya calculó todos los totales. */

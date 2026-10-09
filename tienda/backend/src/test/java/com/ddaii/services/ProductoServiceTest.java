@@ -6,7 +6,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -17,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ddaii.domain.Categoria;
+import com.ddaii.domain.Genero;
 import com.ddaii.domain.Producto;
 import com.ddaii.repositories.ProductoRepository;
 
@@ -30,9 +34,12 @@ class ProductoServiceTest {
     private ProductoService productoService;
 
     private Producto producto(Long id, Integer stock) {
+        Map<Genero, Map<String, Integer>> mapa = new EnumMap<>(Genero.class);
+        mapa.put(Genero.HOMBRE, new HashMap<>(Map.of("M", stock)));
+
         return new Producto(
                 id, "Remera Nike", "descripcion",
-                new BigDecimal("10000"), stock,
+                new BigDecimal("10000"), mapa,
                 Categoria.REMPERA, 1L, "img.png");
     }
 
@@ -78,9 +85,10 @@ class ProductoServiceTest {
                 .thenReturn(Optional.of(producto));
         when(productoRepository.save(producto)).thenReturn(producto);
 
-        Producto resultado = productoService.actualizarStock(1L, 3);
+        Producto resultado =
+                productoService.actualizarStock(1L, Genero.HOMBRE, "M", 3);
 
-        assertThat(resultado.getStock()).isEqualTo(7);
+        assertThat(resultado.stockDe(Genero.HOMBRE, "M")).isEqualTo(7);
         verify(productoRepository).save(producto);
     }
 
@@ -89,7 +97,8 @@ class ProductoServiceTest {
         when(productoRepository.findById(999L))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> productoService.actualizarStock(999L, 1))
+        assertThatThrownBy(() ->
+                productoService.actualizarStock(999L, Genero.HOMBRE, "M", 1))
                 .isInstanceOf(NoSuchElementException.class);
     }
 
@@ -98,7 +107,8 @@ class ProductoServiceTest {
         when(productoRepository.findById(1L))
                 .thenReturn(Optional.of(producto(1L, 10)));
 
-        assertThatThrownBy(() -> productoService.actualizarStock(1L, 0))
+        assertThatThrownBy(() ->
+                productoService.actualizarStock(1L, Genero.HOMBRE, "M", 0))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -107,7 +117,8 @@ class ProductoServiceTest {
         when(productoRepository.findById(1L))
                 .thenReturn(Optional.of(producto(1L, 2)));
 
-        assertThatThrownBy(() -> productoService.actualizarStock(1L, 5))
+        assertThatThrownBy(() ->
+                productoService.actualizarStock(1L, Genero.HOMBRE, "M", 5))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

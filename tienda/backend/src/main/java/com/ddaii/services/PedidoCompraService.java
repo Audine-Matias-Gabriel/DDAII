@@ -45,7 +45,7 @@ public class PedidoCompraService {
         }
 
         // 1. Validar cada detalle y resolver el precio desde la base: el
-        //    cliente manda productoId y cantidad, nunca el precio.
+        //    cliente manda productoId, cantidad, talle y género, nunca el precio.
         Map<Long, Producto> productos = new LinkedHashMap<>();
 
         for (var detalle : pedido.getDetalles()) {
@@ -63,11 +63,36 @@ public class PedidoCompraService {
                                 + detalle.getProductoId());
             }
 
+            if (detalle.getGenero() == null) {
+                throw new IllegalArgumentException(
+                        "Cada detalle debe indicar el género del producto "
+                                + detalle.getProductoId());
+            }
+
+            if (detalle.getTalle() == null
+                    || detalle.getTalle().isBlank()) {
+
+                throw new IllegalArgumentException(
+                        "Cada detalle debe indicar el talle del producto "
+                                + detalle.getProductoId());
+            }
+
             Producto producto = productoRepository
                     .findById(detalle.getProductoId())
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Producto inexistente: "
                                     + detalle.getProductoId()));
+
+            if (!producto.existeVariante(
+                    detalle.getGenero(),
+                    detalle.getTalle())) {
+
+                throw new IllegalArgumentException(
+                        "Combinación género/talle inexistente para el producto "
+                                + detalle.getProductoId()
+                                + ": " + detalle.getGenero()
+                                + " " + detalle.getTalle());
+            }
 
             detalle.setPrecioUnitario(producto.getPrecio());
 
@@ -78,6 +103,8 @@ public class PedidoCompraService {
         for (var detalle : pedido.getDetalles()) {
             inventarioService.verificarStock(
                     detalle.getProductoId(),
+                    detalle.getGenero(),
+                    detalle.getTalle(),
                     detalle.getCantidad()
             );
         }
@@ -100,6 +127,8 @@ public class PedidoCompraService {
                         productos.get(
                                 detalle.getProductoId()
                         ).getNombre(),
+                        detalle.getGenero(),
+                        detalle.getTalle(),
                         detalle.getCantidad()
                 ))
                 .toList();

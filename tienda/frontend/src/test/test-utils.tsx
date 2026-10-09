@@ -5,7 +5,7 @@ import type { AuthContextValue } from '@/context/AuthContext'
 import { AuthContext, AuthProvider } from '@/context/AuthContext'
 import type { CarritoContextValue } from '@/context/CarritoContext'
 import { CarritoContext, CarritoProvider } from '@/context/CarritoContext'
-import type { Producto } from '@/types/Producto'
+import type { Genero, Producto } from '@/types/Producto'
 
 export type OpcionesRender = {
   initialEntries?: string[]
@@ -44,14 +44,20 @@ export function producto(overrides: Partial<Producto> = {}): Producto {
     nombre: 'Remera Nike',
     descripcion: 'Una remera de prueba',
     precio: 25000,
-    stock: 10,
+    stock: stockPorGenero({ UNISEX: { S: 5, M: 5 } }),
     categoria: 'REMPERA',
     genero: 'UNISEX',
     estado: 'NUEVO',
-    talles: ['S', 'M'],
     imagenUrl: undefined,
     tiendaId: '1',
     creadoEn: '2024-03-15T00:00:00',
     ...overrides,
   }
+}
+
+/** Arma un stock por variante permitiendo declarar solo algunos géneros. */
+export function stockPorGenero(
+  mapa: Partial<Record<Genero, Record<string, number>>>,
+): Producto['stock'] {
+  return mapa as Producto['stock']
 }

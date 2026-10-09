@@ -72,7 +72,7 @@ Si aparece `La base ya contiene productos`, es que faltó el `down -v` del paso 
 En otra ventana de PowerShell, con el backend corriendo:
 
 ```powershell
-# 1. Catálogo: 14 productos, con talles, estado, género y creadoEn
+# 1. Catálogo: 14 productos, con stock por variante (talle × género)
 curl.exe -s localhost:8080/api/productos
 
 # 2. Detalle del producto 1: la campera, con imagenUrl en null
@@ -81,22 +81,30 @@ curl.exe -s localhost:8080/api/productos/1
 # 3. Producto inexistente: 404 con { "error": ... }
 curl.exe -s -i localhost:8080/api/productos/999
 
-# 4. Compra válida: 201 y total 149800 (74900 x 2), sin mandar precio
+# 4. Compra válida con variante: 201 y total 149800 (74900 x 2)
+curl.exe -s -i -X POST localhost:8080/api/pedidos `
+  -H "Content-Type: application/json" `
+  -d "{\"detalles\":[{\"productoId\":5,\"cantidad\":2,\"talle\":\"M\",\"genero\":\"HOMBRE\"}]}"
+
+# 5. El stock de la celda HOMBRE/M del producto 5 pasó de 2 a 0
+curl.exe -s localhost:8080/api/productos/5
+
+# 6. Compra sin variante: 400 con { "error": ... }
 curl.exe -s -i -X POST localhost:8080/api/pedidos `
   -H "Content-Type: application/json" `
   -d "{\"detalles\":[{\"productoId\":5,\"cantidad\":2}]}"
 
-# 5. El stock del producto 5 pasó de 9 a 7
-curl.exe -s localhost:8080/api/productos/5
-
-# 6. Compra sin stock: 409 con { "error": "Stock insuficiente..." }
+# 7. Compra con cantidad mayor a la celda HOMBRE/M (quedó en 0): 409
 curl.exe -s -i -X POST localhost:8080/api/pedidos `
   -H "Content-Type: application/json" `
-  -d "{\"detalles\":[{\"productoId\":5,\"cantidad\":999}]}"
+  -d "{\"detalles\":[{\"productoId\":5,\"cantidad\":999,\"talle\":\"M\",\"genero\":\"HOMBRE\"}]}"
 ```
 
+> Ojo: correr los checks 4 y 5 altera el stock persistido. Para repetirlos, `docker compose
+> down -v && docker compose up -d` y reiniciar el backend.
+
 Además, la consola del backend debe imprimir el bloque `COMPRA REALIZADA` con el stock
-anterior y el actual.
+anterior y el actual (incluye talle y género).
 
 `GET /api/pedidos/1/pedidos` devuelve 404: no hay clientes sembrados en la base. Es lo
 esperado, no es un bug.
@@ -111,10 +119,10 @@ npm run dev    # http://localhost:5173
 
 1. Entrar en `http://localhost:5173` y hacer login con cualquier correo (es mock).
 2. El catálogo tiene que mostrar los 14 productos que bajan de la API.
-3. Entrar al detalle del producto 1 y agregarlo al carrito.
+3. Entrar al detalle del producto 1, elegir género y talle, y agregarlo al carrito.
 4. En el desplegable del header, subir la cantidad con `+`.
 5. Confirmar la compra: aparece `Pedido #N confirmado por $X` y el carrito se vacía.
-6. Volver al catálogo: el producto figura con el stock ya descontado.
+6. Volver al catálogo: el producto figura con el stock de esa variante ya descontado.
 7. Con el backend apagado, el catálogo tiene que mostrar el error de conexión y el botón
    "Reintentar".
 
@@ -123,10 +131,10 @@ npm run dev    # http://localhost:5173
 ```powershell
 cd tienda\frontend
 npm run lint      # oxlint: 0 errores, 2 warnings conocidos de only-export-components
-npm run test      # vitest: 111 tests en 24 archivos, todos verdes
+npm run test      # vitest: 128 tests en 26 archivos, todos verdes
 npm run build     # tsc + vite build
 cd ..\backend
-.\mvnw test       # 55 tests JUnit, BUILD SUCCESS
+.\mvnw test       # 55 tests JUnit base + casos de variante del §18 (correr desde Windows)
 ```
 
 ### 6. Cerrar
@@ -149,17 +157,19 @@ docker compose down -v    # reinicia la base para el próximo ensayo
 
 ## Estado
 
-Frontend y backend **integrados**: el catálogo y el detalle se piden a la API, y el carrito
-hace `POST /api/pedidos` para confirmar la compra, que descuenta stock vía evento de dominio.
+Frontend y backend **integrados**: el catálogo y el detalle se piden a la API, el carrito
+pide **género y talle** (stock por variante) y hace `POST /api/pedidos` para confirmar la
+compra, que descuenta la celda `stock[genero][talle]` vía evento de dominio.
+Pendiente la verificación end-to-end completa (§ Métodos de prueba).
 
 ## API
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/api/productos` | Catálogo |
+| GET | `/api/productos` | Catálogo (stock por variante `genero → talle → cantidad`) |
 | GET | `/api/productos/{id}` | Detalle |
-| POST | `/api/pedidos` | Confirmar compra (manda solo `productoId` y `cantidad`) |
-| PUT | `/api/productos/{id}/stock?cantidad=N` | Descontar stock |
+| POST | `/api/pedidos` | Confirmar compra (manda `productoId`, `cantidad`, `talle`, `genero`) |
+| PUT | `/api/productos/{id}/stock?genero=X&talle=Y&cantidad=N` | Descontar una celda de stock |
 | GET | `/api/pedidos/{clienteId}/pedidos` | Pedidos del cliente |
 
 ## Equipo

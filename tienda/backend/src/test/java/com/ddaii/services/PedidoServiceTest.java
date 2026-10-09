@@ -7,7 +7,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -19,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ddaii.domain.Categoria;
+import com.ddaii.domain.Genero;
 import com.ddaii.domain.Pedido;
 import com.ddaii.domain.Producto;
 import com.ddaii.repositories.PedidoRepository;
@@ -37,8 +41,11 @@ class PedidoServiceTest {
     private PedidoService pedidoService;
 
     private Producto producto(Long id, BigDecimal precio) {
+        Map<Genero, Map<String, Integer>> mapa = new EnumMap<>(Genero.class);
+        mapa.put(Genero.HOMBRE, new HashMap<>(Map.of("M", 10)));
+
         return new Producto(
-                id, "Remera Nike", "descripcion", precio, 10,
+                id, "Remera Nike", "descripcion", precio, mapa,
                 Categoria.REMPERA, 1L, "img.png");
     }
 
@@ -84,7 +91,7 @@ class PedidoServiceTest {
         when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
         when(productoRepository.findById(1L)).thenReturn(Optional.of(producto));
 
-        pedidoService.agregarProducto(1L, 1L, 2);
+        pedidoService.agregarProducto(1L, 1L, Genero.HOMBRE, "M", 2);
 
         ArgumentCaptor<Pedido> captor = ArgumentCaptor.forClass(Pedido.class);
         verify(pedidoRepository).save(captor.capture());
@@ -93,6 +100,8 @@ class PedidoServiceTest {
         assertThat(guardado.getDetalles()).hasSize(1);
         assertThat(guardado.getDetalles().get(0).getPrecioUnitario())
                 .isEqualByComparingTo("10000");
+        assertThat(guardado.getDetalles().get(0).getGenero()).isEqualTo(Genero.HOMBRE);
+        assertThat(guardado.getDetalles().get(0).getTalle()).isEqualTo("M");
         assertThat(guardado.getDetalles().get(0).getCantidad()).isEqualTo(2);
         assertThat(guardado.getTotal()).isEqualByComparingTo("20000");
     }
@@ -101,7 +110,8 @@ class PedidoServiceTest {
     void agregarProducto_pedidoInexistente_lanzaNoSuchElementException() {
         when(pedidoRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> pedidoService.agregarProducto(999L, 1L, 1))
+        assertThatThrownBy(() ->
+                pedidoService.agregarProducto(999L, 1L, Genero.HOMBRE, "M", 1))
                 .isInstanceOf(NoSuchElementException.class);
     }
 
@@ -110,7 +120,8 @@ class PedidoServiceTest {
         when(pedidoRepository.findById(1L)).thenReturn(Optional.of(new Pedido()));
         when(productoRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> pedidoService.agregarProducto(1L, 999L, 1))
+        assertThatThrownBy(() ->
+                pedidoService.agregarProducto(1L, 999L, Genero.HOMBRE, "M", 1))
                 .isInstanceOf(NoSuchElementException.class);
     }
 }

@@ -1,6 +1,7 @@
 package com.ddaii.services;
 
 import com.ddaii.domain.DetallePedido;
+import com.ddaii.domain.Genero;
 import com.ddaii.domain.Pedido;
 import com.ddaii.domain.Producto;
 import com.ddaii.repositories.PedidoRepository;
@@ -39,7 +40,13 @@ public class PedidoService {
     }
 
     @Transactional
-    public void agregarProducto(Long pedidoId, Long productoId, Integer cantidad) {
+    public void agregarProducto(
+            Long pedidoId,
+            Long productoId,
+            Genero genero,
+            String talle,
+            Integer cantidad) {
+
         Pedido pedido = pedidoRepository.findById(pedidoId).orElseThrow();
 
         Producto producto = productoRepository.findById(productoId).orElseThrow();
@@ -47,6 +54,8 @@ public class PedidoService {
         DetallePedido detalle = new DetallePedido();
 
         detalle.setProductoId(producto.getId());
+        detalle.setGenero(genero);
+        detalle.setTalle(talle);
         detalle.setCantidad(cantidad);
         detalle.setPrecioUnitario(producto.getPrecio());
 

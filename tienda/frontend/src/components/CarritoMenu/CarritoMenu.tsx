@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useCarrito } from '@/hooks/useCarrito'
 import { formatMoneda } from '@/lib/formatters'
+import { claveItem, etiquetaGenero, stockDe } from '@/lib/variantes'
 import type { ResultadoCompra } from '@/context/CarritoContext'
 import { Button } from '@/components/Button/Button'
 import styles from './CarritoMenu.module.css'
@@ -74,49 +76,63 @@ export function CarritoMenu() {
             <p className={styles.vacio}>Todavía no agregaste nada.</p>
           ) : (
             <ul className={styles.lista}>
-              {items.map((item) => (
-                <li key={item.producto.id} className={styles.item}>
-                  <div className={styles.itemInfo}>
-                    <p className={styles.itemNombre}>{item.producto.nombre}</p>
-                    <p className={styles.itemPrecio}>
-                      {formatMoneda(item.producto.precio)} c/u
+              {items.map((item) => {
+                const clave = claveItem(item.producto.id, item.genero, item.talle)
+                const disponible = stockDe(item.producto, item.genero, item.talle)
+
+                return (
+                  <li key={clave} className={styles.item}>
+                    <div className={styles.itemInfo}>
+                      <Link
+                        className={styles.itemNombre}
+                        to={`/productos/${item.producto.id}`}
+                        onClick={cerrar}
+                      >
+                        {item.producto.nombre}
+                      </Link>
+                      <p className={styles.itemVariante}>
+                        {etiquetaGenero(item.genero)} · Talle {item.talle}
+                      </p>
+                      <p className={styles.itemPrecio}>
+                        {formatMoneda(item.producto.precio)} c/u
+                      </p>
+                    </div>
+
+                    <div className={styles.controles}>
+                      <button
+                        type="button"
+                        className={styles.paso}
+                        onClick={() => cambiarCantidad(clave, item.cantidad - 1)}
+                        aria-label={`Quitar una unidad de ${item.producto.nombre}`}
+                      >
+                        −
+                      </button>
+                      <span className={styles.cantidad}>{item.cantidad}</span>
+                      <button
+                        type="button"
+                        className={styles.paso}
+                        onClick={() => cambiarCantidad(clave, item.cantidad + 1)}
+                        disabled={item.cantidad >= disponible}
+                        aria-label={`Agregar una unidad de ${item.producto.nombre}`}
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <p className={styles.subtotal}>
+                      {formatMoneda(item.producto.precio * item.cantidad)}
                     </p>
-                  </div>
 
-                  <div className={styles.controles}>
                     <button
                       type="button"
-                      className={styles.paso}
-                      onClick={() => cambiarCantidad(item.producto.id, item.cantidad - 1)}
-                      aria-label={`Quitar una unidad de ${item.producto.nombre}`}
+                      className={styles.quitar}
+                      onClick={() => quitar(clave)}
                     >
-                      −
+                      Quitar
                     </button>
-                    <span className={styles.cantidad}>{item.cantidad}</span>
-                    <button
-                      type="button"
-                      className={styles.paso}
-                      onClick={() => cambiarCantidad(item.producto.id, item.cantidad + 1)}
-                      disabled={item.cantidad >= item.producto.stock}
-                      aria-label={`Agregar una unidad de ${item.producto.nombre}`}
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <p className={styles.subtotal}>
-                    {formatMoneda(item.producto.precio * item.cantidad)}
-                  </p>
-
-                  <button
-                    type="button"
-                    className={styles.quitar}
-                    onClick={() => quitar(item.producto.id)}
-                  >
-                    Quitar
-                  </button>
-                </li>
-              ))}
+                  </li>
+                )
+              })}
             </ul>
           )}
 

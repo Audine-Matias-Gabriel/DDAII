@@ -1,5 +1,8 @@
 package com.ddaii.domain;
 
+import com.ddaii.converters.StockMapConverter;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "productos")
@@ -30,7 +34,12 @@ public class Producto {
 
     private BigDecimal precio;
 
-    private Integer stock;
+    // Stock por género y talle: stock[genero][talle] -> cantidad.
+    // Se persiste como JSON en una columna text (ver StockMapConverter),
+    // porque JPA no soporta mapas anidados con @ElementCollection.
+    @Convert(converter = StockMapConverter.class)
+    @Column(columnDefinition = "text")
+    private Map<Genero, Map<String, Integer>> stock;
 
     @Enumerated(EnumType.STRING)
     private Categoria categoria;
@@ -62,7 +71,7 @@ public class Producto {
             String nombre,
             String descripcion,
             BigDecimal precio,
-            Integer stock,
+            Map<Genero, Map<String, Integer>> stock,
             Categoria categoria,
             Long tiendaId,
             String imagenUrl) {
@@ -77,25 +86,86 @@ public class Producto {
         this.imagenUrl = imagenUrl;
     }
 
-    public boolean estaDisponible() {
-        return stock != null && stock > 0;
+    /**
+     * Cantidad disponible en la celda género + talle. Devuelve 0 si la
+     * combinación no existe (no explota).
+     */
+    public int stockDe(Genero genero, String talle) {
+
+        if (genero == null || talle == null || stock == null) {
+            return 0;
+        }
+
+        Map<String, Integer> porTalle = stock.get(genero);
+
+        if (porTalle == null) {
+            return 0;
+        }
+
+        Integer cantidad = porTalle.get(talle);
+
+        return cantidad == null ? 0 : cantidad;
     }
 
     /**
-     * Descuenta del stock la cantidad indicada.
+     * Indica si la combinación género + talle existe en el mapa de stock.
      */
-    public void actualizarStock(Integer cantidad) {
+    public boolean existeVariante(Genero genero, String talle) {
+
+        if (genero == null || talle == null || stock == null) {
+            return false;
+        }
+
+        Map<String, Integer> porTalle = stock.get(genero);
+
+        return porTalle != null && porTalle.containsKey(talle);
+    }
+
+    public boolean estaDisponible() {
+
+        if (stock == null) {
+            return false;
+        }
+
+        for (Map<String, Integer> porTalle : stock.values()) {
+
+            if (porTalle == null) {
+                continue;
+            }
+
+            for (Integer cantidad : porTalle.values()) {
+                if (cantidad != null && cantidad > 0) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Descuenta de la celda género + talle la cantidad indicada.
+     */
+    public void actualizarStock(Genero genero, String talle, Integer cantidad) {
 
         if (cantidad == null || cantidad <= 0) {
             throw new IllegalArgumentException(
                     "La cantidad debe ser mayor a 0");
         }
 
-        if (stock == null || cantidad > stock) {
-            throw new IllegalStateException(
-                    "Stock insuficiente para el producto " + id);
+        if (genero == null || talle == null) {
+            throw new IllegalArgumentException(
+                    "El género y el talle son obligatorios");
         }
 
-        stock -= cantidad;
+        int disponible = stockDe(genero, talle);
+
+        if (cantidad > disponible) {
+            throw new IllegalStateException(
+                    "Stock insuficiente para el producto " + id
+                            + " (" + genero + " " + talle + ")");
+        }
+
+        stock.get(genero).put(talle, disponible - cantidad);
     }
 }

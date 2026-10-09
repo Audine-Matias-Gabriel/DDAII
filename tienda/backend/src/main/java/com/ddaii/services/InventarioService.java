@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.ddaii.domain.Genero;
 import com.ddaii.domain.Producto;
 import com.ddaii.events.PedidoCreadoEvent;
 import com.ddaii.repositories.ProductoRepository;
@@ -30,11 +31,13 @@ public class InventarioService {
     }
 
     /**
-     * Verifica que exista stock suficiente.
+     * Verifica que exista stock suficiente en la celda género + talle.
      * No modifica el inventario.
      */
     public synchronized void verificarStock(
             Long productoId,
+            Genero genero,
+            String talle,
             int cantidad) {
 
         if (cantidad <= 0) {
@@ -47,35 +50,40 @@ public class InventarioService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Producto inexistente: " + productoId));
 
-        if (producto.getStock() < cantidad) {
+        int disponible = producto.stockDe(genero, talle);
+
+        if (disponible < cantidad) {
             throw new IllegalStateException(
                     "Stock insuficiente para: "
                             + producto.getNombre()
+                            + " (" + genero + " " + talle + ")"
                             + ". Disponible: "
-                            + producto.getStock());
+                            + disponible);
         }
     }
 
     /**
-     * Descuenta unidades del stock y publica
+     * Descuenta unidades de la celda género + talle y publica
      * un evento con el resultado.
      */
     public synchronized StockActualizadoEvent actualizarStock(
             Long pedidoId,
             Long productoId,
+            Genero genero,
+            String talle,
             int cantidad) {
 
-        verificarStock(productoId, cantidad);
+        verificarStock(productoId, genero, talle, cantidad);
 
         Producto producto = productoRepository
                 .findById(productoId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Producto inexistente: " + productoId));
 
-        int stockAnterior = producto.getStock();
+        int stockAnterior = producto.stockDe(genero, talle);
         int stockActual = stockAnterior - cantidad;
 
-        producto.setStock(stockActual);
+        producto.actualizarStock(genero, talle, cantidad);
         productoRepository.save(producto);
 
         StockActualizadoEvent evento =
@@ -83,6 +91,8 @@ public class InventarioService {
                         pedidoId,
                         producto.getId(),
                         producto.getNombre(),
+                        genero,
+                        talle,
                         cantidad,
                         stockAnterior,
                         stockActual,
@@ -102,29 +112,49 @@ public class InventarioService {
     public synchronized void alCrearPedido(
             PedidoCreadoEvent evento) {
 
-        // Agrupa artículos repetidos del mismo producto.
-        Map<Long, Integer> cantidades = new HashMap<>();
+        // Agrupa ítems de la misma celda (producto + género + talle).
+        // Distinto talle o género NO se agrupan: son celdas distintas.
+        Map<Variante, Integer> cantidades = new HashMap<>();
 
         for (var item : evento.items()) {
-            cantidades.merge(
+            Variante clave = new Variante(
                     item.productoId(),
+                    item.genero(),
+                    item.talle());
+
+            cantidades.merge(
+                    clave,
                     item.cantidad(),
                     Integer::sum
             );
         }
 
-        // Primera pasada: validar todos los productos.
+        // Primera pasada: validar todas las celdas.
         for (var entry : cantidades.entrySet()) {
-            verificarStock(entry.getKey(), entry.getValue());
+            Variante clave = entry.getKey();
+
+            verificarStock(
+                    clave.productoId(),
+                    clave.genero(),
+                    clave.talle(),
+                    entry.getValue()
+            );
         }
 
         // Segunda pasada: actualizar el inventario.
         for (var entry : cantidades.entrySet()) {
+            Variante clave = entry.getKey();
+
             actualizarStock(
                     evento.pedidoId(),
-                    entry.getKey(),
+                    clave.productoId(),
+                    clave.genero(),
+                    clave.talle(),
                     entry.getValue()
             );
         }
+    }
+
+    private record Variante(Long productoId, Genero genero, String talle) {
     }
 }

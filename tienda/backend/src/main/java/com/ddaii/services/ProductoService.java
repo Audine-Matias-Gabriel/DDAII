@@ -1,5 +1,6 @@
 package com.ddaii.services;
 
+import com.ddaii.domain.Genero;
 import com.ddaii.domain.Producto;
 import com.ddaii.repositories.ProductoRepository;
 import org.springframework.stereotype.Service;
@@ -38,11 +39,13 @@ public class ProductoService {
 
     public Producto actualizarStock(
             Long id,
+            Genero genero,
+            String talle,
             Integer cantidad) {
 
         Producto producto = obtenerPorId(id);
 
-        producto.actualizarStock(cantidad);
+        producto.actualizarStock(genero, talle, cantidad);
 
         return productoRepository.save(producto);
     }

@@ -2,10 +2,13 @@ import { createContext, useCallback, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { crearPedido } from '@/services/productoService'
 import { formatMoneda } from '@/lib/formatters'
-import type { Producto } from '@/types/Producto'
+import { claveItem, stockDe } from '@/lib/variantes'
+import type { Genero, Producto } from '@/types/Producto'
 
 export type ItemCarrito = {
   producto: Producto
+  genero: Genero
+  talle: string
   cantidad: number
 }
 
@@ -18,9 +21,9 @@ export type CarritoContextValue = {
   items: ItemCarrito[]
   cantidadTotal: number
   total: number
-  agregar: (producto: Producto) => void
-  cambiarCantidad: (id: string, cantidad: number) => void
-  quitar: (id: string) => void
+  agregar: (producto: Producto, genero: Genero, talle: string) => void
+  cambiarCantidad: (clave: string, cantidad: number) => void
+  quitar: (clave: string) => void
   vaciar: () => void
   confirmar: () => Promise<ResultadoCompra>
 }
@@ -28,43 +31,62 @@ export type CarritoContextValue = {
 export const CarritoContext = createContext<CarritoContextValue | null>(null)
 
 // Estado en memoria a propósito: es un prototipo de demostración.
-// La cantidad nunca supera el stock que trajo el producto del catálogo.
+// La cantidad nunca supera el stock de esa variante (género + talle) que trajo
+// el catálogo.
 export function CarritoProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ItemCarrito[]>([])
 
-  const agregar = useCallback((producto: Producto) => {
-    setItems((prev) => {
-      const existente = prev.find((item) => item.producto.id === producto.id)
+  const agregar = useCallback(
+    (producto: Producto, genero: Genero, talle: string) => {
+      setItems((prev) => {
+        const clave = claveItem(producto.id, genero, talle)
+        const disponible = stockDe(producto, genero, talle)
 
-      if (!existente) {
-        return producto.stock > 0 ? [...prev, { producto, cantidad: 1 }] : prev
-      }
+        if (disponible <= 0) {
+          return prev
+        }
 
-      return prev.map((item) =>
-        item.producto.id === producto.id
-          ? { ...item, cantidad: Math.min(item.cantidad + 1, producto.stock) }
-          : item,
-      )
-    })
-  }, [])
+        const existente = prev.find(
+          (item) => claveItem(item.producto.id, item.genero, item.talle) === clave,
+        )
 
-  /** cantidad <= 0 quita la fila; si no, se limita al stock disponible. */
-  const cambiarCantidad = useCallback((id: string, cantidad: number) => {
+        if (!existente) {
+          return [...prev, { producto, genero, talle, cantidad: 1 }]
+        }
+
+        return prev.map((item) =>
+          claveItem(item.producto.id, item.genero, item.talle) === clave
+            ? { ...item, cantidad: Math.min(item.cantidad + 1, disponible) }
+            : item,
+        )
+      })
+    },
+    [],
+  )
+
+  /** cantidad <= 0 quita la fila; si no, se limita al stock de esa variante. */
+  const cambiarCantidad = useCallback((clave: string, cantidad: number) => {
     setItems((prev) =>
       prev.flatMap((item) => {
-        if (item.producto.id !== id) {
+        if (claveItem(item.producto.id, item.genero, item.talle) !== clave) {
           return [item]
         }
         if (cantidad <= 0) {
           return []
         }
-        return [{ ...item, cantidad: Math.min(cantidad, item.producto.stock) }]
+        const disponible = stockDe(item.producto, item.genero, item.talle)
+        return [{ ...item, cantidad: Math.min(cantidad, disponible) }]
       }),
     )
   }, [])
 
-  const quitar = useCallback((id: string) => {
-    setItems((prev) => prev.filter((item) => item.producto.id !== id))
+  const quitar = useCallback((clave: string) => {
+    setItems((prev) =>
+      prev.filter(
+        (item) =>
+          claveItem(item.producto.id, item.genero, item.talle) !== clave,
+      ),
+    )
   }, [])
 
   const vaciar = useCallback(() => setItems([]), [])
@@ -80,8 +102,9 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
   )
 
   /**
-   * POST /api/pedidos: el backend valida el stock, calcula los totales y
-   * descuenta inventario. Solo se manda productoId y cantidad.
+   * POST /api/pedidos: el backend valida el stock de la variante, calcula los
+   * totales y descuenta inventario. Se manda productoId, cantidad, género y
+   * talle.
    */
   const confirmar = useCallback(async (): Promise<ResultadoCompra> => {
     if (items.length === 0) {
@@ -93,6 +116,8 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
         items.map((item) => ({
           productoId: item.producto.id,
           cantidad: item.cantidad,
+          genero: item.genero,
+          talle: item.talle,
         })),
       )
 

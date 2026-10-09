@@ -8,15 +8,16 @@ React 19 + TypeScript + Vite 8 + react-router 7. Sin librería de estado ni de e
 src/
 ├── App.tsx              # tabla de rutas
 ├── main.tsx             # StrictMode > BrowserRouter > AuthProvider > CarritoProvider
-├── components/          # 10 componentes reutilizables
+├── components/          # 11 componentes reutilizables
 │                        # cada uno en su carpeta: X.tsx + X.module.css + index.ts
+│                        # incluye SelectorVariante (género + talle con stock)
 ├── pages/               # NotFoundPage, auth/LoginPage, productos/{ShopPage,ProductoDetallePage}
 ├── context/             # AuthContext (sesión mock), CarritoContext (carrito + checkout)
-├── hooks/               # useAuth, useCarrito, useProductos, useProducto
+├── hooks/               # useAuth, useCarrito, useProductos, useProducto, useVariante
 ├── services/            # api.ts (fetch + ApiError), productoService.ts
 ├── data/                # tiendas.json + index.ts
 ├── types/               # Producto.ts, Pedido.ts, Tienda.ts
-├── lib/                 # formatters.ts (moneda, fecha, iniciales)
+├── lib/                 # formatters.ts, variantes.ts (stockDe, claveItem, …)
 └── styles/              # global.css, variables.css (tokens)
 ```
 
@@ -51,7 +52,7 @@ Los controllers del backend tienen CORS para `localhost:5173` y `localhost:4173`
 npm run build       # tsc -b && vite build
 npm run lint        # oxlint
 npm run preview     # sirve el build de dist/
-npm run test        # vitest run: 111 tests en 24 archivos
+npm run test        # vitest run: 128 tests en 26 archivos
 npm run test:watch  # vitest en watch
 ```
 
@@ -61,8 +62,9 @@ Vitest + Testing Library (jsdom). Los tests van **colocalizados** junto al códi
 prueban (`X.test.tsx` dentro de `src/`); el helper compartido está en `src/test/`
 (`setup.ts`, `test-utils.tsx` con `renderConProviders` y la factory `producto()`).
 
-Cubren `lib/`, `data/`, `services/`, `hooks/`, `context/`, los 9 componentes, las 4
-páginas y el ruteo de `App`. La red se simula con `vi.mock` de módulos (sin MSW).
+Cubren `lib/`, `data/`, `services/`, `hooks/`, `context/`, los 11 componentes (incluye
+`SelectorVariante`), las 4 páginas y el ruteo de `App`. La red se simula con `vi.mock` de
+módulos (sin MSW).
 
 
 ## Consumo de la API
@@ -74,16 +76,21 @@ Todo pasa por `src/services/`:
 - `productoService.ts` — `listarProductos()`, `obtenerProducto(id)`, `crearPedido(detalles)`.
   La respuesta cruda del backend se normaliza a los tipos de la UI: `String(id)`,
   `String(tiendaId)`, `imagenUrl ?? undefined` (el backend manda `null`, no `undefined`).
+  El `stock` crudo (`Record<string, Record<string, number>>`) se normaliza con fallback `{}`.
 
 `useProductos` y `useProducto` exponen `{ datos, cargando, error, recargar }`. El detalle
 recibe el error tipado como `ApiError` para poder distinguir el 404 de otros fallos.
+`useVariante` maneja la selección de **género + talle** de un producto (auto-selecciona
+género y talle único) y devuelve el stock de la combinación elegida.
 
 ## Carrito
 
-`CarritoContext` guarda ítems `{ producto, cantidad }` y expone `agregar`, `cambiarCantidad`,
-`quitar`, `vaciar`, `cantidadTotal`, `total` y `confirmar()`. `confirmar()` hace el
-`POST /api/pedidos` mandando solo `productoId` y `cantidad`, y devuelve `{ ok, mensaje }`;
-el carrito **solo se vacía si la compra se confirmó**.
+`CarritoContext` guarda ítems `{ producto, cantidad, talle, genero }` y expone
+`agregar(producto, genero, talle)`, `cambiarCantidad`/`quitar` por clave
+(`productoId|genero|talle`), `vaciar`, `cantidadTotal`, `total` y `confirmar()`.
+`confirmar()` hace el `POST /api/pedidos` mandando `productoId`, `cantidad`, `talle` y
+`genero` por detalle, y devuelve `{ ok, mensaje }`; el carrito **solo se vacía si la
+compra se confirmó**. Acumula por variante y se topa con el stock de esa celda.
 
 ## Convenciones
 

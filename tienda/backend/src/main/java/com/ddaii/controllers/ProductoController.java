@@ -1,5 +1,6 @@
 package com.ddaii.controllers;
 
+import com.ddaii.domain.Genero;
 import com.ddaii.domain.Producto;
 import com.ddaii.services.ProductoService;
 import org.springframework.http.HttpStatus;
@@ -74,13 +75,15 @@ public class ProductoController {
     }
 
     /**
-     * PUT /api/productos/{id}/stock?cantidad=2
+     * PUT /api/productos/{id}/stock?genero=UNISEX&talle=M&cantidad=2
      *
-     * Descuenta "cantidad" unidades del stock.
+     * Descuenta "cantidad" unidades de la celda género + talle.
      */
     @PutMapping("/{id}/stock")
     public ResponseEntity<?> actualizarStock(
             @PathVariable Long id,
+            @RequestParam Genero genero,
+            @RequestParam String talle,
             @RequestParam Integer cantidad) {
 
         try {
@@ -88,6 +91,8 @@ public class ProductoController {
             Producto producto =
                     productoService.actualizarStock(
                             id,
+                            genero,
+                            talle,
                             cantidad
                     );
 

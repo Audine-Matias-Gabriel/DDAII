@@ -1,19 +1,25 @@
 import { Link } from 'react-router-dom'
 import { formatMoneda } from '@/lib/formatters'
+import { stockTotal } from '@/lib/variantes'
 import { obtenerTienda } from '@/data'
-import type { Producto } from '@/types/Producto'
+import { useVariante } from '@/hooks/useVariante'
+import type { Genero, Producto } from '@/types/Producto'
 import { Badge } from '@/components/Badge/Badge'
 import { Button } from '@/components/Button/Button'
 import { ImagenProducto } from '@/components/ImagenProducto/ImagenProducto'
+import { SelectorVariante } from '@/components/SelectorVariante/SelectorVariante'
 import styles from './ProductoCard.module.css'
 
 export type ProductoCardProps = {
   producto: Producto
-  onAgregar: (producto: Producto) => void
+  onAgregar: (producto: Producto, genero: Genero, talle: string) => void
 }
 
 export function ProductoCard({ producto, onAgregar }: ProductoCardProps) {
   const tienda = obtenerTienda(producto.tiendaId)
+  const { generos, talles, genero, talle, setGenero, setTalle, listo } =
+    useVariante(producto)
+  const sinStock = stockTotal(producto) === 0
 
   return (
     <article className={styles.card}>
@@ -32,13 +38,24 @@ export function ProductoCard({ producto, onAgregar }: ProductoCardProps) {
 
         {producto.estado === 'USADO' && <Badge tono="neutro">Usado</Badge>}
 
+        <SelectorVariante
+          producto={producto}
+          generos={generos}
+          talles={talles}
+          genero={genero}
+          talle={talle}
+          onGenero={setGenero}
+          onTalle={setTalle}
+          compacto
+        />
+
         <Button
           variante="primario"
           tamano="sm"
-          disabled={producto.stock === 0}
-          onClick={() => onAgregar(producto)}
+          disabled={!listo}
+          onClick={() => onAgregar(producto, genero as Genero, talle)}
         >
-          {producto.stock === 0 ? 'Sin stock' : 'Agregar'}
+          {sinStock ? 'Sin stock' : listo ? 'Agregar' : 'Elegí talle'}
         </Button>
       </div>
     </article>
