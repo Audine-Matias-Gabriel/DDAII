@@ -21,6 +21,8 @@ public class CompraLogger {
         log.info("COMPRA REALIZADA");
         log.info("Pedido: {}", evento.pedidoId());
         log.info("Producto: {}", evento.nombreProducto());
+        log.info("Género: {}", evento.genero());
+        log.info("Talle: {}", evento.talle());
         log.info("Cantidad: {}", evento.cantidadVendida());
         log.info("Stock anterior: {}", evento.stockAnterior());
         log.info("Stock actual: {}", evento.stockActual());

@@ -2,11 +2,15 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { obtenerTienda } from '@/data'
 import { useCarrito } from '@/hooks/useCarrito'
 import { useProducto } from '@/hooks/useProducto'
+import { useVariante } from '@/hooks/useVariante'
 import { formatFecha, formatMoneda } from '@/lib/formatters'
+import { stockTotal } from '@/lib/variantes'
+import type { Genero } from '@/types/Producto'
 import { Badge } from '@/components/Badge/Badge'
 import { Button } from '@/components/Button/Button'
 import { EmptyState } from '@/components/EmptyState/EmptyState'
 import { ImagenProducto } from '@/components/ImagenProducto/ImagenProducto'
+import { SelectorVariante } from '@/components/SelectorVariante/SelectorVariante'
 import styles from './ProductoDetallePage.module.css'
 
 export function ProductoDetallePage() {
@@ -14,6 +18,8 @@ export function ProductoDetallePage() {
   const navigate = useNavigate()
   const { agregar } = useCarrito()
   const { producto, cargando, error, recargar } = useProducto(id)
+  const { generos, talles, genero, talle, setGenero, setTalle, stock, listo } =
+    useVariante(producto ?? null)
 
   const volver = () => navigate('/')
 
@@ -50,6 +56,7 @@ export function ProductoDetallePage() {
   }
 
   const tienda = obtenerTienda(producto.tiendaId)
+  const disponible = stockTotal(producto)
 
   return (
     <div className={styles.pagina}>
@@ -74,20 +81,37 @@ export function ProductoDetallePage() {
           <div className={styles.badges}>
             <Badge tono="primario">{producto.categoria}</Badge>
             {producto.estado === 'USADO' && <Badge tono="neutro">Usado</Badge>}
-            <Badge tono={producto.stock > 0 ? 'exito' : 'error'}>
-              {producto.stock > 0 ? `${producto.stock} en stock` : 'Sin stock'}
+            <Badge tono={disponible > 0 ? 'exito' : 'error'}>
+              {disponible > 0 ? `${disponible} en stock` : 'Sin stock'}
             </Badge>
           </div>
 
-          {producto.talles.length > 0 && (
-            <p className={styles.meta}>Talles: {producto.talles.join(' · ')}</p>
-          )}
+          <SelectorVariante
+            producto={producto}
+            generos={generos}
+            talles={talles}
+            genero={genero}
+            talle={talle}
+            onGenero={setGenero}
+            onTalle={setTalle}
+          />
+
+          <p className={styles.meta}>
+            {talle
+              ? stock > 0
+                ? `${stock} unidades en talle ${talle}`
+                : `Sin stock en talle ${talle}`
+              : 'Elegí un talle para ver la disponibilidad'}
+          </p>
 
           <p className={styles.descripcion}>{producto.descripcion}</p>
 
           <p className={styles.meta}>Publicado el {formatFecha(producto.creadoEn)}</p>
 
-          <Button disabled={producto.stock === 0} onClick={() => agregar(producto)}>
+          <Button
+            disabled={!listo}
+            onClick={() => agregar(producto, genero as Genero, talle)}
+          >
             Agregar al carrito
           </Button>
         </div>

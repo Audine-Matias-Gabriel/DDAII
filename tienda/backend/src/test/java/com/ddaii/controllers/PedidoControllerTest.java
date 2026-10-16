@@ -58,7 +58,7 @@ class PedidoControllerTest {
         mockMvc.perform(post("/api/pedidos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"clienteId":1,"detalles":[{"productoId":1,"cantidad":2}]}
+                                {"clienteId":1,"detalles":[{"productoId":1,"cantidad":2,"talle":"M","genero":"HOMBRE"}]}
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.estado").value("PENDIENTE"));
@@ -72,7 +72,7 @@ class PedidoControllerTest {
         mockMvc.perform(post("/api/pedidos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"clienteId":1,"detalles":[{"productoId":1,"cantidad":5}]}
+                                {"clienteId":1,"detalles":[{"productoId":1,"cantidad":5,"talle":"M","genero":"HOMBRE"}]}
                                 """))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value(
@@ -87,10 +87,26 @@ class PedidoControllerTest {
         mockMvc.perform(post("/api/pedidos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"clienteId":1,"detalles":[{"productoId":999,"cantidad":1}]}
+                                {"clienteId":1,"detalles":[{"productoId":999,"cantidad":1,"talle":"M","genero":"HOMBRE"}]}
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Producto inexistente: 999"));
+    }
+
+    @Test
+    void confirmarCompra_sinVariante_devuelve400() throws Exception {
+        when(pedidoCompraService.confirmarCompra(any(Pedido.class)))
+                .thenThrow(new IllegalArgumentException(
+                        "Cada detalle debe indicar el talle del producto 1"));
+
+        mockMvc.perform(post("/api/pedidos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"clienteId":1,"detalles":[{"productoId":1,"cantidad":1,"genero":"HOMBRE"}]}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(
+                        "Cada detalle debe indicar el talle del producto 1"));
     }
 
     // --- GET /api/pedidos/{clienteId}/pedidos ---

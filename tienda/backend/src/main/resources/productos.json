@@ -4,7 +4,10 @@
     "nombre": "Campera de jean classic",
     "descripcion": "Campera de denim lavado, corte recto, con bolsillos al pecho y forro interior de algodón.",
     "precio": 45990,
-    "stock": 12,
+    "stock": {
+      "HOMBRE": { "S": 2, "M": 3, "L": 2, "XL": 1 },
+      "MUJER": { "S": 1, "M": 2, "L": 1, "XL": 0 }
+    },
     "categoria": "CAMPERA",
     "genero": "UNISEX",
     "estado": "NUEVO",
@@ -17,7 +20,10 @@
     "nombre": "Buzo de algodón con capucha",
     "descripcion": "Buzo pesado de 320 gr/m², capucha forrada y bolsillo canguro frontal. Unisex.",
     "precio": 28900,
-    "stock": 30,
+    "stock": {
+      "HOMBRE": { "M": 6, "L": 7, "XL": 4 },
+      "MUJER": { "M": 5, "L": 5, "XL": 3 }
+    },
     "categoria": "BUZO",
     "genero": "UNISEX",
     "estado": "NUEVO",
@@ -30,7 +36,10 @@
     "nombre": "Remera básica de algodón peinado",
     "descripcion": "Remera lisa, cuello redondo, costuras reforzadas. Disponible en seis colores.",
     "precio": 12500,
-    "stock": 84,
+    "stock": {
+      "HOMBRE": { "S": 15, "M": 20, "L": 15 },
+      "MUJER": { "S": 10, "M": 14, "L": 10 }
+    },
     "categoria": "REMPERA",
     "genero": "UNISEX",
     "estado": "NUEVO",
@@ -43,7 +52,10 @@
     "nombre": "Pantalón cargoWide",
     "descripcion": "Pantalón cargo de gabardina con bolsillos laterales y cordón en botamanga.",
     "precio": 38900,
-    "stock": 17,
+    "stock": {
+      "HOMBRE": { "M": 3, "L": 4, "XXL": 2 },
+      "MUJER": { "M": 3, "L": 3, "XXL": 2 }
+    },
     "categoria": "PANTALON",
     "genero": "UNISEX",
     "estado": "NUEVO",
@@ -56,7 +68,10 @@
     "nombre": "Zapatilla urbana Running 2",
     "descripcion": "Zapatilla Running para calle, capellada de mesh y suela de goma vulcanizada.",
     "precio": 74900,
-    "stock": 9,
+    "stock": {
+      "HOMBRE": { "S": 2, "M": 2, "L": 2 },
+      "MUJER": { "S": 1, "M": 1, "L": 1 }
+    },
     "categoria": "ZAPATILLA",
     "genero": "UNISEX",
     "estado": "NUEVO",
@@ -69,9 +84,11 @@
     "nombre": "Botín de cuero classic",
     "descripcion": "Botín de cuero vacuno con suela de cuero, curado artesanal. Incluye bolsa de transporte.",
     "precio": 119900,
-    "stock": 4,
+    "stock": {
+      "HOMBRE": { "M": 2, "L": 2 }
+    },
     "categoria": "ZAPATO",
-    "genero": "UNISEX",
+    "genero": "HOMBRE",
     "estado": "USADO",
     "talles": ["M", "L"],
     "tiendaId": 3,
@@ -82,7 +99,9 @@
     "nombre": "Campera puffer impermeable",
     "descripcion": "Campera inflable con tratamiento impermeable y capucha desmontable. Ideal invierno.",
     "precio": 99900,
-    "stock": 7,
+    "stock": {
+      "UNISEX": { "S": 2, "M": 2, "L": 2, "XL": 1 }
+    },
     "categoria": "CAMPERA",
     "genero": "UNISEX",
     "estado": "NUEVO",
@@ -95,7 +114,10 @@
     "nombre": "Pantalón de jogging sport",
     "descripcion": "Jogger con cintura elástica y cordón, bolsillo lateral con cierre. Sin estampado en pierna.",
     "precio": 21900,
-    "stock": 41,
+    "stock": {
+      "HOMBRE": { "S": 6, "M": 8, "L": 6, "XL": 3 },
+      "MUJER": { "S": 5, "M": 6, "L": 5, "XL": 2 }
+    },
     "categoria": "PANTALON",
     "genero": "UNISEX",
     "estado": "NUEVO",
@@ -108,9 +130,11 @@
     "nombre": "Remera estampada Weekend",
     "descripcion": "Remera de algodón con estampado frontal, calce regular. Tela liviana.",
     "precio": 14900,
-    "stock": 26,
+    "stock": {
+      "HOMBRE": { "M": 14, "L": 12 }
+    },
     "categoria": "REMPERA",
-    "genero": "UNISEX",
+    "genero": "HOMBRE",
     "estado": "USADO",
     "talles": ["M", "L"],
     "tiendaId": 2,
@@ -121,9 +145,11 @@
     "nombre": "Cinturón de cuero trenzado",
     "descripcion": "Cinturón de cuero con hebilla metálica. Se vende por unidad.",
     "precio": 17900,
-    "stock": 53,
+    "stock": {
+      "HOMBRE": { "UNICO": 53 }
+    },
     "categoria": "ACCESORIO",
-    "genero": "UNISEX",
+    "genero": "HOMBRE",
     "estado": "NUEVO",
     "talles": ["UNICO"],
     "tiendaId": 4,
@@ -134,9 +160,11 @@
     "nombre": "Buzo polar con cierre",
     "descripcion": "Buzo de polar con cierre frontal y puños elasticados. Muy abrigado.",
     "precio": 34900,
-    "stock": 15,
+    "stock": {
+      "HOMBRE": { "L": 6, "XL": 5, "XXL": 4 }
+    },
     "categoria": "BUZO",
-    "genero": "UNISEX",
+    "genero": "HOMBRE",
     "estado": "NUEVO",
     "talles": ["L", "XL", "XXL"],
     "tiendaId": 1,
@@ -147,7 +175,9 @@
     "nombre": "Zapatilla de lona clásica",
     "descripcion": "Zapatilla de lona con suela vulcanizada y puntera de goma. Atada a mano.",
     "precio": 32900,
-    "stock": 38,
+    "stock": {
+      "UNISEX": { "S": 10, "M": 12, "L": 10, "XL": 6 }
+    },
     "categoria": "ZAPATILLA",
     "genero": "UNISEX",
     "estado": "NUEVO",
@@ -160,7 +190,9 @@
     "nombre": "Gorra de lona reversible",
     "descripcion": "Gorra con cara de lona lavada y detalles bordados en el frente.",
     "precio": 15900,
-    "stock": 62,
+    "stock": {
+      "UNISEX": { "UNICO": 62 }
+    },
     "categoria": "ACCESORIO",
     "genero": "UNISEX",
     "estado": "NUEVO",
@@ -173,9 +205,11 @@
     "nombre": "Campera de jean oversize",
     "descripcion": "Campera oversize con hombros caídos y lavado stone. Tela rígida de 12oz.",
     "precio": 52900,
-    "stock": 6,
+    "stock": {
+      "MUJER": { "M": 3, "L": 3 }
+    },
     "categoria": "CAMPERA",
-    "genero": "UNISEX",
+    "genero": "MUJER",
     "estado": "NUEVO",
     "talles": ["M", "L"],
     "imagenUrl": "https://picsum.photos/seed/jean-oversize/600/600",

@@ -21,6 +21,7 @@ src/main/java/com/ddaii/
 ├── controllers/          # ProductoController, PedidoController
 ├── events/               # PedidoCreadoEvent, StockActualizadoEvent
 ├── messaging/            # CompraLogger (Observer)
+├── converters/           # StockMapConverter (stock[genero][talle] como JSON en column text)
 └── config/               # ProductoDataLoader (seed)
 
 src/main/resources/
@@ -38,20 +39,22 @@ src/main/resources/
 | GET | `/api/productos` | Lista el catálogo |
 | GET | `/api/productos/{id}` | Detalle, o `404 {"error": "..."}` |
 | GET | `/api/productos/tienda/{tiendaId}` | Productos de una tienda |
-| PUT | `/api/productos/{id}/stock?cantidad=N` | Descuenta stock |
+| PUT | `/api/productos/{id}/stock?genero=X&talle=Y&cantidad=N` | Descuenta la celda `stock[genero][talle]` |
 | POST | `/api/pedidos` | Confirma la compra, `201` con el `Pedido` |
 | GET | `/api/pedidos/{clienteId}/pedidos` | Pedidos del cliente |
 
 CORS habilitado para `localhost:5173` y `localhost:4173` en ambos controllers.
 
-`POST /api/pedidos` recibe solo `productoId` y `cantidad` por detalle:
+`POST /api/pedidos` recibe por detalle `productoId`, `cantidad` y la **variante**
+(`talle` + `genero`). El stock se descuenta de la celda `stock[genero][talle]`:
 
 ```json
-{ "detalles": [ { "productoId": 1, "cantidad": 2 } ] }
+{ "detalles": [ { "productoId": 1, "cantidad": 2, "talle": "M", "genero": "HOMBRE" } ] }
 ```
 
 El **precio lo resuelve el backend** desde la base, así el cliente no puede manipularlo.
-Errores: `400` por payload inválido o producto inexistente, `409` por stock insuficiente.
+Errores: `400` por payload inválido, producto inexistente o variante faltante/mal formada;
+`409` por stock insuficiente en la celda.
 
 ## Levantar
 
@@ -95,7 +98,7 @@ CompraLogger                            Observer: loguea ====COMPRA REALIZADA===
 ## Comandos
 
 ```powershell
-.\mvnw test             # 55 tests (servicios, controllers, dominio) — JUnit 5 + Mockito
+.\mvnw test             # 55 tests base + casos de variante (JUnit 5 + Mockito) ⚠️ correr desde Windows
 .\mvnw spring-boot:run
 ```
 
@@ -105,11 +108,11 @@ CompraLogger                            Observer: loguea ====COMPRA REALIZADA===
 
 | Clase | Qué cubre |
 |---|---|
-| `services/InventarioServiceTest` | Los 3 casos del enunciado: compra válida, stock insuficiente, producto inexistente |
+| `services/InventarioServiceTest` | Los 3 casos del enunciado + stock por variante: compra válida, stock insuficiente, producto inexistente |
 | `services/PedidoCompraServiceTest` | `confirmarCompra`: precios desde la base, validaciones, evento |
-| `services/ProductoServiceTest` · `PedidoServiceTest` | Delegación a repositorio y excepciones |
-| `controllers/*ControllerTest` | MockMvc standalone: códigos 200/201/400/404/409 |
-| `domain/ProductoTest` | Descuento de stock y `estaDisponible` |
+| `services/ProductoServiceTest` · `PedidoServiceTest` | Delegación a repositorio, excepciones y `actualizarStock` por variante |
+| `controllers/*ControllerTest` | MockMvc standalone: códigos 200/201/400/404/409 (stock por `genero`/`talle`) |
+| `domain/ProductoTest` | Descuento de la celda `stock[genero][talle]` y `estaDisponible` |
 
 ## Pendiente
 

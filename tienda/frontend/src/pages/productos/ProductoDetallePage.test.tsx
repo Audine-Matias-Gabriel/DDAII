@@ -82,7 +82,7 @@ describe('<ProductoDetallePage>', () => {
 
   it('muestra el detalle completo del producto', () => {
     montar({
-      producto: producto({ nombre: 'Campera Norte', precio: 74900, talles: ['M', 'L'] }),
+      producto: producto({ nombre: 'Campera Norte', precio: 74900 }),
       cargando: false,
       error: null,
       recargar: vi.fn(),
@@ -92,17 +92,18 @@ describe('<ProductoDetallePage>', () => {
     expect(screen.getByText(/74\.900/)).toBeInTheDocument()
     expect(screen.getByText('REMPERA')).toBeInTheDocument()
     expect(screen.getByText('10 en stock')).toBeInTheDocument()
-    expect(screen.getByText('Talles: M · L')).toBeInTheDocument()
+    expect(screen.getByLabelText('Talle')).toBeInTheDocument()
   })
 
-  it('Agregar al carrito llama agregar con el producto', async () => {
+  it('Agregar al carrito llama agregar con el producto y la variante', async () => {
     const user = userEvent.setup()
     const p = producto({ nombre: 'Campera Norte' })
     const carrito = carritoCon()
     montar({ producto: p, cargando: false, error: null, recargar: vi.fn() }, carrito)
 
+    await user.selectOptions(screen.getByLabelText('Talle'), 'M')
     await user.click(screen.getByRole('button', { name: 'Agregar al carrito' }))
 
-    expect(carrito.agregar).toHaveBeenCalledWith(p)
+    expect(carrito.agregar).toHaveBeenCalledWith(p, 'UNISEX', 'M')
   })
 })

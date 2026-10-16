@@ -9,7 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ddaii.domain.Categoria;
+import com.ddaii.domain.Genero;
 import com.ddaii.domain.Producto;
 import com.ddaii.services.ProductoService;
 
@@ -42,9 +46,12 @@ class ProductoControllerTest {
     }
 
     private Producto producto(Long id, Integer stock) {
+        Map<Genero, Map<String, Integer>> mapa = new EnumMap<>(Genero.class);
+        mapa.put(Genero.HOMBRE, new HashMap<>(Map.of("M", stock)));
+
         return new Producto(
                 id, "Remera Nike", "descripcion",
-                new BigDecimal("10000"), stock,
+                new BigDecimal("10000"), mapa,
                 Categoria.REMPERA, 1L, "img.png");
     }
 
@@ -91,21 +98,25 @@ class ProductoControllerTest {
 
     @Test
     void actualizarStock_ok_devuelve200() throws Exception {
-        when(productoService.actualizarStock(1L, 3))
+        when(productoService.actualizarStock(1L, Genero.HOMBRE, "M", 3))
                 .thenReturn(producto(1L, 7));
 
         mockMvc.perform(put("/api/productos/1/stock")
+                        .param("genero", "HOMBRE")
+                        .param("talle", "M")
                         .param("cantidad", "3"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.stock").value(7));
+                .andExpect(jsonPath("$.stock.HOMBRE.M").value(7));
     }
 
     @Test
     void actualizarStock_inexistente_devuelve404() throws Exception {
-        when(productoService.actualizarStock(999L, 3))
+        when(productoService.actualizarStock(999L, Genero.HOMBRE, "M", 3))
                 .thenThrow(new NoSuchElementException("Producto no encontrado: 999"));
 
         mockMvc.perform(put("/api/productos/999/stock")
+                        .param("genero", "HOMBRE")
+                        .param("talle", "M")
                         .param("cantidad", "3"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Producto no encontrado: 999"));
@@ -113,10 +124,12 @@ class ProductoControllerTest {
 
     @Test
     void actualizarStock_insuficiente_devuelve409() throws Exception {
-        when(productoService.actualizarStock(1L, 50))
+        when(productoService.actualizarStock(1L, Genero.HOMBRE, "M", 50))
                 .thenThrow(new IllegalStateException("Stock insuficiente"));
 
         mockMvc.perform(put("/api/productos/1/stock")
+                        .param("genero", "HOMBRE")
+                        .param("talle", "M")
                         .param("cantidad", "50"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value("Stock insuficiente"));
@@ -124,10 +137,12 @@ class ProductoControllerTest {
 
     @Test
     void actualizarStock_cantidadInvalida_devuelve400() throws Exception {
-        when(productoService.actualizarStock(1L, 0))
+        when(productoService.actualizarStock(1L, Genero.HOMBRE, "M", 0))
                 .thenThrow(new IllegalArgumentException("La cantidad debe ser mayor a 0"));
 
         mockMvc.perform(put("/api/productos/1/stock")
+                        .param("genero", "HOMBRE")
+                        .param("talle", "M")
                         .param("cantidad", "0"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("La cantidad debe ser mayor a 0"));
@@ -135,13 +150,15 @@ class ProductoControllerTest {
 
     @Test
     void actualizarStock_delegaEnElServicio() throws Exception {
-        when(productoService.actualizarStock(any(), any()))
+        when(productoService.actualizarStock(any(), any(), any(), any()))
                 .thenReturn(producto(1L, 7));
 
         mockMvc.perform(put("/api/productos/1/stock")
+                        .param("genero", "HOMBRE")
+                        .param("talle", "M")
                         .param("cantidad", "3"))
                 .andExpect(status().isOk());
 
-        verify(productoService).actualizarStock(1L, 3);
+        verify(productoService).actualizarStock(1L, Genero.HOMBRE, "M", 3);
     }
 }

@@ -1,5 +1,7 @@
 package com.ddaii.events;
 
+import com.ddaii.domain.Genero;
+
 import java.util.List;
 
 public record PedidoCreadoEvent(
@@ -15,6 +17,8 @@ public record PedidoCreadoEvent(
     public record ItemPedido(
         Long productoId,
         String nombre,
+        Genero genero,
+        String talle,
         int cantidad
     ) {}
     
