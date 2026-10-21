@@ -53,6 +53,115 @@ docker logs tienda-postgres # esperar "database system is ready to accept connec
 El `down -v` es **obligatorio**: el seed corre solo si la tabla de productos está vacía, así que
 con el volumen viejo quedan los 4 productos de una versión anterior y el JSON no se carga.
 
+### RabbitMQ (mensajería)
+
+RabbitMQ se utiliza para enviar eventos cuando se confirma una compra. El backend publica el evento `PedidoCreadoEvent` en la cola `tienda.pedidos.creado`, y un consumidor recibe el mensaje y muestra los datos del pedido en la consola.
+
+#### 1. Iniciar RabbitMQ
+
+Requisitos: Docker Desktop abierto y funcionando.
+
+Desde PowerShell, ejecutar:
+
+```powershell
+docker run -d --name tienda-rabbitmq `
+  -p 5672:5672 `
+  -p 15672:15672 `
+  -e RABBITMQ_DEFAULT_USER=tienda `
+  -e RABBITMQ_DEFAULT_PASS=tienda_dev_123 `
+  rabbitmq:4-management
+```
+
+Este comando crea e inicia un contenedor de RabbitMQ con su interfaz de administración.
+
+Si el contenedor ya existe y está detenido, iniciarlo con:
+
+```powershell
+docker start tienda-rabbitmq
+```
+
+Para verificar que esté funcionando:
+
+```powershell
+docker ps
+docker logs tienda-rabbitmq
+```
+
+#### 2. Acceder a RabbitMQ
+
+Abrir en el navegador:
+
+- **Interfaz de administración:** http://localhost:15672
+- **Usuario:** `tienda`
+- **Contraseña:** `tienda_dev_123`
+- **Puerto AMQP:** `5672`
+
+El puerto 5672 se utiliza para la comunicación entre el backend y RabbitMQ. El puerto 15672 permite administrar y monitorear las colas desde el navegador.
+
+#### 3. Verificar la configuración del backend
+
+En `backend/src/main/resources/application.properties` deben estar configuradas las credenciales correspondientes al contenedor:
+
+```properties
+spring.rabbitmq.host=localhost
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=tienda
+spring.rabbitmq.password=tienda_dev_123
+```
+
+No es necesario instalar RabbitMQ directamente en Windows: Docker ejecuta el servicio y el backend se conecta a él mediante el puerto 5672.
+
+#### 4. Ejecutar y probar la integración
+
+1. Iniciar PostgreSQL siguiendo los pasos de la sección **Métodos de prueba**.
+2. Iniciar RabbitMQ con los comandos anteriores.
+3. Ejecutar el backend desde `backend`:
+
+   ```powershell
+   .\mvnw spring-boot:run
+   ```
+
+4. Realizar una compra válida mediante `POST /api/pedidos` o desde el frontend.
+5. Verificar la consola del backend: debe aparecer el mensaje de publicación y el bloque `PEDIDO RECIBIDO DESDE RABBITMQ`, con el ID del pedido y los artículos comprados.
+6. En la interfaz de administración, ingresar a **Queues and Streams** y comprobar que exista la cola `tienda.pedidos.creado`.
+
+El consumidor procesa los mensajes automáticamente. Por eso, si funciona correctamente, la cantidad de mensajes pendientes de la cola puede volver rápidamente a cero.
+
+#### 5. Detener RabbitMQ
+
+Para detener el contenedor sin eliminarlo:
+
+```powershell
+docker stop tienda-rabbitmq
+```
+
+Para volver a iniciarlo:
+
+```powershell
+docker start tienda-rabbitmq
+```
+
+Para eliminarlo definitivamente:
+
+```powershell
+docker rm -f tienda-rabbitmq
+```
+
+Si se elimina el contenedor, será necesario ejecutar nuevamente el comando del paso 1 para crearlo. No eliminarlo si se desea conservar el contenedor existente.
+
+#### Fallos típicos de RabbitMQ
+
+| Síntoma | Causa posible |
+|---|---|
+| `Connection refused` o error de conexión | RabbitMQ está detenido o el puerto 5672 no está disponible. |
+| `ACCESS_REFUSED` | Las credenciales configuradas en `application.properties` no coinciden con las del contenedor. |
+| `Port 5672 is already allocated` | Otro proceso o contenedor ya está utilizando el puerto. |
+| No aparece `tienda.pedidos.creado` | Revisar que el backend haya iniciado correctamente y que `RabbitMQConfig` declare la cola. |
+| La compra se guarda, pero no llega el mensaje | Revisar la conexión con RabbitMQ y los errores del publicador. La confirmación de PostgreSQL no garantiza por sí sola la entrega del evento. |
+
+**Importante:** las credenciales indicadas son únicamente para el entorno local de desarrollo. No deben utilizarse tal cual en un entorno de producción.
+
+
 ### 2. Backend
 
 ```powershell
