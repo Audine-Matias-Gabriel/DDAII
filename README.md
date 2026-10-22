@@ -9,16 +9,16 @@ App web tipo Mercado Libre solo para ropa, con artículos de múltiples tiendas.
 tienda/
   backend/    # Java 17 + Spring Boot + Maven + PostgreSQL
   frontend/   # React 19 + TypeScript + Vite
-docker-compose.yml   # PostgreSQL 16 en el puerto 5433
+docker-compose.yml   # PostgreSQL 16 en el puerto 5433 + RabbitMQ 4 en 5672/15672
 docs/         # contexto e instrucciones locales (ignorado por git)
 ```
 
 ## Stack
 
-- Backend: Java 17, Spring Boot 4.1, Maven, Spring Data JPA, PostgreSQL
+- Backend: Java 17, Spring Boot 4.1, Maven, Spring Data JPA, PostgreSQL, Spring AMQP
 - Frontend: TypeScript, React 19 + Vite 8, CSS Modules
-- Deploy: Docker + docker-compose (hoy solo PostgreSQL)
-- P1-P2 (pendiente): RabbitMQ, SOAP puntual, API externa, componente IA, Swagger
+- Deploy: Docker + docker-compose (PostgreSQL y RabbitMQ)
+- P1-P2 (pendiente): SOAP puntual, API externa, componente IA, Swagger
 
 ## Levantar
 
@@ -26,7 +26,7 @@ Requisitos: Docker Desktop y un **JDK 17+** con `JAVA_HOME` apuntando a él. Mav
 hace falta instalarlo: el wrapper del repo (`.\mvnw`) lo descarga solo en el primer uso.
 
 ```powershell
-docker compose up -d                    # PostgreSQL en localhost:5433
+docker compose up -d                    # PostgreSQL en 5433 y RabbitMQ en 5672/15672
 
 cd tienda\backend
 .\mvnw spring-boot:run                  # API en localhost:8080
@@ -41,7 +41,7 @@ npm run dev                             # UI en localhost:5173
 Los comandos van en **PowerShell desde Windows**: `docker` no está en el PATH de WSL y
 `java` de WSL no existe. De WSL solo funcionan `npm run lint` y el typecheck.
 
-### 1. Base de datos (lo único en Docker)
+### 1. Base de datos (PostgreSQL en Docker)
 
 ```powershell
 docker compose down -v      # IMPORTANTE: resetea el volumen
@@ -53,32 +53,34 @@ docker logs tienda-postgres # esperar "database system is ready to accept connec
 El `down -v` es **obligatorio**: el seed corre solo si la tabla de productos está vacía, así que
 con el volumen viejo quedan los 4 productos de una versión anterior y el JSON no se carga.
 
-### RabbitMQ (mensajería)
+### 2. RabbitMQ (mensajería)
 
 RabbitMQ se utiliza para enviar eventos cuando se confirma una compra. El backend publica el evento `PedidoCreadoEvent` en la cola `tienda.pedidos.creado`, y un consumidor recibe el mensaje y muestra los datos del pedido en la consola.
+
+La cola `tienda.pedidos.creado.dlq` es la **cola de mensajes muertos**: recibe los mensajes
+que el consumidor rechaza, para poder revisarlos sin que se pierdan.
 
 #### 1. Iniciar RabbitMQ
 
 Requisitos: Docker Desktop abierto y funcionando.
 
-Desde PowerShell, ejecutar:
+`docker-compose.yml` ya define el servicio `rabbitmq` con su interfaz de administración,
+así que la forma normal de levantarlo es:
 
 ```powershell
-docker run -d --name tienda-rabbitmq `
-  -p 5672:5672 `
-  -p 15672:15672 `
-  -e RABBITMQ_DEFAULT_USER=tienda `
-  -e RABBITMQ_DEFAULT_PASS=tienda_dev_123 `
-  rabbitmq:4-management
+docker compose up -d        # RabbitMQ en 5672 (AMQP) y 15672 (administración)
+docker compose ps           # tienda-rabbitmq Up, 0.0.0.0:5672->5672/tcp
 ```
-
-Este comando crea e inicia un contenedor de RabbitMQ con su interfaz de administración.
 
 Si el contenedor ya existe y está detenido, iniciarlo con:
 
 ```powershell
 docker start tienda-rabbitmq
 ```
+
+> **No usar `docker run` para crear el contenedor a mano**: el servicio de `docker-compose.yml`
+> ya lo crea con el mismo nombre (`tienda-rabbitmq`) y con las mismas credenciales, así que
+> los dos caminos chocan con el mismo nombre de contenedor.
 
 Para verificar que esté funcionando:
 
@@ -107,6 +109,14 @@ spring.rabbitmq.host=localhost
 spring.rabbitmq.port=5672
 spring.rabbitmq.username=tienda
 spring.rabbitmq.password=tienda_dev_123
+
+# Confirmaciones de publicación: el backend espera el ack del broker
+spring.rabbitmq.publisher-confirm-type=correlated
+spring.rabbitmq.publisher-returns=true
+spring.rabbitmq.template.mandatory=true
+
+# Un mensaje rechazado no se re-encola: va a la cola de mensajes muertos
+spring.rabbitmq.listener.simple.default-requeue-rejected=false
 ```
 
 No es necesario instalar RabbitMQ directamente en Windows: Docker ejecuta el servicio y el backend se conecta a él mediante el puerto 5672.
@@ -123,9 +133,14 @@ No es necesario instalar RabbitMQ directamente en Windows: Docker ejecuta el ser
 
 4. Realizar una compra válida mediante `POST /api/pedidos` o desde el frontend.
 5. Verificar la consola del backend: debe aparecer el mensaje de publicación y el bloque `PEDIDO RECIBIDO DESDE RABBITMQ`, con el ID del pedido y los artículos comprados.
-6. En la interfaz de administración, ingresar a **Queues and Streams** y comprobar que exista la cola `tienda.pedidos.creado`.
+6. En la interfaz de administración, ingresar a **Queues and Streams** y comprobar que existan las colas `tienda.pedidos.creado` y `tienda.pedidos.creado.dlq`.
 
 El consumidor procesa los mensajes automáticamente. Por eso, si funciona correctamente, la cantidad de mensajes pendientes de la cola puede volver rápidamente a cero.
+
+**Si RabbitMQ está caído, la compra igual se guarda.** El backend publica el evento *después* del
+commit de la transacción y, si el broker no responde, registra el error y sigue: el `POST
+/api/pedidos` devuelve `201` con el pedido creado. Lo que se pierde es la notificación del
+evento, no el pedido.
 
 #### 5. Detener RabbitMQ
 
@@ -141,13 +156,16 @@ Para volver a iniciarlo:
 docker start tienda-rabbitmq
 ```
 
-Para eliminarlo definitivamente:
+Para eliminarlo definitivamente (y con él el volumen de datos):
 
 ```powershell
 docker rm -f tienda-rabbitmq
+docker volume rm proyecto-rabbitmq-data
 ```
 
-Si se elimina el contenedor, será necesario ejecutar nuevamente el comando del paso 1 para crearlo. No eliminarlo si se desea conservar el contenedor existente.
+Si se elimina el contenedor, `docker compose up -d` lo vuelve a crear. Ojo: el volumen guarda
+las colas ya declaradas, y si cambian sus argumentos el broker las rechaza (ver la fila de
+`PRECONDITION_FAILED` más abajo).
 
 #### Fallos típicos de RabbitMQ
 
@@ -156,13 +174,15 @@ Si se elimina el contenedor, será necesario ejecutar nuevamente el comando del 
 | `Connection refused` o error de conexión | RabbitMQ está detenido o el puerto 5672 no está disponible. |
 | `ACCESS_REFUSED` | Las credenciales configuradas en `application.properties` no coinciden con las del contenedor. |
 | `Port 5672 is already allocated` | Otro proceso o contenedor ya está utilizando el puerto. |
+| `PRECONDITION_FAILED` (406) | La cola ya existe en el volumen con otros argumentos. **Eliminar el contenedor y el volumen**, y volver a levantarlo con `docker compose up -d`. |
 | No aparece `tienda.pedidos.creado` | Revisar que el backend haya iniciado correctamente y que `RabbitMQConfig` declare la cola. |
-| La compra se guarda, pero no llega el mensaje | Revisar la conexión con RabbitMQ y los errores del publicador. La confirmación de PostgreSQL no garantiza por sí sola la entrega del evento. |
+| La compra se guarda, pero no llega el mensaje | RabbitMQ está caído o no confirma la publicación. El backend lo deja asentado en el log: `No se pudo publicar el pedido N en RabbitMQ`. La confirmación de PostgreSQL no garantiza por sí sola la entrega del evento. |
+| La cola `tienda.pedidos.creado.dlq` tiene mensajes | El consumidor rechazó algún mensaje (por ejemplo, JSON inválido). Es el comportamiento esperado: el mensaje queda en la cola de mensajes muertos en vez de perderse. |
 
 **Importante:** las credenciales indicadas son únicamente para el entorno local de desarrollo. No deben utilizarse tal cual en un entorno de producción.
 
 
-### 2. Backend
+### 3. Backend
 
 ```powershell
 cd tienda\backend
@@ -176,7 +196,7 @@ Dos señales de arranque OK:
 
 Si aparece `La base ya contiene productos`, es que faltó el `down -v` del paso 1.
 
-### 3. Checks de la API
+### 4. Checks de la API
 
 En otra ventana de PowerShell, con el backend corriendo:
 
@@ -218,7 +238,7 @@ anterior y el actual (incluye talle y género).
 `GET /api/pedidos/1/pedidos` devuelve 404: no hay clientes sembrados en la base. Es lo
 esperado, no es un bug.
 
-### 4. Flujo completo en el navegador
+### 5. Flujo completo en el navegador
 
 ```powershell
 cd tienda\frontend
@@ -235,7 +255,7 @@ npm run dev    # http://localhost:5173
 7. Con el backend apagado, el catálogo tiene que mostrar el error de conexión y el botón
    "Reintentar".
 
-### 5. Chequeos rápidos
+### 6. Chequeos rápidos
 
 ```powershell
 cd tienda\frontend
@@ -243,14 +263,14 @@ npm run lint      # oxlint: 0 errores, 2 warnings conocidos de only-export-compo
 npm run test      # vitest: 128 tests en 26 archivos, todos verdes
 npm run build     # tsc + vite build
 cd ..\backend
-.\mvnw test       # 55 tests JUnit base + casos de variante del §18 (correr desde Windows)
+.\mvnw test       # 55 tests JUnit base + casos de variante del §18 + tests de RabbitMQ
 ```
 
-### 6. Cerrar
+### 7. Cerrar
 
 ```powershell
-docker compose down       # conserva los datos
-docker compose down -v    # reinicia la base para el próximo ensayo
+docker compose down       # detiene PostgreSQL y RabbitMQ, conserva los datos
+docker compose down -v    # reinicia la base y las colas para el próximo ensayo
 ```
 
 ### Fallos típicos
@@ -269,6 +289,8 @@ docker compose down -v    # reinicia la base para el próximo ensayo
 Frontend y backend **integrados**: el catálogo y el detalle se piden a la API, el carrito
 pide **género y talle** (stock por variante) y hace `POST /api/pedidos` para confirmar la
 compra, que descuenta la celda `stock[genero][talle]` vía evento de dominio.
+Cada compra confirmada publica un `PedidoCreadoEvent` en RabbitMQ, que consume el propio
+backend (cola `tienda.pedidos.creado`, con DLQ `tienda.pedidos.creado.dlq`).
 Pendiente la verificación end-to-end completa (§ Métodos de prueba).
 
 ## API
