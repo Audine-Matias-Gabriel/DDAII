@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 import java.math.BigDecimal;
 import java.util.EnumMap;
@@ -22,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+
 
 import com.ddaii.domain.Categoria;
 import com.ddaii.domain.Genero;
@@ -218,7 +220,7 @@ class InventarioServiceTest {
     void alCrearPedido_validaTodoElStock_antesDeDescontar() {
         Producto conStock = productoConStock(1L, Genero.HOMBRE, "M", 10);
         Producto sinStock = productoConStock(2L, Genero.HOMBRE, "M", 1);
-        when(productoRepository.findById(1L))
+        lenient().when(productoRepository.findById(1L))
                 .thenReturn(Optional.of(conStock));
         when(productoRepository.findById(2L))
                 .thenReturn(Optional.of(sinStock));
