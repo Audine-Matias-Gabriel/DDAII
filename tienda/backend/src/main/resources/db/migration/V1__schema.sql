@@ -1,0 +1,44 @@
+-- Esquema inicial Web de Ropa (creado si las tablas no existen; JPA con ddl-auto=update las gestiona)
+CREATE TABLE IF NOT EXISTS tienda (
+    id BIGSERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    url_original VARCHAR(500) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS usuario (
+    id BIGSERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(200) NOT NULL UNIQUE,
+    premium BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS producto (
+    id BIGSERIAL PRIMARY KEY,
+    id_externo VARCHAR(200) NOT NULL,
+    tienda VARCHAR(100) NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
+    descripcion VARCHAR(1000),
+    precio DOUBLE PRECISION NOT NULL,
+    categoria VARCHAR(50),
+    genero VARCHAR(50),
+    marca VARCHAR(100),
+    url_original VARCHAR(500),
+    imagen_url VARCHAR(500),
+    disponible BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT uk_producto_tienda_id_externo UNIQUE (tienda, id_externo)
+);
+
+CREATE TABLE IF NOT EXISTS suscripcion (
+    id BIGSERIAL PRIMARY KEY,
+    usuario_id BIGINT NOT NULL REFERENCES usuario(id),
+    estado VARCHAR(50) NOT NULL,
+    id_pago VARCHAR(200),
+    fecha TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Talles disponibles (uno por fila)
+CREATE TABLE IF NOT EXISTS talle_disponible (
+    id BIGSERIAL PRIMARY KEY,
+    producto_id BIGINT NOT NULL REFERENCES producto(id) ON DELETE CASCADE,
+    talle VARCHAR(10) NOT NULL
+);

@@ -1,0 +1,30 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://tporopa.com/webropa/soap/talles"
+           targetNamespace="http://tporopa.com/webropa/soap/talles"
+           elementFormDefault="qualified">
+
+    <xs:element name="EquivalenciaTallesRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="prenda" type="xs:string"/>
+                <xs:element name="talleOrigen" type="xs:string"/>
+                <xs:element name="sistemaOrigen" type="xs:string"/>
+                <xs:element name="sistemaDestino" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="EquivalenciaTallesResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="prenda" type="xs:string"/>
+                <xs:element name="talleOrigen" type="xs:string"/>
+                <xs:element name="sistemaOrigen" type="xs:string"/>
+                <xs:element name="sistemaDestino" type="xs:string"/>
+                <xs:element name="talleDestino" type="xs:string"/>
+                <xs:element name="equivalencia" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

@@ -1,0 +1,37 @@
+name: Tarea
+title: "[P?] <tarea-corta>"
+about: Crea una tarea para el equipo Web de Ropa
+labels: ["P1", "P2", "P3", "P4", "P5"]
+body:
+  - type: input
+    id: rol
+    attributes:
+      label: Tu rol (P1 a P5)
+      description: Ej. P2
+      placeholder: P2
+    validations:
+      required: true
+  - type: input
+    id: hito
+    attributes:
+      label: Milestone / Hito
+      description: Hito 1, Hito 2 o Hito 3
+      placeholder: Hito 1
+    validations:
+      required: true
+  - type: textarea
+    id: que-hacer
+    attributes:
+      label: Qué hay que hacer
+      description: Copiado del plan de 10 días
+      placeholder: Describí la tarea...
+    validations:
+      required: true
+  - type: textarea
+    id: listo-cuando
+    attributes:
+      label: Listo cuando
+      description: Criterio de aceptación
+      placeholder: Ej. /swagger-ui muestra los endpoints
+    validations:
+      required: true

@@ -1,0 +1,54 @@
+spring:
+  application.name: webropa-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/webropa}
+    username: ${DB_USER:webropa}
+    password: ${DB_PASSWORD:webropa}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  rabbitmq:
+    host: ${RABBIT_URI_HOST:localhost}
+    port: ${RABBIT_URI_PORT:5672}
+    username: ${RABBIT_URI_USERNAME:guest}
+    password: ${RABBIT_URI_PASSWORD:guest}
+    # Configuración de colas (valores por defecto, sobrescribibles por variable de entorno)
+    exchange: ${RABBIT_EXCHANGE:webropa.events}
+    queue.producto.scrapeado: ${RABBIT_QUEUE_PRODUCTO_SCRAPEADO:cola.producto.scrapeado}
+    queue.suscripcion.activada: ${RABBIT_QUEUE_SUSCRIPCION_ACTIVADA:cola.suscripcion.activada}
+    queue.recomendacion.solicitada: ${RABBIT_QUEUE_RECOMENDACION_SOLICITADA:cola.recomendacion.solicitada}
+    queue.dlq: ${RABBIT_DLQ:cola.errores.dlq}
+  webservices:
+    wsdl-locations: classpath:xsd/talles.xsd
+    path: /ws
+
+# Mercado Pago (sandbox para la demo)
+mp:
+  access-token: ${MP_ACCESS_TOKEN:}
+  public-key: ${MP_PUBLIC_KEY:}
+  base-url: ${MP_BASE_URL:https://api.mercadopago.com}
+
+# Ximilar (plan gratuito: no usar tagging en estos 10 días)
+ximilar:
+  api-key: ${XIMILAR_API_KEY:}
+  collection-id: ${XIMILAR_COLLECTION_ID:}
+  base-url: ${XIMILAR_BASE_URL:https://api.ximilar.com}
+
+# CORS (frontend)
+app:
+  cors-origins: ${CORS_ORIGINS:http://localhost:5173}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+springdoc:
+  api-docs.enabled: true
+  swagger-ui.enabled: true
+  swagger-ui.path: /swagger-ui.html
+  api-docs.path: /v3/api-docs
+
