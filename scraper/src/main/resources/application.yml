@@ -1,0 +1,16 @@
+spring:
+  application.name: webropa-scraper
+  rabbitmq:
+    host: ${RABBIT_URI_HOST:localhost}
+    port: ${RABBIT_URI_PORT:5672}
+    username: ${RABBIT_URI_USERNAME:guest}
+    password: ${RABBIT_URI_PASSWORD:guest}
+
+app:
+  scraper:
+    snapshot-file: scraper/snapshots/tienda1.json
+    exchange: ${RABBIT_EXCHANGE:webropa.events}
+    queue: ${RABBIT_QUEUE_PRODUCTO_SCRAPEADO:cola.producto.scrapeado}
+
+server:
+  port: ${SERVER_PORT:8081}

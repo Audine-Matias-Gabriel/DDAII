@@ -1,0 +1,41 @@
+# --- Java / Maven ---
+target/
+!.gitkeep
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+.idea/
+.vscode/
+*.iws
+*.ipr
+
+# --- Node / frontend ---
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+
+# --- Entorno ---
+.env
+.env.local
+*.env.*
+
+# --- IDE ---
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Documentación generada / evidencias (placeholder, no subir capturas reales grandes sin revisar) ---
+docs/evidencias/*.png
+docs/evidencias/*.jpg
+docs/evidencias/*.mp4
+!docs/evidencias/.gitkeep

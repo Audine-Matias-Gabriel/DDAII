@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: webropa
+          POSTGRES_PASSWORD: webropa
+          POSTGRES_DB: webropa
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U webropa -d webropa"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      rabbitmq:
+        image: rabbitmq:3-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        ports: ["5672:5672"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Backend tests (mvn test)
+        run: mvn -B test
+        working-directory: backend
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/webropa
+          DB_USER: webropa
+          DB_PASSWORD: webropa
+          RABBIT_URI_HOST: localhost
+          RABBIT_URI_PORT: 5672
+          RABBIT_URI_USERNAME: guest
+          RABBIT_URI_PASSWORD: guest
+
+      - name: Frontend tests (npm test)
+        run: npm test
+        working-directory: frontend
