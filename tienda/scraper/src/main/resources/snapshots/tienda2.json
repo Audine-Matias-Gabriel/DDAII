@@ -1,0 +1,226 @@
+[
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0001",
+    "nombre": "Remera algodón estampada (Tienda 2)",
+    "descripcion": "Remera de algodón con estampa frontal",
+    "precio": 17269.2,
+    "categoria": "REMERA",
+    "genero": "Mujer",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0001",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0001.jpg",
+    "disponible": true,
+    "tallesDisponibles": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ]
+  },
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0002",
+    "nombre": "Pantalón jean recto (Tienda 2)",
+    "descripcion": "Jean recto talle alto",
+    "precio": 26989.2,
+    "categoria": "PANTALON",
+    "genero": "Mujer",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0002",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0002.jpg",
+    "disponible": true,
+    "tallesDisponibles": [
+      "36",
+      "38",
+      "40",
+      "42"
+    ]
+  },
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0003",
+    "nombre": "Zapatillas running (Tienda 2)",
+    "descripcion": "Zapatillas para correr amortiguadas",
+    "precio": 49669.2,
+    "categoria": "CALZADO",
+    "genero": "Unisex",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0003",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0003.jpg",
+    "disponible": true,
+    "tallesDisponibles": [
+      "38",
+      "39",
+      "40",
+      "41",
+      "42"
+    ]
+  },
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0004",
+    "nombre": "Vestido verano (Tienda 2)",
+    "descripcion": "Vestido ligero de verano",
+    "precio": 20509.2,
+    "categoria": "VESTIDO",
+    "genero": "Mujer",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0004",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0004.jpg",
+    "disponible": true,
+    "tallesDisponibles": [
+      "S",
+      "M",
+      "L"
+    ]
+  },
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0005",
+    "nombre": "Remera básica hombre (Tienda 2)",
+    "descripcion": "Remera básica de algodón",
+    "precio": 14029.2,
+    "categoria": "REMERA",
+    "genero": "Hombre",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0005",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0005.jpg",
+    "disponible": true,
+    "tallesDisponibles": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ]
+  },
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0006",
+    "nombre": "Pantalón de gym (Tienda 2)",
+    "descripcion": "Pantalón deportivo para entrenamiento",
+    "precio": 21589.2,
+    "categoria": "PANTALON",
+    "genero": "Hombre",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0006",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0006.jpg",
+    "disponible": true,
+    "tallesDisponibles": [
+      "M",
+      "L",
+      "XL"
+    ]
+  },
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0007",
+    "nombre": "Botas cuero (Tienda 2)",
+    "descripcion": "Botas de cuero para invierno",
+    "precio": 42109.2,
+    "categoria": "CALZADO",
+    "genero": "Mujer",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0007",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0007.jpg",
+    "disponible": true,
+    "tallesDisponibles": [
+      "37",
+      "38",
+      "39",
+      "40"
+    ]
+  },
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0008",
+    "nombre": "Campera jean (Tienda 2)",
+    "descripcion": "Campera de denim clásica",
+    "precio": 32389.2,
+    "categoria": "REMERA",
+    "genero": "Unisex",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0008",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0008.jpg",
+    "disponible": true,
+    "tallesDisponibles": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ]
+  },
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0009",
+    "nombre": "Pollera midi (Tienda 2)",
+    "descripcion": "Pollera midi plisada",
+    "precio": 18349.2,
+    "categoria": "VESTIDO",
+    "genero": "Mujer",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0009",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0009.jpg",
+    "disponible": false,
+    "tallesDisponibles": [
+      "S",
+      "M"
+    ]
+  },
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0010",
+    "nombre": "Remera oversize (Tienda 2)",
+    "descripcion": "Remera oversize de algodón",
+    "precio": 19429.2,
+    "categoria": "REMERA",
+    "genero": "Mujer",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0010",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0010.jpg",
+    "disponible": true,
+    "tallesDisponibles": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ]
+  },
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0011",
+    "nombre": "Short jean (Tienda 2)",
+    "descripcion": "Short de denim para verano",
+    "precio": 16189.2,
+    "categoria": "PANTALON",
+    "genero": "Mujer",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0011",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0011.jpg",
+    "disponible": true,
+    "tallesDisponibles": [
+      "S",
+      "M",
+      "L"
+    ]
+  },
+  {
+    "tienda": "tienda2",
+    "idExterno": "T2-0012",
+    "nombre": "Mujer blusa seda (Tienda 2)",
+    "descripcion": "Blusa de seda manga larga",
+    "precio": 24829.2,
+    "categoria": "REMERA",
+    "genero": "Mujer",
+    "marca": "Tienda2",
+    "urlOriginal": "https://tienda2.com.ar/producto/t2-0012",
+    "imagenUrl": "https://tienda2.com.ar/imagenes/t2-0012.jpg",
+    "disponible": true,
+    "tallesDisponibles": [
+      "S",
+      "M",
+      "L"
+    ]
+  }
+]

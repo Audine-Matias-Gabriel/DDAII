@@ -40,5 +40,18 @@ test('index.html contiene botón premium / suscripciones', () => {
   assert(html.includes('premium') || html.includes('suscripciones'), 'falta flujo de premium');
 });
 
+test('script.js usa el contrato REST paginado (contenido, pagina, tamano)', () => {
+  const js = fs.readFileSync(path.join(__dirname, 'script.js'), 'utf8');
+  assert(js.includes('pagina.contenido'), 'debe leer contenido del PageResponse');
+  assert(js.includes("params.set('pagina'"), 'debe enviar pagina');
+  assert(js.includes("params.set('tamano'"), 'debe enviar tamano');
+});
+
+test('script.js consume recomendaciones y similares', () => {
+  const js = fs.readFileSync(path.join(__dirname, 'script.js'), 'utf8');
+  assert(js.includes('/api/recomendaciones'), 'falta llamada a recomendaciones');
+  assert(js.includes('/similares'), 'falta llamada a similares');
+});
+
 console.log(`\n${passed} prueba(s) pasada(s), ${failed} fallida(s).`);
 process.exit(failed > 0 ? 1 : 0);

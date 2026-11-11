@@ -4,10 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.tporopa</groupId>
+    <groupId>com.ddaii</groupId>
     <artifactId>backend</artifactId>
     <version>1.0.0</version>
-    <name>Web de Ropa - Backend</name>
+    <name>Tienda - Backend</name>
     <description>Servicio principal: catálogo, SOAP talles, suscripciones/Mercado Pago, recomendaciones REST y cola.</description>
 
     <parent>
@@ -57,7 +57,7 @@
         <!-- SOAP (Spring Web Services) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webservices</artifactId>
+            <artifactId>spring-boot-starter-web-services</artifactId>
         </dependency>
         <!-- Tests -->
         <dependency>

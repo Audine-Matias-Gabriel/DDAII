@@ -1,13 +1,13 @@
 spring:
-  application.name: webropa-backend
+  application.name: tienda-backend
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/webropa}
-    username: ${DB_USER:webropa}
-    password: ${DB_PASSWORD:webropa}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/tienda}
+    username: ${DB_USER:tienda}
+    password: ${DB_PASSWORD:tienda}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${DDL_AUTO:update}
     show-sql: true
     properties:
       hibernate:
@@ -17,14 +17,22 @@ spring:
     port: ${RABBIT_URI_PORT:5672}
     username: ${RABBIT_URI_USERNAME:guest}
     password: ${RABBIT_URI_PASSWORD:guest}
+    publisher-confirm-type: correlated
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
     # Configuración de colas (valores por defecto, sobrescribibles por variable de entorno)
-    exchange: ${RABBIT_EXCHANGE:webropa.events}
-    queue.producto.scrapeado: ${RABBIT_QUEUE_PRODUCTO_SCRAPEADO:cola.producto.scrapeado}
-    queue.suscripcion.activada: ${RABBIT_QUEUE_SUSCRIPCION_ACTIVADA:cola.suscripcion.activada}
-    queue.recomendacion.solicitada: ${RABBIT_QUEUE_RECOMENDACION_SOLICITADA:cola.recomendacion.solicitada}
-    queue.dlq: ${RABBIT_DLQ:cola.errores.dlq}
+    exchange: ${RABBIT_EXCHANGE:tienda.exchange}
+    queue.producto.scrapeado: ${RABBIT_QUEUE_PRODUCTO_SCRAPEADO:producto.scrapeado.queue}
+    queue.producto.scrapeado.dlq: ${RABBIT_QUEUE_PRODUCTO_SCRAPEADO_DLQ:producto.scrapeado.dlq}
+    queue.suscripcion.activada: ${RABBIT_QUEUE_SUSCRIPCION_ACTIVADA:suscripcion.activada.queue}
+    queue.suscripcion.activada.dlq: ${RABBIT_QUEUE_SUSCRIPCION_ACTIVADA_DLQ:suscripcion.activada.dlq}
+    queue.recomendacion.solicitada: ${RABBIT_QUEUE_RECOMENDACION_SOLICITADA:recomendacion.solicitada.queue}
+    queue.recomendacion.solicitada.dlq: ${RABBIT_QUEUE_RECOMENDACION_SOLICITADA_DLQ:recomendacion.solicitada.dlq}
   webservices:
-    wsdl-locations: classpath:xsd/talles.xsd
     path: /ws
 
 # Mercado Pago (sandbox para la demo)
@@ -51,4 +59,3 @@ springdoc:
   swagger-ui.enabled: true
   swagger-ui.path: /swagger-ui.html
   api-docs.path: /v3/api-docs
-

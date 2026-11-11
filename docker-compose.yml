@@ -3,24 +3,24 @@ version: "3.9"
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: webropa-postgres
+    container_name: tienda-postgres
     environment:
-      POSTGRES_DB: webropa
-      POSTGRES_USER: webropa
-      POSTGRES_PASSWORD: webropa
+      POSTGRES_DB: tienda
+      POSTGRES_USER: tienda
+      POSTGRES_PASSWORD: tienda
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U webropa -d webropa"]
+      test: ["CMD-SHELL", "pg_isready -U tienda -d tienda"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: webpora-rabbitmq
+    container_name: tienda-rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -37,20 +37,21 @@ services:
     build:
       context: ./tienda/backend
       dockerfile: Dockerfile
-    container_name: webropa-backend
+    container_name: tienda-backend
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/webropa
-      SPRING_DATASOURCE_USERNAME: webropa
-      SPRING_DATASOURCE_PASSWORD: webropa
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
+      DB_URL: jdbc:postgresql://postgres:5432/tienda
+      DB_USER: tienda
+      DB_PASSWORD: tienda
+      RABBIT_URI_HOST: rabbitmq
+      RABBIT_URI_PORT: 5672
+      RABBIT_URI_USERNAME: guest
+      RABBIT_URI_PASSWORD: guest
+      RABBIT_EXCHANGE: tienda.exchange
       MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN}
       MP_PUBLIC_KEY: ${MP_PUBLIC_KEY}
       MP_BASE_URL: ${MP_BASE_URL}
@@ -65,15 +66,16 @@ services:
     build:
       context: ./tienda/scraper
       dockerfile: Dockerfile
-    container_name: webropa-scraper
+    container_name: tienda-scraper
     depends_on:
       rabbitmq:
         condition: service_healthy
     environment:
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
+      RABBIT_URI_HOST: rabbitmq
+      RABBIT_URI_PORT: 5672
+      RABBIT_URI_USERNAME: guest
+      RABBIT_URI_PASSWORD: guest
+      RABBIT_EXCHANGE: tienda.exchange
       TIENDA1_CATALOGO_URL: ${TIENDA1_CATALOGO_URL}
       TIENDA2_CATALOGO_URL: ${TIENDA2_CATALOGO_URL}
 
@@ -81,7 +83,7 @@ services:
     build:
       context: ./tienda/frontend
       dockerfile: Dockerfile
-    container_name: webropa-frontend
+    container_name: tienda-frontend
     depends_on:
       backend:
         condition: service_started

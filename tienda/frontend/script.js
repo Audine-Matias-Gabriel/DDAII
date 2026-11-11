@@ -43,8 +43,8 @@ async function cargarCatalogo() {
   if (texto) params.set('texto', texto);
   if (categoria) params.set('categoria', categoria);
   if (genero) params.set('genero', genero);
-  params.set('page', 0);
-  params.set('size', 20);
+  params.set('pagina', 0);
+  params.set('tamano', 20);
 
   try {
     const r = await fetch(`${API}/api/productos?${params}`, {
@@ -52,7 +52,7 @@ async function cargarCatalogo() {
     });
     if (!r.ok) throw new Error('Backend no responde');
     const pagina = await r.json();
-    renderProductos(pagina.content || []);
+    renderProductos(pagina.contenido || []);
   } catch (e) {
     $('#listaProductos').innerHTML = '<div class="mensaje err">No se pudo cargar el catálogo. ¿Está levantado el backend?</div>';
   }
@@ -90,12 +90,16 @@ async function verDetalle(id) {
       <p class="precio">$${p.precio}</p>
       <p>${p.disponible ? 'Disponible / Sin stock' : ''} · ${p.marca || ''}</p>
       <p><strong>Talles:</strong> ${(p.tallesDisponibles||[]).join(', ')}</p>
+      <p><strong>Tienda:</strong> ${p.tienda ? p.tienda.nombre : ''}</p>
       <a href="${p.urlOriginal || '#'}" target="_blank" class="boton">Ver en tienda oficial</a>
       <h3>Te puede gustar</h3>
       <div id="recomendaciones-${id}">Cargando recomendaciones...</div>
+      <h3>Prendas similares en otras tiendas</h3>
+      <div id="similares-${id}">Cargando similares...</div>
     `;
     mostrar('detalle');
     cargarRecomendaciones(id);
+    cargarSimilares(id);
   } catch (e) {
     $('#detalleContenido').innerHTML = '<div class="mensaje err">No se pudo cargar el detalle.</div>';
     mostrar('detalle');
@@ -117,6 +121,26 @@ async function cargarRecomendaciones(productoId) {
     `).join('') || '<span style="font-size:0.85rem;color:#64748b;">Sin recomendaciones.</span>';
   } catch (e) {
     cont.textContent = 'No se pudieron cargar las recomendaciones.';
+  }
+}
+
+async function cargarSimilares(productoId) {
+  const cont = $(`#similares-${productoId}`);
+  try {
+    const r = await fetch(`${API}/api/productos/${productoId}/similares?limite=4`);
+    const similares = await r.json();
+    cont.innerHTML = (similares || []).map(p => `
+      <div style="border:1px solid #e2e8f0;padding:0.5rem;border-radius:0.5rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;">
+        <img src="${p.imagenUrl || ''}" width="40" height="40" style="object-fit:cover;border-radius:0.3rem;">
+        <div>
+          <div style="font-size:0.85rem;font-weight:600;">${p.nombre}</div>
+          <div style="font-size:0.8rem;color:#64748b;">${p.tienda ? p.tienda.nombre : ''} · $${p.precio}</div>
+          <a href="${p.urlOriginal || '#'}" target="_blank" style="font-size:0.8rem;">Ver en tienda</a>
+        </div>
+      </div>
+    `).join('') || '<span style="font-size:0.85rem;color:#64748b;">Sin similares en otras tiendas.</span>';
+  } catch (e) {
+    cont.textContent = 'No se pudieron cargar los similares.';
   }
 }
 
