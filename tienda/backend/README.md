@@ -1,122 +1,160 @@
-# Backend — Tienda
+# Backend — Agregador de ropa
 
-Java 17 + Spring Boot 4.1 + Maven + PostgreSQL. Expone la API REST que consume el frontend.
+Java 17 + Spring Boot 4.1 + Maven + PostgreSQL. Expone la API REST, el servicio SOAP y
+participa de la mensajería con RabbitMQ.
 
 Maven se corre con el **wrapper** del repo (`.\mvnw`): no hay que instalar `mvn`. Requiere
-un **JDK 17+** con `JAVA_HOME` apuntando a él (el wrapper baja Maven 3.9.16 solo).
+un **JDK 17+** con `JAVA_HOME` apuntando a él.
 
-## Estructura
+## Estructura objetivo
 
 ```
-mvnw / mvnw.cmd              # Maven Wrapper (only-script, sin .jar)
+mvnw / mvnw.cmd              # Maven Wrapper
 .mvn/wrapper/
-└── maven-wrapper.properties # distributionUrl → Maven 3.9.16
 
 src/main/java/com/ddaii/
-├── Main.java             # @SpringBootApplication
-├── domain/               # Producto, Pedido, DetallePedido, Cliente
-│                         # + Categoria, Genero, EstadoProducto, EstadoPedido, TipoCliente
-├── repositories/         # ProductoRepository, PedidoRepository, ClienteRepository
-├── services/             # ProductoService, PedidoService, PedidoCompraService, InventarioService
-├── controllers/          # ProductoController, PedidoController
-├── events/               # PedidoCreadoEvent, StockActualizadoEvent
-├── messaging/            # CompraLogger (Observer)
-├── converters/           # StockMapConverter (stock[genero][talle] como JSON en column text)
-└── config/               # ProductoDataLoader (seed)
+├── Main.java                # @SpringBootApplication
+├── domain/                  # Producto, Tienda, Usuario, Suscripcion + enums
+├── repositories/            # ProductoRepository, TiendaRepository, UsuarioRepository,
+│                            # SuscripcionRepository
+├── services/                # ProductoService, RecomendacionService, SuscripcionService,
+│                            # EquivalenciaTallesService
+├── controllers/             # ProductoController, TiendaController,
+│                            # RecomendacionController, SuscripcionController
+├── events/                  # ProductoScrapeado, SuscripcionActivada,
+│                            # RecomendacionSolicitada
+├── messaging/               # publicador genérico y consumidores
+├── integrations/            # XimilarFacade, MercadoPagoClient
+├── config/                  # RabbitMQConfig, SwaggerConfig, CorsConfig
+└── exceptions/              # GlobalExceptionHandler (@RestControllerAdvice)
 
 src/main/resources/
 ├── application.properties
-└── productos.json        # seed de 14 productos
+├── productos.json           # seed inicial
+└── equivalencias-talles.xsd
 ```
 
-> El enunciado pedía `com/tienda/{domain,repository,service,web,util}`. El código real usa
-> `com/ddaii/{domain,repositories,services,controllers,events,messaging,config}`.
+> El código anterior de compra (`Pedido`, `DetallePedido`, `PedidoController`,
+> `PedidoCompraService`, `PedidoService`, `InventarioService`, `StockMapConverter` y
+> `PUT /stock`) se elimina en esta etapa.
 
-## Endpoints
+## Modelo
+
+### `Producto`
+
+`id`, `idExterno`, `nombre`, `descripcion`, `precio`, `categoria`, `genero`, `marca`,
+`tienda`, `urlOriginal`, `imagenUrl`, `disponible`, `tallesDisponibles`.
+
+La combinación `tienda + idExterno` es única.
+
+### `Tienda`
+
+`id`, `nombre`, `urlBase`, `activa`.
+
+### `Usuario`
+
+`id`, `nombre`, `email`, `premium`.
+
+### `Suscripcion`
+
+`id`, `usuario`, `estado`, `idPago`, `fecha`.
+
+## Endpoints REST
 
 | Método | Ruta | Respuesta |
 |---|---|---|
-| GET | `/api/productos` | Lista el catálogo |
-| GET | `/api/productos/{id}` | Detalle, o `404 {"error": "..."}` |
-| GET | `/api/productos/tienda/{tiendaId}` | Productos de una tienda |
-| PUT | `/api/productos/{id}/stock?genero=X&talle=Y&cantidad=N` | Descuenta la celda `stock[genero][talle]` |
-| POST | `/api/pedidos` | Confirma la compra, `201` con el `Pedido` |
-| GET | `/api/pedidos/{clienteId}/pedidos` | Pedidos del cliente |
+| GET | `/api/productos` | Catálogo con filtros y paginación |
+| GET | `/api/productos/{id}` | Detalle o `404 {"error": "..."}` |
+| GET | `/api/tiendas` | Listado de tiendas |
+| GET | `/api/productos/{id}/similares` | Prendas similares de otras tiendas |
+| GET | `/api/recomendaciones?productoId=&limite=` | Recomendaciones por contenido |
+| POST | `/api/recomendaciones/solicitudes` | `202` y publicación de evento |
+| POST | `/api/suscripciones` | Crea el pago premium |
+| POST | `/api/suscripciones/webhook` | Confirmación de MercadoPago |
+| GET | `/api/suscripciones/{id}/estado` | Estado del pago |
 
-CORS habilitado para `localhost:5173` y `localhost:4173` en ambos controllers.
+Filtros de catálogo: `categoria`, `tienda`, `genero`, `precioMin`, `precioMax`, `texto`,
+`pagina`, `tamano`.
 
-`POST /api/pedidos` recibe por detalle `productoId`, `cantidad` y la **variante**
-(`talle` + `genero`). El stock se descuenta de la celda `stock[genero][talle]`:
+Swagger UI: `http://localhost:8080/swagger-ui/index.html`.
 
-```json
-{ "detalles": [ { "productoId": 1, "cantidad": 2, "talle": "M", "genero": "HOMBRE" } ] }
+## SOAP
+
+Servicio de equivalencias de talles:
+
+- WSDL: `http://localhost:8080/ws/equivalencias-talles.wsdl`
+- Endpoint: `http://localhost:8080/ws/equivalencias-talles`
+- Tabla AR/US/EU para remeras, pantalones y calzado.
+
+## Eventos
+
+| Evento | Publica | Consume | Efecto |
+|---|---|---|---|
+| `ProductoScrapeado` | Scraper | Backend | Upsert por `tienda + idExterno` |
+| `SuscripcionActivada` | Backend | Backend | Marca `usuario.premium = true` |
+| `RecomendacionSolicitada` | Backend | Componente de IA | Calcula y guarda recomendaciones |
+
+Topología:
+
+- Exchange `tienda.exchange`.
+- `producto.scrapeado.queue` + `producto.scrapeado.dlq`.
+- `suscripcion.activada.queue` + `suscripcion.activada.dlq`.
+- `recomendacion.solicitada.queue` + `recomendacion.solicitada.dlq`.
+
+## Configuración
+
+Credenciales por variables de entorno. En local se puede usar `.env` o
+`application-local.properties` (ignorados por git).
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5433/tienda
+spring.datasource.username=tienda
+spring.datasource.password=tienda_dev_123
+
+spring.rabbitmq.host=localhost
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=tienda
+spring.rabbitmq.password=tienda_dev_123
+
+mercadopago.access-token=
+mercadopago.public-key=
+ximilar.api-token=
+ximilar.collection-id=
 ```
-
-El **precio lo resuelve el backend** desde la base, así el cliente no puede manipularlo.
-Errores: `400` por payload inválido, producto inexistente o variante faltante/mal formada;
-`409` por stock insuficiente en la celda.
 
 ## Levantar
 
-PostgreSQL primero (el `docker-compose.yml` de la raíz lo levanta en el puerto **5433**):
-
 ```powershell
-docker compose down -v    # resetea el volumen: NECESARIO si cambiás productos.json
 docker compose up -d
-```
-
-Luego (PowerShell, desde este directorio):
-
-```powershell
+cd tienda\backend
 .\mvnw spring-boot:run
 ```
 
 Queda en `http://localhost:8080`.
 
-> `ProductoDataLoader` solo siembra cuando `productoRepository.count() == 0`. Con
-> `ddl-auto=update` las columnas nuevas se crean solas, pero el seed no vuelve a correr: si
-> tocás `productos.json`, hacé `docker compose down -v` primero.
-
-## Flujo de compra
-
-```
-POST /api/pedidos
-      ↓
-PedidoCompraService.confirmarCompra()   valida, resuelve precios, calcula el total
-      ↓
-PedidoRepository.save()                 el pedido se persiste antes del evento para tener id
-      ↓
-publica PedidoCreadoEvent
-      ↓
-InventarioService.alCrearPedido()       Observer: verifica y descuenta stock
-      ↓
-publica StockActualizadoEvent
-      ↓
-CompraLogger                            Observer: loguea ====COMPRA REALIZADA====
-```
-
-## Comandos
-
-```powershell
-.\mvnw test             # 55 tests base + casos de variante (JUnit 5 + Mockito) ⚠️ correr desde Windows
-.\mvnw spring-boot:run
-```
-
 ## Tests
 
-`src/test/java/com/ddaii/` — unitarios con Mockito, sin DB:
+```powershell
+.\mvnw test
+```
 
-| Clase | Qué cubre |
-|---|---|
-| `services/InventarioServiceTest` | Los 3 casos del enunciado + stock por variante: compra válida, stock insuficiente, producto inexistente |
-| `services/PedidoCompraServiceTest` | `confirmarCompra`: precios desde la base, validaciones, evento |
-| `services/ProductoServiceTest` · `PedidoServiceTest` | Delegación a repositorio, excepciones y `actualizarStock` por variante |
-| `controllers/*ControllerTest` | MockMvc standalone: códigos 200/201/400/404/409 (stock por `genero`/`talle`) |
-| `domain/ProductoTest` | Descuento de la celda `stock[genero][talle]` y `estaDisponible` |
+Cobertura esperada:
+
+- `ProductoServiceTest`: catálogo, filtros y detalle.
+- `ProductoScrapeadoConsumerTest`: alta y upsert por tienda.
+- `ProductoControllerTest`: 200/404 y similares.
+- `EquivalenciaTallesServiceTest`: SOAP AR/US/EU.
+- `RecomendacionPorContenidoTest`, `RecomendacionComplementariaTest` y
+  `RecomendadorFactoryTest`.
+- `SuscripcionServiceTest` y `SuscripcionActivadaConsumerTest`.
+- `EventoPublisherTest`: publicación y DLQ.
 
 ## Pendiente
 
-- Swagger/OpenAPI: falta la dependencia `springdoc`.
-- `util/` (validación, logging, config) del enunciado.
-- P1-P2: Factory, Strategy, Facade, `ClienteService`, RabbitMQ, SOAP, API externa,
-  IA (`AiService`).
+- Implementar el modelo nuevo y eliminar el código de compra.
+- Implementar catálogo con filtros y paginación.
+- Implementar SOAP con Spring-WS.
+- Implementar Swagger con springdoc.
+- Implementar RabbitMQ, eventos y DLQ.
+- Implementar recomendaciones, Ximilar y MercadoPago.
+- Completar Dockerfile y variables de entorno.

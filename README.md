@@ -1,32 +1,61 @@
-# Tienda de Ropa Multi-tienda
+# Agregador de Ropa Multi-tienda
 
 Proyecto universitario para **Desarrollo de Aplicaciones II — UADE**.
 App web tipo Mercado Libre solo para ropa, con artículos de múltiples tiendas.
+
+La **Segunda Parte (P2)** apunta a una arquitectura de integración sincrónica y
+asincrónica: SOAP, REST con Swagger, RabbitMQ, dos servicios separados, APIs externas y un
+componente de IA.
+
+## Alcance P2
+
+- Catálogo de prendas de 1 o 2 tiendas reales, obtenido por scraping.
+- Cada producto guarda la URL oficial de la tienda y puede repetirse entre tiendas.
+- Stock simplificado: **disponible / sin stock** y **talles disponibles**.
+- API REST con filtros, paginación, recomendaciones, similares y suscripciones.
+- Servicio **SOAP** de equivalencias de talles AR/US/EU con WSDL.
+- **RabbitMQ** con exchange, colas por consumidor y colas de error (DLQ).
+- Eventos: `ProductoScrapeado`, `SuscripcionActivada`, `RecomendacionSolicitada`.
+- **IA de recomendaciones por contenido**, por REST y por cola.
+- **Ximilar** para prendas similares.
+- **MercadoPago sandbox** para el plan premium.
+- Frontend de demo: catálogo, detalle, filtros, “Ver tienda”, recomendaciones, similares y
+  premium.
+- Docker Compose con PostgreSQL, RabbitMQ, backend, scraper y frontend.
+
+No hay compra ni carrito: se eliminaron `Pedido`, `DetallePedido`, el checkout y el
+descuento de stock. Try-on, outfits y login con Firebase quedan para el Integrador.
 
 ## Estructura
 
 ```
 tienda/
-  backend/    # Java 17 + Spring Boot + Maven + PostgreSQL
-  frontend/   # React 19 + TypeScript + Vite
-docker-compose.yml   # PostgreSQL 16 en el puerto 5433 + RabbitMQ 4 en 5672/15672
-docs/         # contexto e instrucciones locales (ignorado por git)
+  backend/              # Java 17 + Spring Boot + Maven + PostgreSQL
+  scraper/              # segundo servicio Spring Boot: scraping y publicación
+  frontend/             # React 19 + TypeScript + Vite
+  ximilar-product-similarity/  # integración con Ximilar
+docker-compose.yml      # PostgreSQL, RabbitMQ, backend, scraper y frontend
+docs/                   # contexto, planes, eventos, IA y evidencias (ignorado por git)
 ```
 
 ## Stack
 
-- Backend: Java 17, Spring Boot 4.1, Maven, Spring Data JPA, PostgreSQL, Spring AMQP
-- Frontend: TypeScript, React 19 + Vite 8, CSS Modules
-- Deploy: Docker + docker-compose (PostgreSQL y RabbitMQ)
-- P1-P2 (pendiente): SOAP puntual, API externa, componente IA, Swagger
+- Backend: Java 17, Spring Boot 4.1, Maven, Spring Data JPA, PostgreSQL, Spring AMQP,
+  Spring-WS, springdoc.
+- Scraper: Java 17 + Spring Boot.
+- Frontend: TypeScript, React 19 + Vite 8, CSS Modules.
+- Mensajería: RabbitMQ.
+- APIs externas: MercadoPago sandbox y Ximilar.
+- Deploy: Docker + Docker Compose.
+- Tests: JUnit 5 + Mockito y Vitest + Testing Library.
 
 ## Levantar
 
-Requisitos: Docker Desktop y un **JDK 17+** con `JAVA_HOME` apuntando a él. Maven **no**
-hace falta instalarlo: el wrapper del repo (`.\mvnw`) lo descarga solo en el primer uso.
+Requisitos: Docker Desktop y un **JDK 17+** con `JAVA_HOME` apuntando a él. Maven no hace
+falta instalarlo: el wrapper del repo (`.\mvnw`) lo descarga solo en el primer uso.
 
 ```powershell
-docker compose up -d                    # PostgreSQL en 5433 y RabbitMQ en 5672/15672
+docker compose up -d                    # PostgreSQL, RabbitMQ, backend, scraper y frontend
 
 cd tienda\backend
 .\mvnw spring-boot:run                  # API en localhost:8080
@@ -36,272 +65,236 @@ npm install
 npm run dev                             # UI en localhost:5173
 ```
 
-## Métodos de prueba
-
-Los comandos van en **PowerShell desde Windows**: `docker` no está en el PATH de WSL y
-`java` de WSL no existe. De WSL solo funcionan `npm run lint` y el typecheck.
-
-### 1. Base de datos (PostgreSQL en Docker)
+Para levantar todo junto:
 
 ```powershell
-docker compose down -v      # IMPORTANTE: resetea el volumen
-docker compose up -d        # PostgreSQL en localhost:5433
-docker compose ps           # tienda-postgres Up, 0.0.0.0:5433->5432/tcp
-docker logs tienda-postgres # esperar "database system is ready to accept connections"
+docker compose up --build
 ```
 
-El `down -v` es **obligatorio**: el seed corre solo si la tabla de productos está vacía, así que
-con el volumen viejo quedan los 4 productos de una versión anterior y el JSON no se carga.
+## Servicios y puertos
 
-### 2. RabbitMQ (mensajería)
+| Servicio | Puerto | Descripción |
+|---|---|---|
+| PostgreSQL | 5433 | Base de datos |
+| RabbitMQ AMQP | 5672 | Mensajería |
+| RabbitMQ administración | 15672 | Panel web |
+| Backend | 8080 | API REST, SOAP y Swagger |
+| Scraper | 8081 | Servicio de scraping |
+| Frontend | 5173 | Demo React |
 
-RabbitMQ se utiliza para enviar eventos cuando se confirma una compra. El backend publica el evento `PedidoCreadoEvent` en la cola `tienda.pedidos.creado`, y un consumidor recibe el mensaje y muestra los datos del pedido en la consola.
+Credenciales locales de RabbitMQ: usuario `tienda`, contraseña `tienda_dev_123`.
 
-La cola `tienda.pedidos.creado.dlq` es la **cola de mensajes muertos**: recibe los mensajes
-que el consumidor rechaza, para poder revisarlos sin que se pierdan.
+## Configuración
 
-#### 1. Iniciar RabbitMQ
+Las credenciales y URLs van en `.env`. El repositorio solo versiona `.env.example` con los
+nombres de las variables.
 
-Requisitos: Docker Desktop abierto y funcionando.
-
-`docker-compose.yml` ya define el servicio `rabbitmq` con su interfaz de administración,
-así que la forma normal de levantarlo es:
-
-```powershell
-docker compose up -d        # RabbitMQ en 5672 (AMQP) y 15672 (administración)
-docker compose ps           # tienda-rabbitmq Up, 0.0.0.0:5672->5672/tcp
-```
-
-Si el contenedor ya existe y está detenido, iniciarlo con:
-
-```powershell
-docker start tienda-rabbitmq
-```
-
-> **No usar `docker run` para crear el contenedor a mano**: el servicio de `docker-compose.yml`
-> ya lo crea con el mismo nombre (`tienda-rabbitmq`) y con las mismas credenciales, así que
-> los dos caminos chocan con el mismo nombre de contenedor.
-
-Para verificar que esté funcionando:
-
-```powershell
-docker ps
-docker logs tienda-rabbitmq
-```
-
-#### 2. Acceder a RabbitMQ
-
-Abrir en el navegador:
-
-- **Interfaz de administración:** http://localhost:15672
-- **Usuario:** `tienda`
-- **Contraseña:** `tienda_dev_123`
-- **Puerto AMQP:** `5672`
-
-El puerto 5672 se utiliza para la comunicación entre el backend y RabbitMQ. El puerto 15672 permite administrar y monitorear las colas desde el navegador.
-
-#### 3. Verificar la configuración del backend
-
-En `backend/src/main/resources/application.properties` deben estar configuradas las credenciales correspondientes al contenedor:
+Variables principales:
 
 ```properties
-spring.rabbitmq.host=localhost
-spring.rabbitmq.port=5672
-spring.rabbitmq.username=tienda
-spring.rabbitmq.password=tienda_dev_123
+# Base de datos
+POSTGRES_DB=tienda
+POSTGRES_USER=tienda
+POSTGRES_PASSWORD=tienda_dev_123
 
-# Confirmaciones de publicación: el backend espera el ack del broker
-spring.rabbitmq.publisher-confirm-type=correlated
-spring.rabbitmq.publisher-returns=true
-spring.rabbitmq.template.mandatory=true
+# RabbitMQ
+SPRING_RABBITMQ_HOST=localhost
+SPRING_RABBITMQ_PORT=5672
+SPRING_RABBITMQ_USERNAME=tienda
+SPRING_RABBITMQ_PASSWORD=tienda_dev_123
 
-# Un mensaje rechazado no se re-encola: va a la cola de mensajes muertos
-spring.rabbitmq.listener.simple.default-requeue-rejected=false
+# MercadoPago
+MERCADOPAGO_ACCESS_TOKEN=
+MERCADOPAGO_PUBLIC_KEY=
+MERCADOPAGO_WEBHOOK_URL=
+
+# Ximilar
+XIMILAR_API_TOKEN=
+XIMILAR_COLLECTION_ID=
+
+# Frontend
+VITE_API_URL=http://localhost:8080
 ```
 
-No es necesario instalar RabbitMQ directamente en Windows: Docker ejecuta el servicio y el backend se conecta a él mediante el puerto 5672.
+No commitear `.env` ni tokens.
 
-#### 4. Ejecutar y probar la integración
+## API REST
 
-1. Iniciar PostgreSQL siguiendo los pasos de la sección **Métodos de prueba**.
-2. Iniciar RabbitMQ con los comandos anteriores.
-3. Ejecutar el backend desde `backend`:
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/productos` | Catálogo con filtros y paginación |
+| GET | `/api/productos/{id}` | Detalle de producto |
+| GET | `/api/tiendas` | Listado de tiendas |
+| GET | `/api/productos/{id}/similares` | Prendas similares de otras tiendas |
+| GET | `/api/recomendaciones?productoId=&limite=` | Recomendaciones por contenido |
+| POST | `/api/recomendaciones/solicitudes` | Solicitud asincrónica (`202`) |
+| POST | `/api/suscripciones` | Crea el pago premium y devuelve la URL |
+| POST | `/api/suscripciones/webhook` | Confirmación de MercadoPago |
+| GET | `/api/suscripciones/{id}/estado` | Consulta el estado del pago |
 
-   ```powershell
-   .\mvnw spring-boot:run
-   ```
+Filtros del catálogo: `categoria`, `tienda`, `genero`, `precioMin`, `precioMax`, `texto`,
+`pagina`, `tamano`.
 
-4. Realizar una compra válida mediante `POST /api/pedidos` o desde el frontend.
-5. Verificar la consola del backend: debe aparecer el mensaje de publicación y el bloque `PEDIDO RECIBIDO DESDE RABBITMQ`, con el ID del pedido y los artículos comprados.
-6. En la interfaz de administración, ingresar a **Queues and Streams** y comprobar que existan las colas `tienda.pedidos.creado` y `tienda.pedidos.creado.dlq`.
+Swagger UI: `http://localhost:8080/swagger-ui/index.html`.
 
-El consumidor procesa los mensajes automáticamente. Por eso, si funciona correctamente, la cantidad de mensajes pendientes de la cola puede volver rápidamente a cero.
+## SOAP
 
-**Si RabbitMQ está caído, la compra igual se guarda.** El backend publica el evento *después* del
-commit de la transacción y, si el broker no responde, registra el error y sigue: el `POST
-/api/pedidos` devuelve `201` con el pedido creado. Lo que se pierde es la notificación del
-evento, no el pedido.
+Servicio de equivalencias de talles AR/US/EU:
 
-#### 5. Detener RabbitMQ
+- WSDL: `http://localhost:8080/ws/equivalencias-talles.wsdl`
+- Endpoint: `http://localhost:8080/ws/equivalencias-talles`
+- Cubre remeras, pantalones y calzado.
 
-Para detener el contenedor sin eliminarlo:
+## RabbitMQ
 
-```powershell
-docker stop tienda-rabbitmq
-```
+### Topología
 
-Para volver a iniciarlo:
+- Exchange: `tienda.exchange`.
+- `producto.scrapeado.queue` + `producto.scrapeado.dlq`.
+- `suscripcion.activada.queue` + `suscripcion.activada.dlq`.
+- `recomendacion.solicitada.queue` + `recomendacion.solicitada.dlq`.
 
-```powershell
-docker start tienda-rabbitmq
-```
+### Eventos
 
-Para eliminarlo definitivamente (y con él el volumen de datos):
+| Evento | Publica | Consume |
+|---|---|---|
+| `ProductoScrapeado` | Scraper | Backend |
+| `SuscripcionActivada` | Backend (pago aprobado) | Backend |
+| `RecomendacionSolicitada` | Backend (REST) | Componente de IA |
 
-```powershell
-docker rm -f tienda-rabbitmq
-docker volume rm proyecto-rabbitmq-data
-```
+La documentación completa con JSON de ejemplo está en `docs/eventos.md`.
 
-Si se elimina el contenedor, `docker compose up -d` lo vuelve a crear. Ojo: el volumen guarda
-las colas ya declaradas, y si cambian sus argumentos el broker las rechaza (ver la fila de
-`PRECONDITION_FAILED` más abajo).
+### Verificar
 
-#### Fallos típicos de RabbitMQ
+1. Abrir `http://localhost:15672`.
+2. Ingresar con `tienda` / `tienda_dev_123`.
+3. Revisar **Queues and Streams**: deben existir las colas y sus DLQ.
+4. Correr el scraper y ver los mensajes de `ProductoScrapeado`.
+5. Solicitar recomendaciones y ver el mensaje entrar y salir de la cola.
 
-| Síntoma | Causa posible |
+Si un mensaje es rechazado, termina en la DLQ correspondiente en lugar de perderse.
+
+## MercadoPago
+
+1. Crear una cuenta de desarrollador y usuarios de prueba en sandbox.
+2. Configurar `MERCADOPAGO_ACCESS_TOKEN` y `MERCADOPAGO_PUBLIC_KEY` en `.env`.
+3. Exponer el backend con ngrok para que MercadoPago llegue al webhook.
+4. Desde el frontend, entrar a `/planes` y pulsar **“Hacerme premium”**.
+5. Pagar en la pantalla de prueba.
+6. Verificar que el usuario quede con `premium = true`.
+
+Plan B si el webhook no llega: al volver a `/pago/exito`, el backend consulta el estado del
+pago con `GET /api/suscripciones/{id}/estado`.
+
+## Ximilar
+
+- `XimilarFacade` sube imágenes del catálogo y busca prendas similares.
+- `GET /api/productos/{id}/similares` devuelve productos de otras tiendas.
+- Hay perfil mock con respuestas fijas para tests y demo sin red.
+- Plan gratuito: 1.000 créditos/mes, 0,25 por subir imagen, 15 por tagging.
+  **No se usa tagging.**
+
+Detalle en `tienda/ximilar-product-similarity/env.md`.
+
+## Frontend de demo
+
+| Ruta | Pantalla |
 |---|---|
-| `Connection refused` o error de conexión | RabbitMQ está detenido o el puerto 5672 no está disponible. |
-| `ACCESS_REFUSED` | Las credenciales configuradas en `application.properties` no coinciden con las del contenedor. |
-| `Port 5672 is already allocated` | Otro proceso o contenedor ya está utilizando el puerto. |
-| `PRECONDITION_FAILED` (406) | La cola ya existe en el volumen con otros argumentos. **Eliminar el contenedor y el volumen**, y volver a levantarlo con `docker compose up -d`. |
-| No aparece `tienda.pedidos.creado` | Revisar que el backend haya iniciado correctamente y que `RabbitMQConfig` declare la cola. |
-| La compra se guarda, pero no llega el mensaje | RabbitMQ está caído o no confirma la publicación. El backend lo deja asentado en el log: `No se pudo publicar el pedido N en RabbitMQ`. La confirmación de PostgreSQL no garantiza por sí sola la entrega del evento. |
-| La cola `tienda.pedidos.creado.dlq` tiene mensajes | El consumidor rechazó algún mensaje (por ejemplo, JSON inválido). Es el comportamiento esperado: el mensaje queda en la cola de mensajes muertos en vez de perderse. |
+| `/login` | Login simple (mock) |
+| `/` | Catálogo público |
+| `/productos/:id` | Detalle público |
+| `/planes` | Planes y botón premium |
+| `/pago/exito` | Pago exitoso |
+| `/pago/error` | Pago rechazado o cancelado |
+| `*` | 404 |
 
-**Importante:** las credenciales indicadas son únicamente para el entorno local de desarrollo. No deben utilizarse tal cual en un entorno de producción.
+El catálogo y el detalle son públicos. El login simple guarda `usuarioId` y lo envía en el
+header `X-Usuario-Id`.
 
+## Métodos de prueba
 
-### 3. Backend
+### Backend
 
 ```powershell
 cd tienda\backend
+.\mvnw test
 .\mvnw spring-boot:run
 ```
 
-Dos señales de arranque OK:
-
-- `Tomcat started on port 8080`
-- `[INFO] Productos cargados desde productos.json: 14`
-
-Si aparece `La base ya contiene productos`, es que faltó el `down -v` del paso 1.
-
-### 4. Checks de la API
-
-En otra ventana de PowerShell, con el backend corriendo:
+### Frontend
 
 ```powershell
-# 1. Catálogo: 14 productos, con stock por variante (talle × género)
-curl.exe -s localhost:8080/api/productos
+cd tienda\frontend
+npm run test
+npm run build
+npm run lint
+```
 
-# 2. Detalle del producto 1: la campera, con imagenUrl en null
+### Docker
+
+```powershell
+docker compose down -v      # resetea la base y las colas
+docker compose up -d --build
+docker compose ps
+```
+
+### Checks manuales
+
+```powershell
+# Catálogo con filtros
+curl.exe -s "localhost:8080/api/productos?categoria=REMERA&pagina=0&tamano=10"
+
+# Detalle
 curl.exe -s localhost:8080/api/productos/1
 
-# 3. Producto inexistente: 404 con { "error": ... }
-curl.exe -s -i localhost:8080/api/productos/999
+# Tiendas
+curl.exe -s localhost:8080/api/tiendas
 
-# 4. Compra válida con variante: 201 y total 149800 (74900 x 2)
-curl.exe -s -i -X POST localhost:8080/api/pedidos `
+# Similares
+curl.exe -s localhost:8080/api/productos/1/similares
+
+# Recomendaciones REST
+curl.exe -s "localhost:8080/api/recomendaciones?productoId=1&limite=5"
+
+# Solicitud asincrónica de recomendaciones
+curl.exe -s -i -X POST localhost:8080/api/recomendaciones/solicitudes `
   -H "Content-Type: application/json" `
-  -d "{\"detalles\":[{\"productoId\":5,\"cantidad\":2,\"talle\":\"M\",\"genero\":\"HOMBRE\"}]}"
+  -d "{\"productoId\":1,\"limite\":5}"
 
-# 5. El stock de la celda HOMBRE/M del producto 5 pasó de 2 a 0
-curl.exe -s localhost:8080/api/productos/5
-
-# 6. Compra sin variante: 400 con { "error": ... }
-curl.exe -s -i -X POST localhost:8080/api/pedidos `
+# Crear suscripción premium
+curl.exe -s -i -X POST localhost:8080/api/suscripciones `
   -H "Content-Type: application/json" `
-  -d "{\"detalles\":[{\"productoId\":5,\"cantidad\":2}]}"
-
-# 7. Compra con cantidad mayor a la celda HOMBRE/M (quedó en 0): 409
-curl.exe -s -i -X POST localhost:8080/api/pedidos `
-  -H "Content-Type: application/json" `
-  -d "{\"detalles\":[{\"productoId\":5,\"cantidad\":999,\"talle\":\"M\",\"genero\":\"HOMBRE\"}]}"
+  -H "X-Usuario-Id: 1" `
+  -d "{\"usuarioId\":1,\"plan\":\"PREMIUM\"}"
 ```
 
-> Ojo: correr los checks 4 y 5 altera el stock persistido. Para repetirlos, `docker compose
-> down -v && docker compose up -d` y reiniciar el backend.
+## Estado
 
-Además, la consola del backend debe imprimir el bloque `COMPRA REALIZADA` con el stock
-anterior y el actual (incluye talle y género).
+El repositorio conserva la base del backend, frontend, RabbitMQ y la integración inicial con
+Ximilar. La Segunda Parte se organiza en las tareas de `docs/CONTEXTO.md`,
+`docs/PLAN-INTEGRACION.md` y `docs/PLAN-TESTS.md`.
 
-`GET /api/pedidos/1/pedidos` devuelve 404: no hay clientes sembrados en la base. Es lo
-esperado, no es un bug.
+Pendientes principales:
 
-### 5. Flujo completo en el navegador
+- Eliminar el flujo de compra y el stock por variante.
+- Implementar el modelo nuevo de catálogo y el scraper.
+- Implementar SOAP, Swagger, colas nuevas y DLQ.
+- Implementar recomendaciones por contenido y prendas similares.
+- Integrar MercadoPago sandbox.
+- Adaptar el frontend a filtros, disponibilidad, recomendaciones, similares y premium.
+- Completar Docker Compose, CI y evidencias.
 
-```powershell
-cd tienda\frontend
-npm install
-npm run dev    # http://localhost:5173
-```
-
-1. Entrar en `http://localhost:5173` y hacer login con cualquier correo (es mock).
-2. El catálogo tiene que mostrar los 14 productos que bajan de la API.
-3. Entrar al detalle del producto 1, elegir género y talle, y agregarlo al carrito.
-4. En el desplegable del header, subir la cantidad con `+`.
-5. Confirmar la compra: aparece `Pedido #N confirmado por $X` y el carrito se vacía.
-6. Volver al catálogo: el producto figura con el stock de esa variante ya descontado.
-7. Con el backend apagado, el catálogo tiene que mostrar el error de conexión y el botón
-   "Reintentar".
-
-### 6. Chequeos rápidos
-
-```powershell
-cd tienda\frontend
-npm run lint      # oxlint: 0 errores, 2 warnings conocidos de only-export-components
-npm run test      # vitest: 128 tests en 26 archivos, todos verdes
-npm run build     # tsc + vite build
-cd ..\backend
-.\mvnw test       # 55 tests JUnit base + casos de variante del §18 + tests de RabbitMQ
-```
-
-### 7. Cerrar
-
-```powershell
-docker compose down       # detiene PostgreSQL y RabbitMQ, conserva los datos
-docker compose down -v    # reinicia la base y las colas para el próximo ensayo
-```
-
-### Fallos típicos
+## Fallos típicos
 
 | Síntoma | Causa |
 |---|---|
 | `password authentication failed for user "tienda"` | Volumen viejo: falta `docker compose down -v` |
-| `La base ya contiene productos` en el log del backend | El seed no corrió; falta `down -v` |
-| `Port 5433 / 8080 / 5173 is already allocated` | Hay otra instancia viva; bajarla antes |
+| `Port 5433 / 5672 / 8080 / 5173 is already allocated` | Hay otra instancia viva; bajarla antes |
 | El frontend dice `No se pudo conectar con el backend` | El backend está caído o no está en el puerto 8080 |
-| Error de CORS en la consola del navegador | El front se abrió en un origen distinto de `localhost:5173` |
-| `npm run dev` en WSL va lentísimo | El watching sobre NTFS: correrlo en PowerShell |
-
-## Estado
-
-Frontend y backend **integrados**: el catálogo y el detalle se piden a la API, el carrito
-pide **género y talle** (stock por variante) y hace `POST /api/pedidos` para confirmar la
-compra, que descuenta la celda `stock[genero][talle]` vía evento de dominio.
-Cada compra confirmada publica un `PedidoCreadoEvent` en RabbitMQ, que consume el propio
-backend (cola `tienda.pedidos.creado`, con DLQ `tienda.pedidos.creado.dlq`).
-Pendiente la verificación end-to-end completa (§ Métodos de prueba).
-
-## API
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/api/productos` | Catálogo (stock por variante `genero → talle → cantidad`) |
-| GET | `/api/productos/{id}` | Detalle |
-| POST | `/api/pedidos` | Confirmar compra (manda `productoId`, `cantidad`, `talle`, `genero`) |
-| PUT | `/api/productos/{id}/stock?genero=X&talle=Y&cantidad=N` | Descontar una celda de stock |
-| GET | `/api/pedidos/{clienteId}/pedidos` | Pedidos del cliente |
+| Error de CORS en el navegador | El front se abrió en un origen distinto de `localhost:5173` |
+| `PRECONDITION_FAILED` en RabbitMQ | La cola existe con otros argumentos: borrar contenedor y volumen |
+| Ximilar responde error de créditos | Usar el perfil mock o renovar la cuenta |
+| MercadoPago no llama al webhook | Exponer el backend con ngrok o usar el plan B |
 
 ## Equipo
 
@@ -317,7 +310,7 @@ Pendiente la verificación end-to-end completa (§ Métodos de prueba).
 1. Nombre y apellido: Aldaz, Luciano Nahuel — Legajo: 1139484 — Email: lualdaz@uade.edu.ar
 2. Nombre y apellido: Audine, Matias Gabriel — Legajo: 1172179 — Email: maudine@uade.edu.ar
 3. Nombre y apellido: Frisoli Pirc, Salvador — Legajo: 1112365 — Email: SAFRISOLIPIRC@uade.edu.ar
-4. Nombre y apellido: Mendez , Nicolas — Legajo: 1172141 — Email: nicomendez@uade.edu.ar
+4. Nombre y apellido: Mendez, Nicolas — Legajo: 1172141 — Email: nicomendez@uade.edu.ar
 5. Nombre y apellido: Vignolo, Nahir Yael — Legajo: 1137587 — Email: nvignolo@uade.edu.ar
 
 ## Entregas
