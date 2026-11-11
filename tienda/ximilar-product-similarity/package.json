@@ -1,0 +1,1 @@
+{"name":"ximilar-product-similarity-demo","version":"1.0.0","main":"server.js","scripts":{"start":"node server.js"},"dependencies":{"axios":"^1.21.1","dotenv":"^16.6.1","express":"^4.22.3","multer":"^1.4.5-lts.1"},"description":"","directories":{"test":"tests"},"keywords":[],"author":"","license":"ISC","type":"commonjs"}
