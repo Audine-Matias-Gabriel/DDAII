@@ -10,7 +10,23 @@ CREATE TABLE IF NOT EXISTS usuario (
     id BIGSERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(200) NOT NULL UNIQUE,
+    password_hash VARCHAR(500) NOT NULL,
     premium BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS sesion_usuario (
+    id BIGSERIAL PRIMARY KEY,
+    usuario_id BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+    token VARCHAR(500) NOT NULL UNIQUE,
+    expira_en TIMESTAMP NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS favorito (
+    id BIGSERIAL PRIMARY KEY,
+    usuario_id BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+    producto_id BIGINT NOT NULL REFERENCES producto(id) ON DELETE CASCADE,
+    fecha TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT uk_favorito_usuario_producto UNIQUE (usuario_id, producto_id)
 );
 
 CREATE TABLE IF NOT EXISTS producto (

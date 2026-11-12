@@ -20,13 +20,17 @@ public class Usuario {
     private String email;
 
     @Column(nullable = false)
+    private String passwordHash;
+
+    @Column(nullable = false)
     private Boolean premium = false;
 
     public Usuario() {}
 
-    public Usuario(String nombre, String email) {
+    public Usuario(String nombre, String email, String passwordHash) {
         this.nombre = nombre;
         this.email = email;
+        this.passwordHash = passwordHash;
     }
 
     public Long getId() { return id; }
@@ -35,6 +39,8 @@ public class Usuario {
     public void setNombre(String nombre) { this.nombre = nombre; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public Boolean getPremium() { return premium; }
     public void setPremium(Boolean premium) { this.premium = premium; }
 }

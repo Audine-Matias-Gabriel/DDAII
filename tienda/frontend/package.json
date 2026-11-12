@@ -1,9 +1,21 @@
 {
   "name": "tienda-frontend",
-  "version": "1.0.0",
-  "description": "Frontend mínimo para la demo — Tienda",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Frontend React + Vite — Agregador de ropa",
   "scripts": {
-    "test": "node test.js",
-    "start": "node server.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
   }
 }

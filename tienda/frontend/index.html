@@ -1,97 +1,12 @@
 <!doctype html>
 <html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tienda — Demo</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <header>
-    <h1>👕 Tienda</h1>
-    <nav>
-      <a href="#/" onclick="mostrar('inicio')">Inicio</a>
-      <a href="#/catalogo" onclick="mostrar('catalogo')">Catálogo</a>
-      <a href="#/login" onclick="mostrar('login')">Ingresar</a>
-      <a href="#/planes" onclick="mostrar('planes')">Planes</a>
-    </nav>
-  </header>
-
-  <main id="app">
-    <section id="inicio" class="seccion activa">
-      <h2>Agregador de ropa</h2>
-      <p>Catálogo, filtros, recomendaciones y plan premium. Backend en <code>http://localhost:8080</code>.</p>
-      <div id="msg"></div>
-    </section>
-
-    <section id="login" class="seccion">
-      <h2>Ingresar (login simple)</h2>
-      <div class="login">
-        <label>Nombre de usuario</label>
-        <input type="text" id="userNombre" placeholder="Juan">
-        <label>Email</label>
-        <input type="email" id="userEmail" placeholder="juan@test.com">
-        <button onclick="login()">Guardar usuario</button>
-        <p id="msgLogin"></p>
-      </div>
-      <p class="mensaje ok">El login guarda el usuarioId y lo envía en el header <code>X-Usuario-Id</code> (acordado con P5, Día 3).</p>
-    </section>
-
-    <section id="catalogo" class="seccion">
-      <h2>Catálogo</h2>
-      <div class="filtros">
-        <input type="text" id="filtroTexto" placeholder="Buscar producto...">
-        <select id="filtroCategoria"><option value="">Todas las categorías</option><option value="REMERA">Remera</option><option value="PANTALON">Pantalón</option><option value="CALZADO">Calzado</option><option value="VESTIDO">Vestido</option></select>
-        <select id="filtroGenero"><option value="">Todos los géneros</option><option value="Mujer">Mujer</option><option value="Hombre">Hombre</option><option value="Unisex">Unisex</option></select>
-        <button onclick="cargarCatalogo()">Aplicar filtros</button>
-      </div>
-      <div id="listaProductos"></div>
-    </section>
-
-    <section id="detalle" class="seccion">
-      <h2>Detalle</h2>
-      <div id="detalleContenido"></div>
-    </section>
-
-    <section id="planes" class="seccion">
-      <h2>Planes</h2>
-      <div id="msgPlanes"></div>
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-body">
-            <h3>Gratuito</h3>
-            <p class="precio">$0 / mes</p>
-            <p>Catálogo y detalle públicos.</p>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-body">
-            <h3>Premium</h3>
-            <p class="precio">$999 / mes</p>
-            <p>Experiencia premium. Pago de prueba con Mercado Pago (sandbox).</p>
-            <button onclick="irPremium()">Hacerme premium</button>
-          </div>
-        </div>
-      </div>
-      <p class="mensaje ok">El pago se hace en el sandbox de Mercado Pago (P5, Día 4-5). Al volver a <code>/pago/exito</code> se consulta el estado del pago (plan B si el webhook no llega).</p>
-    </section>
-
-    <section id="pago-exito" class="seccion">
-      <h2>Pago exitoso ✅</h2>
-      <p>Tu plan premium se activó. Redirigiendo al catálogo...</p>
-      <button onclick="mostrar('catalogo')">Ir al catálogo</button>
-    </section>
-    <section id="pago-error" class="seccion">
-      <h2>Pago fallido ❌</h2>
-      <p>Intenta nuevamente.</p>
-      <button onclick="mostrar('planes')">Volver a planes</button>
-    </section>
-  </main>
-
-  <footer>
-    Tienda — TP Segunda Parte. Frontend mínimo (P1). Backend + scraper + RabbitMQ + Postgres en <code>docker compose</code>.
-  </footer>
-
-  <script src="script.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tienda — Agregador de Ropa</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
