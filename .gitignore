@@ -1,5 +1,7 @@
 # Docs locales (contexto agente, no versionar)
-docs/
+# docs/* (y no docs/) para poder versionar los contratos compartidos con el grupo
+docs/*
+!docs/eventos.md
 
 # Java / Maven
 target/
