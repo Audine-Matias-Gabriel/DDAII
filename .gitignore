@@ -1,5 +1,7 @@
 # Docs locales (contexto agente, no versionar)
-docs/
+# docs/* (y no docs/) para poder versionar los contratos compartidos con el grupo
+docs/*
+!docs/eventos.md
 
 # --- Java / Maven ---
 target/
@@ -30,3 +32,12 @@ npm-debug.log*
 # --- OS ---
 .DS_Store
 Thumbs.db
+
+# --- Qodo / contexto agente (no versionar) ---
+.qodo/
+
+# --- Build artifacts (reforzado) ---
+target/
+node_modules/
+dist/
+build/
