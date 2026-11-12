@@ -13,13 +13,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.AmqpException;
 
+import com.ddaii.config.RabbitMQConfig;
 import com.ddaii.domain.Genero;
 
 @ExtendWith(MockitoExtension.class)
 class PedidoCreadoEventListenerTest {
 
     @Mock
-    private PedidoCreadoPublisher publisher;
+    private EventoPublisher publisher;
 
     @InjectMocks
     private PedidoCreadoEventListener listener;
@@ -43,7 +44,7 @@ class PedidoCreadoEventListenerTest {
 
         listener.alConfirmarPedido(evento);
 
-        verify(publisher).publicar(evento);
+        verify(publisher).publicar(RabbitMQConfig.RK_PEDIDO_CREADO, evento, "pedido-7");
     }
 
     /**
@@ -58,7 +59,7 @@ class PedidoCreadoEventListenerTest {
 
         doThrow(new AmqpException("broker caido"))
                 .when(publisher)
-                .publicar(evento);
+                .publicar(RabbitMQConfig.RK_PEDIDO_CREADO, evento, "pedido-7");
 
         assertThatCode(() -> listener.alConfirmarPedido(evento))
                 .doesNotThrowAnyException();

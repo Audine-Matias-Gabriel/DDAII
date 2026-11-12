@@ -40,12 +40,15 @@ public class RabbitMQConfig {
     public static final String SUFIJO_DLQ = ".dlq";
 
     // --- Prototipo de pedidos (temporal) -----------------------------------
-    // Lo siguen usando PedidoCreadoPublisher y PedidoCreadoConsumer. Se borra
-    // junto con ellos en el punto e) del plan de eventos.
+    // Lo siguen usando PedidoCreadoEventListener y PedidoCreadoConsumer. Se
+    // borra junto con ellos en el punto e) del plan de eventos.
+
+    /** Routing key con la que se publica el pedido creado. */
+    public static final String RK_PEDIDO_CREADO = "pedido.creado";
 
     /**
-     * Cola donde se publica el evento de pedido creado. El exchange vacío
-     * enruta directo a esta cola usando su nombre como routing key.
+     * Cola donde llega el evento de pedido creado, enlazada al exchange de
+     * eventos con {@link #RK_PEDIDO_CREADO}.
      */
     public static final String COLA_PEDIDO_CREADO = "tienda.pedidos.creado";
 
@@ -111,5 +114,16 @@ public class RabbitMQConfig {
     @Bean
     public Queue colaPedidoCreadoDlq() {
         return QueueBuilder.durable(COLA_PEDIDO_CREADO_DLQ).build();
+    }
+
+    @Bean
+    public Binding bindingPedidoCreado() {
+        return new Binding(
+                COLA_PEDIDO_CREADO,
+                Binding.DestinationType.QUEUE,
+                EXCHANGE,
+                RK_PEDIDO_CREADO,
+                null
+        );
     }
 }

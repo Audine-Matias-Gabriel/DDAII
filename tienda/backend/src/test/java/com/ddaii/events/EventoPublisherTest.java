@@ -9,7 +9,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
-import java.util.List;
+import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,51 +24,42 @@ import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.ReturnedMessage;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import com.ddaii.config.RabbitMQConfig;
-import com.ddaii.domain.Genero;
 
 @ExtendWith(MockitoExtension.class)
-class PedidoCreadoPublisherTest {
+class EventoPublisherTest {
 
     private static final Duration TIMEOUT = Duration.ofMillis(100);
+    private static final String ROUTING_KEY = RabbitMQConfig.RK_SUSCRIPCION_ACTIVADA;
+    private static final String ID = "suscripcion-1";
+
+    /** Evento de prueba con la forma de SuscripcionActivada (docs/eventos.md). */
+    record EventoDePrueba(Long suscripcionId, Long usuarioId, String pagoId, LocalDateTime fecha) {}
 
     @Mock
     private RabbitTemplate rabbitTemplate;
 
-    private PedidoCreadoPublisher publisher;
+    private EventoPublisher publisher;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
-        publisher = new PedidoCreadoPublisher(
-                rabbitTemplate,
-                objectMapper,
-                TIMEOUT
-        );
+        publisher = new EventoPublisher(rabbitTemplate, objectMapper, TIMEOUT);
     }
 
-    private PedidoCreadoEvent evento() {
-        return new PedidoCreadoEvent(
-                7L,
-                List.of(new PedidoCreadoEvent.ItemPedido(
-                        1L,
-                        "Remera Nike",
-                        Genero.HOMBRE,
-                        "M",
-                        2
-                ))
-        );
+    private EventoDePrueba evento() {
+        return new EventoDePrueba(1L, 7L, "123456", LocalDateTime.of(2026, 11, 12, 10, 0));
     }
 
     /** Completa la confirmacion que el broker envia de vuelta. */
     private void brokerConfirma(boolean ack, String motivo) {
         doAnswer(invocacion -> {
             CorrelationData datos = invocacion.getArgument(3);
-            datos.getFuture().complete(
-                    new CorrelationData.Confirm(ack, motivo));
+            datos.getFuture().complete(new CorrelationData.Confirm(ack, motivo));
             return null;
         }).when(rabbitTemplate).send(
                 anyString(),
@@ -79,76 +70,64 @@ class PedidoCreadoPublisherTest {
     }
 
     @Test
-    void publicar_enviaElEventoALaColaYEsperaElAck() {
-        PedidoCreadoEvent evento = evento();
+    void publicar_enviaElEventoAlExchangeConSuRoutingKeyYEsperaElAck() {
         brokerConfirma(true, null);
 
-        publisher.publicar(evento);
+        publisher.publicar(ROUTING_KEY, evento(), ID);
 
-        ArgumentCaptor<Message> mensaje =
-                ArgumentCaptor.forClass(Message.class);
-        ArgumentCaptor<CorrelationData> datos =
-                ArgumentCaptor.forClass(CorrelationData.class);
+        ArgumentCaptor<Message> mensaje = ArgumentCaptor.forClass(Message.class);
+        ArgumentCaptor<CorrelationData> datos = ArgumentCaptor.forClass(CorrelationData.class);
 
         verify(rabbitTemplate).send(
-                eq(""),
-                eq(RabbitMQConfig.COLA_PEDIDO_CREADO),
+                eq(RabbitMQConfig.EXCHANGE),
+                eq(ROUTING_KEY),
                 mensaje.capture(),
                 datos.capture()
         );
 
-        Message enviado = mensaje.getValue();
-        assertThat(enviado.getMessageProperties().getContentType())
-                .isEqualTo(MessageProperties.CONTENT_TYPE_JSON);
-        assertThat(enviado.getMessageProperties().getDeliveryMode())
-                .isEqualTo(MessageDeliveryMode.PERSISTENT);
+        assertThat(datos.getValue().getId()).isEqualTo(ID);
 
-        PedidoCreadoEvent recibido = objectMapper.readValue(
-                enviado.getBody(),
-                PedidoCreadoEvent.class
-        );
-        assertThat(recibido.pedidoId()).isEqualTo(7L);
-        assertThat(recibido.items()).hasSize(1);
-        assertThat(recibido.items().get(0).nombre())
-                .isEqualTo("Remera Nike");
-        assertThat(recibido.items().get(0).genero())
-                .isEqualTo(Genero.HOMBRE);
+        MessageProperties propiedades = mensaje.getValue().getMessageProperties();
+        assertThat(propiedades.getContentType()).isEqualTo(MessageProperties.CONTENT_TYPE_JSON);
+        assertThat(propiedades.getDeliveryMode()).isEqualTo(MessageDeliveryMode.PERSISTENT);
+        assertThat(propiedades.getMessageId()).isEqualTo(ID);
+
+        JsonNode json = objectMapper.readTree(mensaje.getValue().getBody());
+        assertThat(json.get("suscripcionId").asLong()).isEqualTo(1L);
+        assertThat(json.get("usuarioId").asLong()).isEqualTo(7L);
+        assertThat(json.get("pagoId").asString()).isEqualTo("123456");
+        assertThat(json.get("fecha").asString()).isEqualTo("2026-11-12T10:00:00");
     }
 
     @Test
     void publicar_siElBrokerNackea_lanzaAmqpException() {
-        PedidoCreadoEvent evento = evento();
         brokerConfirma(false, "no se pudo guardar");
 
-        assertThatThrownBy(() -> publisher.publicar(evento))
+        assertThatThrownBy(() -> publisher.publicar(ROUTING_KEY, evento(), ID))
                 .isInstanceOf(AmqpException.class)
-                .hasMessageContaining("nack");
+                .hasMessageContaining("nack")
+                .hasMessageContaining(ID);
     }
 
     @Test
     void publicar_siElBrokerNoConfirma_lanzaAmqpException() {
-        PedidoCreadoEvent evento = evento();
-
-        assertThatThrownBy(() -> publisher.publicar(evento))
+        assertThatThrownBy(() -> publisher.publicar(ROUTING_KEY, evento(), ID))
                 .isInstanceOf(AmqpException.class)
                 .hasMessageContaining("no confirmó");
     }
 
     @Test
     void publicar_siElBrokerDevuelveElMensajeSinEnrutar_lanzaAmqpException() {
-        PedidoCreadoEvent evento = evento();
-
         doAnswer(invocacion -> {
             CorrelationData datos = invocacion.getArgument(3);
             datos.setReturned(new ReturnedMessage(
                     invocacion.getArgument(2),
                     312,
                     "NO_ROUTE",
-                    "",
-                    RabbitMQConfig.COLA_PEDIDO_CREADO
+                    RabbitMQConfig.EXCHANGE,
+                    ROUTING_KEY
             ));
-            datos.getFuture().complete(
-                    new CorrelationData.Confirm(true, null));
+            datos.getFuture().complete(new CorrelationData.Confirm(true, null));
             return null;
         }).when(rabbitTemplate).send(
                 anyString(),
@@ -157,7 +136,7 @@ class PedidoCreadoPublisherTest {
                 any(CorrelationData.class)
         );
 
-        assertThatThrownBy(() -> publisher.publicar(evento))
+        assertThatThrownBy(() -> publisher.publicar(ROUTING_KEY, evento(), ID))
                 .isInstanceOf(AmqpException.class)
                 .hasMessageContaining("sin enrutar");
     }

@@ -23,17 +23,22 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * Publica cualquier evento del sistema en el exchange
+ * {@link RabbitMQConfig#EXCHANGE}. La routing key decide a qué cola llega
+ * (ver docs/eventos.md).
+ */
 @Component
-public class PedidoCreadoPublisher {
+public class EventoPublisher {
 
     private static final Logger log =
-            LoggerFactory.getLogger(PedidoCreadoPublisher.class);
+            LoggerFactory.getLogger(EventoPublisher.class);
 
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
     private final Duration timeoutConfirmacion;
 
-    public PedidoCreadoPublisher(
+    public EventoPublisher(
             RabbitTemplate rabbitTemplate,
             ObjectMapper objectMapper,
             @Value("${tienda.rabbitmq.confirm-timeout:5s}")
@@ -45,44 +50,46 @@ public class PedidoCreadoPublisher {
     }
 
     /**
-     * Publica el evento del pedido en la cola y espera la confirmación del
-     * broker.
-     *
-     * El exchange vacío es el exchange por defecto de RabbitMQ: enruta el
-     * mensaje directamente a la cola cuyo nombre es el routing key.
+     * Publica el evento como JSON y espera la confirmación del broker.
      *
      * No alcanza con hacer el {@code send()}: sin confirmaciones, un mensaje
-     * que el broker rechaza se pierde en silencio y el pedido queda sin
-     * notificar. Por eso se espera el ack con un timeout.
+     * que el broker rechaza se pierde en silencio. Por eso se espera el ack
+     * con un timeout.
+     *
+     * @param routingKey    routing key del evento, por ejemplo
+     *                      {@link RabbitMQConfig#RK_SUSCRIPCION_ACTIVADA}
+     * @param evento        objeto que se serializa a JSON
+     * @param idCorrelacion identificador único del evento; se usa como
+     *                      {@code message_id} y en los logs
      */
-    public void publicar(PedidoCreadoEvent evento) {
-        Message mensaje = construirMensaje(evento);
+    public void publicar(String routingKey, Object evento, String idCorrelacion) {
+        Message mensaje = construirMensaje(evento, idCorrelacion);
 
-        CorrelationData correlationData =
-                new CorrelationData("pedido-" + evento.pedidoId());
+        CorrelationData correlationData = new CorrelationData(idCorrelacion);
 
         rabbitTemplate.send(
-                "",
-                RabbitMQConfig.COLA_PEDIDO_CREADO,
+                RabbitMQConfig.EXCHANGE,
+                routingKey,
                 mensaje,
                 correlationData
         );
 
-        esperarConfirmacion(correlationData, evento.pedidoId());
+        esperarConfirmacion(correlationData, routingKey, idCorrelacion);
 
         log.info(
-                "Pedido publicado en RabbitMQ. ID: {}",
-                evento.pedidoId()
+                "Evento publicado en RabbitMQ. routingKey={} id={}",
+                routingKey,
+                idCorrelacion
         );
     }
 
-    private Message construirMensaje(PedidoCreadoEvent evento) {
+    private Message construirMensaje(Object evento, String idCorrelacion) {
         String json;
         try {
             json = objectMapper.writeValueAsString(evento);
         } catch (JacksonException e) {
             throw new IllegalStateException(
-                    "No se pudo convertir el evento del pedido a JSON", e
+                    "No se pudo convertir el evento " + idCorrelacion + " a JSON", e
             );
         }
 
@@ -91,6 +98,7 @@ public class PedidoCreadoPublisher {
                 .setContentType(MessageProperties.CONTENT_TYPE_JSON)
                 .setContentEncoding("UTF-8")
                 .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
+                .setMessageId(idCorrelacion)
                 .build();
     }
 
@@ -101,7 +109,10 @@ public class PedidoCreadoPublisher {
      */
     private void esperarConfirmacion(
             CorrelationData correlationData,
-            Long pedidoId) {
+            String routingKey,
+            String idCorrelacion) {
+
+        String evento = idCorrelacion + " (" + routingKey + ")";
 
         CompletableFuture<CorrelationData.Confirm> confirmacion =
                 correlationData.getFuture();
@@ -114,29 +125,29 @@ public class PedidoCreadoPublisher {
             );
         } catch (TimeoutException e) {
             throw new AmqpException(
-                    "El broker no confirmó la publicación del pedido "
-                            + pedidoId + " en " + timeoutConfirmacion,
+                    "El broker no confirmó la publicación del evento "
+                            + evento + " en " + timeoutConfirmacion,
                     e
             );
         } catch (ExecutionException e) {
             throw new AmqpException(
-                    "Falló la confirmación de la publicación del pedido "
-                            + pedidoId,
+                    "Falló la confirmación de la publicación del evento "
+                            + evento,
                     e.getCause()
             );
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new AmqpException(
-                    "Se interrumpió la espera de confirmación del pedido "
-                            + pedidoId,
+                    "Se interrumpió la espera de confirmación del evento "
+                            + evento,
                     e
             );
         }
 
         if (!confirm.ack()) {
             throw new AmqpException(
-                    "El broker rechazó (nack) la publicación del pedido "
-                            + pedidoId + ": " + confirm.reason()
+                    "El broker rechazó (nack) la publicación del evento "
+                            + evento + ": " + confirm.reason()
             );
         }
 
@@ -146,8 +157,8 @@ public class PedidoCreadoPublisher {
         ReturnedMessage devuelto = correlationData.getReturned();
         if (devuelto != null) {
             throw new AmqpException(
-                    "El broker devolvio el mensaje del pedido "
-                            + pedidoId + " sin enrutar: "
+                    "El broker devolvio el evento "
+                            + evento + " sin enrutar: "
                             + devuelto.getReplyCode() + " "
                             + devuelto.getReplyText()
             );
