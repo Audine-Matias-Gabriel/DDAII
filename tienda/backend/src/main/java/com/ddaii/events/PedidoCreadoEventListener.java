@@ -1,5 +1,6 @@
 package com.ddaii.events;
 
+import com.ddaii.config.RabbitMQConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -12,10 +13,10 @@ public class PedidoCreadoEventListener {
     private static final Logger log =
             LoggerFactory.getLogger(PedidoCreadoEventListener.class);
 
-    private final PedidoCreadoPublisher publisher;
+    private final EventoPublisher publisher;
 
     public PedidoCreadoEventListener(
-            PedidoCreadoPublisher publisher) {
+            EventoPublisher publisher) {
         this.publisher = publisher;
     }
 
@@ -32,7 +33,11 @@ public class PedidoCreadoEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void alConfirmarPedido(PedidoCreadoEvent evento) {
         try {
-            publisher.publicar(evento);
+            publisher.publicar(
+                    RabbitMQConfig.RK_PEDIDO_CREADO,
+                    evento,
+                    "pedido-" + evento.pedidoId()
+            );
         } catch (RuntimeException e) {
             log.error(
                     "No se pudo publicar el pedido {} en RabbitMQ: {}",
