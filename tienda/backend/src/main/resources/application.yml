@@ -46,6 +46,7 @@ ximilar:
   api-key: ${XIMILAR_API_KEY:}
   collection-id: ${XIMILAR_COLLECTION_ID:}
   base-url: ${XIMILAR_BASE_URL:https://api.ximilar.com}
+  mock: ${XIMILAR_MOCK:false}
 
 # CORS (frontend)
 app:

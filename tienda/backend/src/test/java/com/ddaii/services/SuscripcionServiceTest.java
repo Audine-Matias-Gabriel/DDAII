@@ -35,7 +35,7 @@ class SuscripcionServiceTest {
 
     @Test
     void crearPagoPremiumDevuelveUrlDePago() {
-        Usuario u = new Usuario("Juan", "juan@test.com");
+        Usuario u = new Usuario("Juan", "juan@test.com", "hash");
         u.setId(1L);
         when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(u));
         when(suscripcionRepository.save(any())).thenAnswer(inv -> {
@@ -53,7 +53,7 @@ class SuscripcionServiceTest {
 
     @Test
     void confirmarPagoAprobadoPublicaEventoSinMarcarPremiumDirecto() {
-        Usuario u = new Usuario("Juan", "juan@test.com");
+        Usuario u = new Usuario("Juan", "juan@test.com", "hash");
         u.setId(1L);
         u.setPremium(false);
 
@@ -72,7 +72,7 @@ class SuscripcionServiceTest {
 
     @Test
     void confirmarPagoDuplicadoNoRepublicaEvento() {
-        Usuario u = new Usuario("Juan", "juan@test.com");
+        Usuario u = new Usuario("Juan", "juan@test.com", "hash");
         u.setId(1L);
 
         com.ddaii.domain.Suscripcion s = new com.ddaii.domain.Suscripcion(u, "APROBADA", "MP-1");
@@ -87,7 +87,7 @@ class SuscripcionServiceTest {
 
     @Test
     void marcarPremiumActivaUsuarioDeFormaIdempotente() {
-        Usuario u = new Usuario("Juan", "juan@test.com");
+        Usuario u = new Usuario("Juan", "juan@test.com", "hash");
         u.setId(1L);
         u.setPremium(false);
 
