@@ -8,7 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * Los JSON de ejemplo de docs/eventos.md tienen que poder leerse como estos
@@ -16,10 +20,16 @@ import tools.jackson.databind.ObjectMapper;
  */
 class EventosContratoTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    // Misma configuración que el ObjectMapper de Spring Boot: java.time, fechas
+    // como texto ISO y sin fallar ante campos desconocidos.
+    private final ObjectMapper objectMapper = JsonMapper.builder()
+            .addModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .build();
 
     @Test
-    void productoScrapeado_leeYEscribeElJsonDelContrato() {
+    void productoScrapeado_leeYEscribeElJsonDelContrato() throws Exception {
         String json = """
                 {"tienda":"tienda1","idExterno":"123","nombre":"Remera X","precio":25000,
                  "categoria":"REMERA","genero":"HOMBRE","marca":"X",
@@ -44,7 +54,7 @@ class EventosContratoTest {
     }
 
     @Test
-    void productoScrapeado_ignoraCamposDesconocidos() {
+    void productoScrapeado_ignoraCamposDesconocidos() throws Exception {
         String json = """
                 {"tienda":"tienda1","idExterno":"1","nombre":"X","precio":1,
                  "categoria":"REMERA","genero":"UNISEX","urlOriginal":"https://x",
@@ -60,7 +70,7 @@ class EventosContratoTest {
     }
 
     @Test
-    void productoScrapeado_sinTalles_quedaConListaVacia() {
+    void productoScrapeado_sinTalles_quedaConListaVacia() throws Exception {
         ProductoScrapeadoEvent evento = new ProductoScrapeadoEvent(
                 "t", "1", "X", BigDecimal.ONE, "REMERA", "UNISEX",
                 null, "https://x", null, false, null);
@@ -69,7 +79,7 @@ class EventosContratoTest {
     }
 
     @Test
-    void productoScrapeado_copiaLosTallesParaNoCompartirLaLista() {
+    void productoScrapeado_copiaLosTallesParaNoCompartirLaLista() throws Exception {
         List<String> talles = new ArrayList<>(List.of("S"));
         ProductoScrapeadoEvent evento = new ProductoScrapeadoEvent(
                 "t", "1", "X", BigDecimal.ONE, "REMERA", "UNISEX",
@@ -81,7 +91,7 @@ class EventosContratoTest {
     }
 
     @Test
-    void suscripcionActivada_leeYEscribeElJsonDelContrato() {
+    void suscripcionActivada_leeYEscribeElJsonDelContrato() throws Exception {
         String json = """
                 {"suscripcionId":1,"usuarioId":7,"pagoId":"123456",
                  "fecha":"2026-11-12T10:00:00"}
@@ -100,7 +110,7 @@ class EventosContratoTest {
     }
 
     @Test
-    void recomendacionSolicitada_leeYEscribeElJsonDelContrato() {
+    void recomendacionSolicitada_leeYEscribeElJsonDelContrato() throws Exception {
         String json = """
                 {"solicitudId":"3f2c9a1e-8b7d-4e2a-9c1f-5d6e7f8a9b0c",
                  "productoId":10,"limite":5}
