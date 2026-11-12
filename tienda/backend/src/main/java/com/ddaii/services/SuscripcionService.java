@@ -5,6 +5,8 @@ import com.ddaii.domain.Usuario;
 import com.ddaii.dto.SuscripcionDTO;
 import com.ddaii.dto.SuscripcionResponse;
 import com.ddaii.exceptions.RecursoNoEncontradoException;
+import com.ddaii.integrations.MercadoPagoGateway;
+import com.ddaii.integrations.MercadoPagoGateway.PreferenciaPago;
 import com.ddaii.messaging.EventPublisher;
 import com.ddaii.repositories.SuscripcionRepository;
 import com.ddaii.repositories.UsuarioRepository;
@@ -20,28 +22,36 @@ public class SuscripcionService {
     private final UsuarioRepository usuarioRepository;
     private final SuscripcionRepository suscripcionRepository;
     private final EventPublisher eventPublisher;
+    private final MercadoPagoGateway mercadoPagoGateway;
 
     public SuscripcionService(UsuarioRepository usuarioRepository,
                               SuscripcionRepository suscripcionRepository,
-                              EventPublisher eventPublisher) {
+                              EventPublisher eventPublisher,
+                              MercadoPagoGateway mercadoPagoGateway) {
         this.usuarioRepository = usuarioRepository;
         this.suscripcionRepository = suscripcionRepository;
         this.eventPublisher = eventPublisher;
+        this.mercadoPagoGateway = mercadoPagoGateway;
     }
 
+    /**
+     * Crea la suscripción en estado PENDIENTE y la preferencia de pago en
+     * Mercado Pago. La suscripción se guarda primero porque su id viaja a
+     * Mercado Pago como referencia. Si Mercado Pago falla, la excepción
+     * deshace la transacción y no queda una suscripción huérfana.
+     */
     @Transactional
     public SuscripcionResponse crearPagoPremium(Long usuarioId, String plan) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado: " + usuarioId));
 
-        // Simulación del pago de prueba en sandbox de Mercado Pago.
-        String idPago = "MP-TEST-" + System.currentTimeMillis();
-        String urlPago = "https://sandbox.mercadopago.com/checkout/v1/preferences?pref_id=" + idPago;
+        Suscripcion s = suscripcionRepository.save(new Suscripcion(usuario, "PENDIENTE", null));
 
-        Suscripcion s = new Suscripcion(usuario, "PENDIENTE", idPago);
+        PreferenciaPago preferencia = mercadoPagoGateway.crearPreferenciaPremium(s.getId());
+        s.setPreferenciaId(preferencia.preferenciaId());
         s = suscripcionRepository.save(s);
 
-        return new SuscripcionResponse(s.getId(), s.getEstado(), urlPago);
+        return new SuscripcionResponse(s.getId(), s.getEstado(), preferencia.urlPago());
     }
 
     /**

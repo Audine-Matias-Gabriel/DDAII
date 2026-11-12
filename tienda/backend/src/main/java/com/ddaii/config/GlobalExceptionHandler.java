@@ -1,5 +1,6 @@
 package com.ddaii.config;
 
+import com.ddaii.exceptions.MercadoPagoException;
 import com.ddaii.exceptions.RecursoNoEncontradoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,14 @@ public class GlobalExceptionHandler {
         error.put("error", "Solicitud inválida");
         error.put("mensaje", ex.getMessage());
         return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(MercadoPagoException.class)
+    public ResponseEntity<Map<String, String>> manejarMercadoPago(MercadoPagoException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "Mercado Pago no disponible");
+        error.put("mensaje", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
     }
 
     @ExceptionHandler(RuntimeException.class)
