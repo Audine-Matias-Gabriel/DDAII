@@ -1,171 +1,95 @@
 package com.ddaii.domain;
 
-import com.ddaii.converters.StockMapConverter;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
+/**
+ * Modelo de producto (docs/modelo.md y docs/PLAN-INTEGRACION.md).
+ * Regla de unicidad: tienda + idExterno.
+ */
 @Entity
-@Table(name = "productos")
-@Data
+@Table(name = "producto", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"tienda_id", "id_externo"})
+})
 public class Producto {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "id_externo", nullable = false)
+    private String idExterno;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "tienda_id", nullable = false)
+    private Tienda tienda;
+
+    @Column(nullable = false)
     private String nombre;
 
+    @Column(length = 1000)
     private String descripcion;
 
-    private BigDecimal precio;
+    @Column(nullable = false)
+    private Double precio;
 
-    // Stock por género y talle: stock[genero][talle] -> cantidad.
-    // Se persiste como JSON en una columna text (ver StockMapConverter),
-    // porque JPA no soporta mapas anidados con @ElementCollection.
-    @Convert(converter = StockMapConverter.class)
-    @Column(columnDefinition = "text")
-    private Map<Genero, Map<String, Integer>> stock;
-
-    @Enumerated(EnumType.STRING)
-    private Categoria categoria;
-
-    @Enumerated(EnumType.STRING)
-    private Genero genero;
-
-    @Enumerated(EnumType.STRING)
-    private EstadoProducto estado = EstadoProducto.NUEVO;
-
-    // EAGER porque open-in-view=false: los controllers devuelven la entidad
-    // y Jackson no podría inicializar la colección al serializar el JSON.
-    @ElementCollection(fetch = FetchType.EAGER)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private List<String> talles = new ArrayList<>();
-
-    private Long tiendaId;
-
+    private String categoria;
+    private String genero;
+    private String marca;
+    private String urlOriginal;
     private String imagenUrl;
 
-    private LocalDateTime creadoEn = LocalDateTime.now();
+    @Column(nullable = false)
+    private Boolean disponible = true;
 
-    public Producto() {
-    }
+    @ElementCollection
+    @CollectionTable(name = "talle_disponible", joinColumns = @JoinColumn(name = "producto_id"))
+    @Column(name = "talle")
+    private List<String> tallesDisponibles = new ArrayList<>();
 
-    public Producto(
-            Long id,
-            String nombre,
-            String descripcion,
-            BigDecimal precio,
-            Map<Genero, Map<String, Integer>> stock,
-            Categoria categoria,
-            Long tiendaId,
-            String imagenUrl) {
+    public Producto() {}
 
-        this.id = id;
+    public Producto(String idExterno, Tienda tienda, String nombre, String descripcion,
+                    Double precio, String categoria, String genero, String marca,
+                    String urlOriginal, String imagenUrl, Boolean disponible) {
+        this.idExterno = idExterno;
+        this.tienda = tienda;
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.precio = precio;
-        this.stock = stock;
         this.categoria = categoria;
-        this.tiendaId = tiendaId;
+        this.genero = genero;
+        this.marca = marca;
+        this.urlOriginal = urlOriginal;
         this.imagenUrl = imagenUrl;
+        this.disponible = disponible;
     }
 
-    /**
-     * Cantidad disponible en la celda género + talle. Devuelve 0 si la
-     * combinación no existe (no explota).
-     */
-    public int stockDe(Genero genero, String talle) {
-
-        if (genero == null || talle == null || stock == null) {
-            return 0;
-        }
-
-        Map<String, Integer> porTalle = stock.get(genero);
-
-        if (porTalle == null) {
-            return 0;
-        }
-
-        Integer cantidad = porTalle.get(talle);
-
-        return cantidad == null ? 0 : cantidad;
-    }
-
-    /**
-     * Indica si la combinación género + talle existe en el mapa de stock.
-     */
-    public boolean existeVariante(Genero genero, String talle) {
-
-        if (genero == null || talle == null || stock == null) {
-            return false;
-        }
-
-        Map<String, Integer> porTalle = stock.get(genero);
-
-        return porTalle != null && porTalle.containsKey(talle);
-    }
-
-    public boolean estaDisponible() {
-
-        if (stock == null) {
-            return false;
-        }
-
-        for (Map<String, Integer> porTalle : stock.values()) {
-
-            if (porTalle == null) {
-                continue;
-            }
-
-            for (Integer cantidad : porTalle.values()) {
-                if (cantidad != null && cantidad > 0) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Descuenta de la celda género + talle la cantidad indicada.
-     */
-    public void actualizarStock(Genero genero, String talle, Integer cantidad) {
-
-        if (cantidad == null || cantidad <= 0) {
-            throw new IllegalArgumentException(
-                    "La cantidad debe ser mayor a 0");
-        }
-
-        if (genero == null || talle == null) {
-            throw new IllegalArgumentException(
-                    "El género y el talle son obligatorios");
-        }
-
-        int disponible = stockDe(genero, talle);
-
-        if (cantidad > disponible) {
-            throw new IllegalStateException(
-                    "Stock insuficiente para el producto " + id
-                            + " (" + genero + " " + talle + ")");
-        }
-
-        stock.get(genero).put(talle, disponible - cantidad);
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getIdExterno() { return idExterno; }
+    public void setIdExterno(String idExterno) { this.idExterno = idExterno; }
+    public Tienda getTienda() { return tienda; }
+    public void setTienda(Tienda tienda) { this.tienda = tienda; }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public Double getPrecio() { return precio; }
+    public void setPrecio(Double precio) { this.precio = precio; }
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
+    public String getGenero() { return genero; }
+    public void setGenero(String genero) { this.genero = genero; }
+    public String getMarca() { return marca; }
+    public void setMarca(String marca) { this.marca = marca; }
+    public String getUrlOriginal() { return urlOriginal; }
+    public void setUrlOriginal(String urlOriginal) { this.urlOriginal = urlOriginal; }
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
+    public Boolean getDisponible() { return disponible; }
+    public void setDisponible(Boolean disponible) { this.disponible = disponible; }
+    public List<String> getTallesDisponibles() { return tallesDisponibles; }
+    public void setTallesDisponibles(List<String> tallesDisponibles) { this.tallesDisponibles = tallesDisponibles; }
 }

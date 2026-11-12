@@ -1,34 +1,95 @@
 services:
-
   postgres:
     image: postgres:16-alpine
     container_name: tienda-postgres
-
     environment:
       POSTGRES_DB: tienda
       POSTGRES_USER: tienda
       POSTGRES_PASSWORD: tienda
-
     ports:
-      - "5433:5432"
-
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tienda -d tienda"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
-    image: rabbitmq:4-management
+    image: rabbitmq:3-management-alpine
     container_name: tienda-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./tienda/backend
+      dockerfile: Dockerfile
+    container_name: tienda-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
-      RABBITMQ_DEFAULT_USER: tienda
-      RABBITMQ_DEFAULT_PASS: tienda_dev_123
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-    restart: unless-stopped
+      DB_URL: jdbc:postgresql://postgres:5432/tienda
+      DB_USER: tienda
+      DB_PASSWORD: tienda
+      RABBIT_URI_HOST: rabbitmq
+      RABBIT_URI_PORT: 5672
+      RABBIT_URI_USERNAME: guest
+      RABBIT_URI_PASSWORD: guest
+      RABBIT_EXCHANGE: tienda.exchange
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN}
+      MP_PUBLIC_KEY: ${MP_PUBLIC_KEY}
+      MP_BASE_URL: ${MP_BASE_URL}
+      XIMILAR_API_KEY: ${XIMILAR_API_KEY}
+      XIMILAR_COLLECTION_ID: ${XIMILAR_COLLECTION_ID}
+      XIMILAR_BASE_URL: ${XIMILAR_BASE_URL}
+      XIMILAR_MOCK: ${XIMILAR_MOCK}
+      CORS_ORIGINS: http://localhost:5173,http://frontend
+    ports:
+      - "8080:8080"
+
+  scraper:
+    build:
+      context: ./tienda/scraper
+      dockerfile: Dockerfile
+    container_name: tienda-scraper
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RABBIT_URI_HOST: rabbitmq
+      RABBIT_URI_PORT: 5672
+      RABBIT_URI_USERNAME: guest
+      RABBIT_URI_PASSWORD: guest
+      RABBIT_EXCHANGE: tienda.exchange
+      TIENDA1_CATALOGO_URL: ${TIENDA1_CATALOGO_URL}
+      TIENDA2_CATALOGO_URL: ${TIENDA2_CATALOGO_URL}
+
+  frontend:
+    build:
+      context: ./tienda/frontend
+      dockerfile: Dockerfile
+    container_name: tienda-frontend
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://backend:8080
 
 volumes:
-  postgres_data:
-  rabbitmq-data:
-
+  pgdata:

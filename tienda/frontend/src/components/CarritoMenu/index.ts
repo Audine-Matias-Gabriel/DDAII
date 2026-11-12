@@ -1,1 +1,0 @@
-export { CarritoMenu } from './CarritoMenu'

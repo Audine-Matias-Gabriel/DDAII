@@ -1,124 +1,110 @@
 package com.ddaii.services;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.math.BigDecimal;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-
+import com.ddaii.domain.Producto;
+import com.ddaii.domain.Tienda;
+import com.ddaii.dto.ProductoDTO;
+import com.ddaii.events.ProductoScrapeado;
+import com.ddaii.repositories.ProductoRepository;
+import com.ddaii.repositories.TiendaRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
-import com.ddaii.domain.Categoria;
-import com.ddaii.domain.Genero;
-import com.ddaii.domain.Producto;
-import com.ddaii.repositories.ProductoRepository;
+import java.util.List;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+/**
+ * Tests unitarios de ProductoService (docs/PLAN-INTEGRACION.md 2.1 y 4.2).
+ */
 @ExtendWith(MockitoExtension.class)
 class ProductoServiceTest {
 
     @Mock
     private ProductoRepository productoRepository;
 
+    @Mock
+    private TiendaRepository tiendaRepository;
+
     @InjectMocks
     private ProductoService productoService;
 
-    private Producto producto(Long id, Integer stock) {
-        Map<Genero, Map<String, Integer>> mapa = new EnumMap<>(Genero.class);
-        mapa.put(Genero.HOMBRE, new HashMap<>(Map.of("M", stock)));
-
-        return new Producto(
-                id, "Remera Nike", "descripcion",
-                new BigDecimal("10000"), mapa,
-                Categoria.REMPERA, 1L, "img.png");
+    private Tienda tienda() {
+        Tienda t = new Tienda("tienda1", "https://tienda1.com.ar", true);
+        t.setId(1L);
+        return t;
     }
 
     @Test
-    void obtenerTodos_devuelveLaListaDelRepositorio() {
-        List<Producto> productos = List.of(producto(1L, 5));
-        when(productoRepository.findAll()).thenReturn(productos);
+    void upsertDesdeScrapeado_creaProductoCuandoNoExiste() {
+        Tienda t = tienda();
+        ProductoScrapeado evento = new ProductoScrapeado(
+                1L, "tienda1", "EXT-001", "Remera test", "desc", 1000.0,
+                "REMERA", "Mujer", "MarcaX", "http://tienda1.com/p/1",
+                "http://tienda1.com/img/1.jpg", true, List.of("S", "M"));
 
-        assertThat(productoService.obtenerTodos()).isEqualTo(productos);
+        when(tiendaRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(productoRepository.findByTienda_IdAndIdExterno(1L, "EXT-001")).thenReturn(Optional.empty());
+        when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Producto resultado = productoService.upsertDesdeScrapeado(evento);
+
+        assertNotNull(resultado);
+        assertEquals("tienda1", resultado.getTienda().getNombre());
+        assertEquals("EXT-001", resultado.getIdExterno());
+        assertEquals("Remera test", resultado.getNombre());
+        verify(productoRepository, times(1)).save(any(Producto.class));
     }
 
     @Test
-    void obtenerPorId_existente_devuelveElProducto() {
-        Producto producto = producto(1L, 5);
-        when(productoRepository.findById(1L))
-                .thenReturn(Optional.of(producto));
+    void upsertDesdeScrapeado_actualizaProductoCuandoYaExiste() {
+        Tienda t = tienda();
+        Producto existente = new Producto();
+        existente.setTienda(t);
+        existente.setIdExterno("EXT-001");
+        existente.setNombre("Nombre viejo");
 
-        assertThat(productoService.obtenerPorId(1L)).isEqualTo(producto);
+        ProductoScrapeado evento = new ProductoScrapeado(
+                1L, "tienda1", "EXT-001", "Remera nueva", "desc", 2000.0,
+                "REMERA", "Mujer", "MarcaY", "http://tienda1.com/p/2",
+                "http://tienda1.com/img/2.jpg", false, List.of("L"));
+
+        when(tiendaRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(productoRepository.findByTienda_IdAndIdExterno(1L, "EXT-001")).thenReturn(Optional.of(existente));
+        when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Producto resultado = productoService.upsertDesdeScrapeado(evento);
+
+        assertEquals("Remera nueva", resultado.getNombre());
+        assertEquals(2000.0, resultado.getPrecio());
+        assertEquals(Boolean.FALSE, resultado.getDisponible());
+        assertEquals(List.of("L"), resultado.getTallesDisponibles());
     }
 
     @Test
-    void obtenerPorId_inexistente_lanzaNoSuchElementException() {
-        when(productoRepository.findById(999L))
-                .thenReturn(Optional.empty());
+    void filtrarDevuelvePaginaDeProductos() {
+        Tienda t = tienda();
+        Producto p = new Producto("EXT-1", t, "Remera", "desc", 1000.0,
+                "REMERA", "Mujer", "M", "url", "img", true);
+        p.setId(1L);
 
-        assertThatThrownBy(() -> productoService.obtenerPorId(999L))
-                .isInstanceOf(NoSuchElementException.class)
-                .hasMessageContaining("Producto no encontrado: 999");
-    }
+        when(productoRepository.filtrar(null, null, null, null, null, null, PageRequest.of(0, 10)))
+                .thenReturn(new PageImpl<>(List.of(p), PageRequest.of(0, 10), 1));
 
-    @Test
-    void buscarPorTienda_delegaEnElRepositorio() {
-        List<Producto> productos = List.of(producto(1L, 5));
-        when(productoRepository.findByTiendaId(1L)).thenReturn(productos);
+        Page<ProductoDTO> pagina = productoService.filtrar(
+                null, null, null, null, null, null, PageRequest.of(0, 10));
 
-        assertThat(productoService.buscarPorTienda(1L)).isEqualTo(productos);
-    }
-
-    @Test
-    void actualizarStock_descuenta_yGuarda() {
-        Producto producto = producto(1L, 10);
-        when(productoRepository.findById(1L))
-                .thenReturn(Optional.of(producto));
-        when(productoRepository.save(producto)).thenReturn(producto);
-
-        Producto resultado =
-                productoService.actualizarStock(1L, Genero.HOMBRE, "M", 3);
-
-        assertThat(resultado.stockDe(Genero.HOMBRE, "M")).isEqualTo(7);
-        verify(productoRepository).save(producto);
-    }
-
-    @Test
-    void actualizarStock_inexistente_lanzaNoSuchElementException() {
-        when(productoRepository.findById(999L))
-                .thenReturn(Optional.empty());
-
-        assertThatThrownBy(() ->
-                productoService.actualizarStock(999L, Genero.HOMBRE, "M", 1))
-                .isInstanceOf(NoSuchElementException.class);
-    }
-
-    @Test
-    void actualizarStock_cantidadInvalida_lanzaIllegalArgumentException() {
-        when(productoRepository.findById(1L))
-                .thenReturn(Optional.of(producto(1L, 10)));
-
-        assertThatThrownBy(() ->
-                productoService.actualizarStock(1L, Genero.HOMBRE, "M", 0))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void actualizarStock_insuficiente_lanzaIllegalStateException() {
-        when(productoRepository.findById(1L))
-                .thenReturn(Optional.of(producto(1L, 2)));
-
-        assertThatThrownBy(() ->
-                productoService.actualizarStock(1L, Genero.HOMBRE, "M", 5))
-                .isInstanceOf(IllegalStateException.class);
+        assertEquals(1, pagina.getTotalElements());
+        assertEquals("Remera", pagina.getContent().get(0).getNombre());
+        assertTrue(pagina.getContent().get(0).getDisponible());
+        assertEquals("tienda1", pagina.getContent().get(0).getTienda().getNombre());
     }
 }

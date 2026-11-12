@@ -1,0 +1,62 @@
+spring:
+  application.name: tienda-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/tienda}
+    username: ${DB_USER:tienda}
+    password: ${DB_PASSWORD:tienda}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:update}
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  rabbitmq:
+    host: ${RABBIT_URI_HOST:localhost}
+    port: ${RABBIT_URI_PORT:5672}
+    username: ${RABBIT_URI_USERNAME:guest}
+    password: ${RABBIT_URI_PASSWORD:guest}
+    publisher-confirm-type: correlated
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+    # Configuración de colas (valores por defecto, sobrescribibles por variable de entorno)
+    exchange: ${RABBIT_EXCHANGE:tienda.exchange}
+    queue.producto.scrapeado: ${RABBIT_QUEUE_PRODUCTO_SCRAPEADO:producto.scrapeado.queue}
+    queue.producto.scrapeado.dlq: ${RABBIT_QUEUE_PRODUCTO_SCRAPEADO_DLQ:producto.scrapeado.dlq}
+    queue.suscripcion.activada: ${RABBIT_QUEUE_SUSCRIPCION_ACTIVADA:suscripcion.activada.queue}
+    queue.suscripcion.activada.dlq: ${RABBIT_QUEUE_SUSCRIPCION_ACTIVADA_DLQ:suscripcion.activada.dlq}
+    queue.recomendacion.solicitada: ${RABBIT_QUEUE_RECOMENDACION_SOLICITADA:recomendacion.solicitada.queue}
+    queue.recomendacion.solicitada.dlq: ${RABBIT_QUEUE_RECOMENDACION_SOLICITADA_DLQ:recomendacion.solicitada.dlq}
+  webservices:
+    path: /ws
+
+# Mercado Pago (sandbox para la demo)
+mp:
+  access-token: ${MP_ACCESS_TOKEN:}
+  public-key: ${MP_PUBLIC_KEY:}
+  base-url: ${MP_BASE_URL:https://api.mercadopago.com}
+
+# Ximilar (plan gratuito: no usar tagging en estos 10 días)
+ximilar:
+  api-key: ${XIMILAR_API_KEY:}
+  collection-id: ${XIMILAR_COLLECTION_ID:}
+  base-url: ${XIMILAR_BASE_URL:https://api.ximilar.com}
+  mock: ${XIMILAR_MOCK:false}
+
+# CORS (frontend)
+app:
+  cors-origins: ${CORS_ORIGINS:http://localhost:5173}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+springdoc:
+  api-docs.enabled: true
+  swagger-ui.enabled: true
+  swagger-ui.path: /swagger-ui.html
+  api-docs.path: /v3/api-docs

@@ -3,31 +3,41 @@
 docs/*
 !docs/eventos.md
 
-# Java / Maven
+# --- Java / Maven ---
 target/
 *.class
 *.jar
 *.war
+*.ear
+*.iml
+.idea/
+.vscode/
+*.iws
+*.ipr
 
-# Node / Frontend
+# --- Node / frontend ---
 node_modules/
 dist/
 build/
-.vite/
-*.local
-
-# Spring Boot / Env
-.env
-*.env
-application-local.properties
-application-local.yml
-
-# IDE
-.idea/
-.vscode/
-*.iml
-.DS_Store
-
-# Logs
+coverage/
 *.log
-logs/
+npm-debug.log*
+
+# --- Entorno ---
+.env
+.env.local
+*.env.*
+!.env.example
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Qodo / contexto agente (no versionar) ---
+.qodo/
+
+# --- Build artifacts (reforzado) ---
+target/
+node_modules/
+dist/
+build/

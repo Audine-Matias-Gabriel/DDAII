@@ -1,0 +1,40 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://ddaii.com/equivalencias"
+           targetNamespace="http://ddaii.com/equivalencias"
+           elementFormDefault="qualified">
+
+    <xs:element name="EquivalenciaRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="pais" type="xs:string"/>
+                <xs:element name="tipoPrenda" type="xs:string"/>
+                <xs:element name="talle" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="EquivalenciaResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="pais" type="xs:string"/>
+                <xs:element name="tipoPrenda" type="xs:string"/>
+                <xs:element name="talle" type="xs:string"/>
+                <xs:element name="equivalencias">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="equivalencia" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="paisDestino" type="xs:string"/>
+                                        <xs:element name="talle" type="xs:string"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

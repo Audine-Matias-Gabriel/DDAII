@@ -1,0 +1,18 @@
+spring:
+  application.name: tienda-scraper
+  rabbitmq:
+    host: ${RABBIT_URI_HOST:localhost}
+    port: ${RABBIT_URI_PORT:5672}
+    username: ${RABBIT_URI_USERNAME:guest}
+    password: ${RABBIT_URI_PASSWORD:guest}
+    publisher-confirm-type: correlated
+
+app:
+  scraper:
+    snapshot-file: snapshots/tienda1.json
+    exchange: ${RABBIT_EXCHANGE:tienda.exchange}
+    queue: ${RABBIT_QUEUE_PRODUCTO_SCRAPEADO:producto.scrapeado.queue}
+    queue.dlq: ${RABBIT_QUEUE_PRODUCTO_SCRAPEADO_DLQ:producto.scrapeado.dlq}
+
+server:
+  port: ${SERVER_PORT:8081}
