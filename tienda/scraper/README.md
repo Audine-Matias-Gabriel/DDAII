@@ -84,3 +84,39 @@ del catálogo comercial.
 
 La estructura de VTEX puede variar. Validar la respuesta real del endpoint antes de
 considerar completa la extracción y respetar los términos y límites de la tienda.
+
+## Publicación de eventos en RabbitMQ (P3 → P2)
+
+Al finalizar la extracción y normalización, el proceso publica **un mensaje por producto** usando el contrato `ProductoScrapeadoEvent` compartido con el backend. El cuerpo JSON contiene exactamente estos campos:
+
+`tienda`, `idExterno`, `nombre`, `precio`, `categoria`, `genero`, `marca`, `urlOriginal`, `imagenUrl`, `disponible`, `tallesDisponibles`.
+
+No se envían `id` ni `descripcion`, porque no pertenecen al record Java indicado. `tienda` se envía como nombre legible (por defecto `STORE_NAME`); `idExterno` se convierte a texto y `precio` se serializa como número JSON, compatible con `BigDecimal` al deserializar.
+
+### Configuración
+
+Copiar `.env.example` a `.env` y configurar:
+
+```env
+RABBITMQ_URL=amqp://usuario:password@localhost:5672
+RABBITMQ_EXCHANGE=knowfit.events
+RABBITMQ_EXCHANGE_TYPE=topic
+RABBITMQ_ROUTING_KEY=producto.scrapeado
+STORE_EVENT_NAME=Sportline
+```
+
+El publisher crea el exchange durable si no existe, usa mensajes persistentes (`deliveryMode: 2`) y un canal de confirmación. La ejecución espera la confirmación de cada mensaje y falla con código distinto de cero si no puede publicar. La conexión se cierra al terminar.
+
+**Contrato de infraestructura:** el backend P2 debe consumir del mismo exchange y tener una cola durable vinculada con la routing key `producto.scrapeado` (o la que se configure). Los nombres de exchange, tipo y routing key deben coincidir con `docs/eventos.md` y la configuración del consumidor del backend. Los valores anteriores son defaults configurables, no sustituyen el contrato real del despliegue.
+
+### Ejecución
+
+```bash
+npm install
+cp .env.example .env
+# Iniciar RabbitMQ y ajustar RABBITMQ_URL
+npm test
+npm start
+```
+
+El JSON local se sigue guardando en `output/` como respaldo y, después, se publican los eventos en RabbitMQ.

@@ -65,3 +65,29 @@ test("el modelo común Producto conserva el contrato de KNOWFIT", () => {
 test("la factory informa estrategias no registradas", () => {
   assert.throws(() => createScraper("DESCONOCIDA", config), /Scraper no registrado/);
 });
+
+const { toProductoScrapeadoEvent } = require("../src/events/ProductoScrapeadoEvent");
+
+test("el evento ProductoScrapeado respeta exactamente el contrato del backend", () => {
+  const event = toProductoScrapeadoEvent({
+    id: null, idExterno: 2024612, nombre: "Remera", descripcion: "No se publica",
+    precio: 25999.5, categoria: "Remeras", genero: "Hombre", marca: "Marca X",
+    tienda: 1, urlOriginal: "https://store.test/p", imagenUrl: "https://cdn.test/p.jpg",
+    disponible: true, tallesDisponibles: ["M", "L", "M"]
+  }, "Sportline");
+
+  assert.deepEqual(Object.keys(event), [
+    "tienda", "idExterno", "nombre", "precio", "categoria", "genero", "marca",
+    "urlOriginal", "imagenUrl", "disponible", "tallesDisponibles"
+  ]);
+  assert.equal(event.tienda, "Sportline");
+  assert.equal(event.idExterno, "2024612");
+  assert.equal(event.precio, 25999.5);
+  assert.deepEqual(event.tallesDisponibles, ["M", "L"]);
+  assert.equal("descripcion" in event, false);
+  assert.equal("id" in event, false);
+});
+
+test("el evento rechaza productos sin idExterno", () => {
+  assert.throws(() => toProductoScrapeadoEvent({ nombre: "Sin ID" }, "Sportline"), /idExterno/);
+});

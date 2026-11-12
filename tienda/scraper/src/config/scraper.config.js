@@ -5,6 +5,7 @@ module.exports = {
   store: {
     id: Number(process.env.STORE_ID || 1),
     nombre: process.env.STORE_NAME || "Sportline",
+    eventName: process.env.STORE_EVENT_NAME || process.env.STORE_NAME || "Sportline",
     url: (process.env.STORE_URL || "https://www.sportline.com.ar").replace(/\/$/, "")
   },
   vtex: {
@@ -13,5 +14,11 @@ module.exports = {
     maxProducts: Math.max(Number(process.env.MAX_PRODUCTS || 150), 1),
     requestDelayMs: Math.max(Number(process.env.REQUEST_DELAY_MS || 700), 0)
   },
-  outputFile: process.env.OUTPUT_FILE || "output/sportline.json"
+  outputFile: process.env.OUTPUT_FILE || "output/sportline.json",
+  rabbitmq: {
+    url: process.env.RABBITMQ_URL || "",
+    exchange: process.env.RABBITMQ_EXCHANGE || "knowfit.events",
+    exchangeType: process.env.RABBITMQ_EXCHANGE_TYPE || "topic",
+    routingKey: process.env.RABBITMQ_ROUTING_KEY || "producto.scrapeado"
+  }
 };

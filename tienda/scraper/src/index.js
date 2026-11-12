@@ -1,6 +1,7 @@
 const config = require("./config/scraper.config");
 const { createScraper } = require("./factories/scraper.factory");
 const { buildCatalog, saveCatalog } = require("./services/catalog.service");
+const { publishProducts } = require("./messaging/rabbitmq.publisher");
 
 async function main() {
   try {
@@ -14,6 +15,9 @@ async function main() {
 
     console.log(`Extracción finalizada. Productos: ${catalog.totalProductos}`);
     console.log(`Archivo: ${output}`);
+
+    const published = await publishProducts(catalog.productos, config);
+    console.log(`Publicación RabbitMQ finalizada. Eventos confirmados: ${published}`);
   } catch (error) {
     console.error("Falló la extracción del catálogo.");
     if (error.response) {
