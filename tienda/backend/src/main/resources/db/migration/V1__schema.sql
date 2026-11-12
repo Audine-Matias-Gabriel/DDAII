@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS suscripcion (
     usuario_id BIGINT NOT NULL REFERENCES usuario(id),
     estado VARCHAR(50) NOT NULL,
     id_pago VARCHAR(200),
+    preferencia_id VARCHAR(200),
     fecha TIMESTAMP NOT NULL DEFAULT NOW()
 );
 

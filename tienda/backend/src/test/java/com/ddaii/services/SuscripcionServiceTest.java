@@ -2,11 +2,15 @@ package com.ddaii.services;
 
 import com.ddaii.domain.Usuario;
 import com.ddaii.dto.SuscripcionResponse;
+import com.ddaii.exceptions.MercadoPagoException;
+import com.ddaii.integrations.MercadoPagoGateway;
+import com.ddaii.integrations.MercadoPagoGateway.PreferenciaPago;
 import com.ddaii.messaging.EventPublisher;
 import com.ddaii.repositories.SuscripcionRepository;
 import com.ddaii.repositories.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,11 +34,14 @@ class SuscripcionServiceTest {
     @Mock
     private EventPublisher eventPublisher;
 
+    @Mock
+    private MercadoPagoGateway mercadoPagoGateway;
+
     @InjectMocks
     private SuscripcionService suscripcionService;
 
     @Test
-    void crearPagoPremiumDevuelveUrlDePago() {
+    void crearPagoPremiumDevuelveUrlDePagoYGuardaLaPreferencia() {
         Usuario u = new Usuario("Juan", "juan@test.com", "hash");
         u.setId(1L);
         when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(u));
@@ -43,12 +50,40 @@ class SuscripcionServiceTest {
             s.setId(10L);
             return s;
         });
+        when(mercadoPagoGateway.crearPreferenciaPremium(10L)).thenReturn(
+                new PreferenciaPago("pref-123", "https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=pref-123"));
 
         SuscripcionResponse respuesta = suscripcionService.crearPagoPremium(1L, "PREMIUM");
 
         assertEquals(10L, respuesta.getSuscripcionId());
         assertEquals("PENDIENTE", respuesta.getEstado());
-        assertTrue(respuesta.getUrlPago().contains("mercadopago.com"));
+        assertEquals("https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=pref-123",
+                respuesta.getUrlPago());
+
+        ArgumentCaptor<com.ddaii.domain.Suscripcion> guardada =
+                ArgumentCaptor.forClass(com.ddaii.domain.Suscripcion.class);
+        verify(suscripcionRepository, times(2)).save(guardada.capture());
+        assertEquals("pref-123", guardada.getValue().getPreferenciaId());
+        assertNull(guardada.getValue().getIdPago());
+    }
+
+    @Test
+    void crearPagoPremiumSiMercadoPagoFallaPropagaElErrorYNoPublicaNada() {
+        Usuario u = new Usuario("Juan", "juan@test.com", "hash");
+        u.setId(1L);
+        when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(u));
+        when(suscripcionRepository.save(any())).thenAnswer(inv -> {
+            com.ddaii.domain.Suscripcion s = inv.getArgument(0);
+            s.setId(10L);
+            return s;
+        });
+        when(mercadoPagoGateway.crearPreferenciaPremium(10L))
+                .thenThrow(new MercadoPagoException("Mercado Pago caído"));
+
+        assertThrows(MercadoPagoException.class,
+                () -> suscripcionService.crearPagoPremium(1L, "PREMIUM"));
+
+        verify(eventPublisher, never()).publicarSuscripcionActivada(any(), any(), any());
     }
 
     @Test

@@ -1,5 +1,10 @@
 spring:
   application.name: tienda-backend
+  # Lee el archivo .env de la carpeta desde donde se arranca el backend
+  # (tienda/backend). Es opcional: si no existe, se usan las variables de
+  # entorno del sistema y los valores por defecto de este archivo.
+  config:
+    import: optional:file:.env[.properties]
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/tienda}
     username: ${DB_USER:tienda}
@@ -40,6 +45,8 @@ mp:
   access-token: ${MP_ACCESS_TOKEN:}
   public-key: ${MP_PUBLIC_KEY:}
   base-url: ${MP_BASE_URL:https://api.mercadopago.com}
+  # Precio del plan premium en pesos argentinos
+  premium-precio: ${MP_PREMIUM_PRECIO:5000}
 
 # Ximilar (plan gratuito: no usar tagging en estos 10 días)
 ximilar:
@@ -51,6 +58,8 @@ ximilar:
 # CORS (frontend)
 app:
   cors-origins: ${CORS_ORIGINS:http://localhost:5173}
+  # A donde vuelve el comprador desde Mercado Pago (/pago/exito y /pago/error)
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
 
 server:
   port: ${SERVER_PORT:8080}
