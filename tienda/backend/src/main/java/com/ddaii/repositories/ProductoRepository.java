@@ -36,9 +36,11 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
            "AND (:genero IS NULL OR p.genero = :genero) " +
            "AND (:precioMin IS NULL OR p.precio >= :precioMin) " +
            "AND (:precioMax IS NULL OR p.precio <= :precioMax) " +
-           "AND (:texto IS NULL OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', :texto, '%')) " +
-           "     OR LOWER(p.marca) LIKE LOWER(CONCAT('%', :texto, '%')) " +
-           "     OR LOWER(p.descripcion) LIKE LOWER(CONCAT('%', :texto, '%'))) " +
+           // CAST a String: si :texto llega null, Postgres lo tipa como bytea y LOWER() falla
+           "AND (CAST(:texto AS String) IS NULL " +
+           "     OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', CAST(:texto AS String), '%')) " +
+           "     OR LOWER(p.marca) LIKE LOWER(CONCAT('%', CAST(:texto AS String), '%')) " +
+           "     OR LOWER(p.descripcion) LIKE LOWER(CONCAT('%', CAST(:texto AS String), '%'))) " +
            "AND p.disponible = true")
     Page<Producto> filtrar(@Param("categoria") String categoria,
                            @Param("tiendaId") Long tiendaId,
