@@ -1,50 +1,86 @@
-# Scraper Sportline
+# KNOWFIT - Scraper multi-tienda (Strategy)
 
-Módulo Node.js independiente que consulta el catálogo público VTEX de
-https://www.sportline.com.ar y genera `output/catalogo.json`.
+Módulo Node.js independiente para obtener catálogos de tiendas y convertirlos al
+modelo común `Producto` de KNOWFIT. Está preparado para incorporar una estrategia
+por tienda sin cambiar el servicio de catálogo ni el backend.
+
+## Estructura
+
+```text
+scraper/
+├── src/
+│   ├── adapters/
+│   │   └── ScraperSportline.js
+│   ├── config/
+│   │   └── scraper.config.js
+│   ├── factories/
+│   │   └── scraper.factory.js
+│   ├── interfaces/
+│   │   └── ScraperTienda.js
+│   ├── models/
+│   │   ├── Producto.js
+│   │   ├── Tienda.js
+│   │   └── Usuario.js
+│   ├── services/
+│   │   └── catalog.service.js
+│   ├── utils/
+│   │   └── helpers.js
+│   └── index.js
+├── tests/
+├── output/
+├── .env.example
+└── package.json
+```
+
+## Patrón Strategy
+
+- `ScraperTienda` define el contrato: `fetchCatalog()` y `normalizeProduct()`.
+- `ScraperSportline` implementa ese contrato usando el endpoint público de catálogo VTEX.
+- `scraper.factory.js` selecciona la estrategia según `STORE_ADAPTER`.
+- `catalog.service.js` trabaja contra la abstracción: no conoce VTEX ni una tienda concreta.
+- `getNormalizedCatalog()` está implementado en la clase base y aplica normalización y deduplicación comunes.
+
+En JavaScript no existe una palabra clave `interface` como en TypeScript; por eso `ScraperTienda` se implementa como clase abstracta que obliga a implementar los métodos al utilizarlos.
 
 ## Instalación y ejecución
 
 ```bash
 npm install
+cp .env.example .env
+npm test
 npm start
 ```
 
-Opcionalmente copiar `.env.example` a `.env` y ajustar la configuración.
+La ejecución actual utiliza `STORE_ADAPTER=SPORTLINE` y genera `output/sportline.json`.
 
-## Variables
+## Agregar otra tienda
 
-- `PAGE_SIZE`: tamaño de página (el módulo lo limita a 50).
-- `MAX_PRODUCTS`: máximo total de productos.
-- `REQUEST_DELAY_MS`: pausa entre páginas.
-- `OUTPUT_FILE`: ruta del JSON generado.
+1. Crear una clase en `src/adapters/`, por ejemplo `ScraperLasMargaritas.js`.
+2. Extender `ScraperTienda` e implementar `fetchCatalog()` y `normalizeProduct()`.
+3. Registrar la clase en `src/factories/scraper.factory.js`.
+4. Configurar la identidad, URL y parámetros propios de esa tienda.
 
-## Modelo
+No asumir que otra tienda utiliza VTEX: primero verificar su mecanismo real de catálogo. La nueva estrategia debe devolver los mismos campos del modelo `Producto`.
 
-Cada producto contiene `id, idExterno, nombre, descripcion, precio, categoria,
-genero, marca, tienda, urlOriginal, imagenUrl, disponible, tallesDisponibles`.
+## Modelo y persistencia
 
-`id` queda null para que lo asigne PostgreSQL. `idExterno` conserva `productId`
-de VTEX. `tienda` contiene el ID de Tienda. El JSON contiene además el objeto
-Tienda y la lista de productos.
+Cada producto contiene `id, idExterno, nombre, descripcion, precio, categoria, genero,
+marca, tienda, urlOriginal, imagenUrl, disponible, tallesDisponibles`. `id` queda en
+`null` para que lo asigne PostgreSQL; `idExterno` identifica el producto en su tienda.
+La combinación `tienda + idExterno` debe tratarse como identificador externo único.
 
-Usuario es una entidad propia de la app y no se extrae desde Sportline.
+El scraper genera JSON; no escribe directamente en PostgreSQL. El backend valida y
+persiste los productos. `Usuario` es una entidad interna de KNOWFIT y no se obtiene
+del catálogo comercial.
 
-## Reglas de normalización
+## Reglas de Sportline
 
-- Precio: menor precio positivo encontrado entre los SKUs disponibles.
-- Talles: valores de variaciones cuyo nombre contiene Talle, Tamaño o Size,
-  asociados a SKUs disponibles.
-- Disponible: verdadero si al menos un SKU tiene disponibilidad y cantidad mayor
-  que cero.
-- Género: inferencia simple por nombre, descripción y categorías; si no hay
-  evidencia suficiente se devuelve `No especificado`.
+- Consulta el catálogo público VTEX con `_from` y `_to`, en páginas de hasta 50.
+- Precio: menor precio positivo entre SKUs disponibles.
+- Talles: variaciones cuyo nombre contiene Talle, Tamaño o Size, de SKUs disponibles.
+- Disponible: al menos un SKU con disponibilidad y cantidad mayor que cero.
+- Género: inferencia simple por nombre, descripción y categorías.
 - Imagen: primera imagen disponible de los SKUs.
 
-La estructura del payload puede variar según la configuración VTEX de la tienda.
-Si algún campo llega vacío, ajustar `normalizeProduct()` con una respuesta real
-del endpoint. Este módulo solo lee datos públicos; no inicia sesión ni realiza
-compras. Respetar condiciones de uso y límites de la tienda.
-
-Para Ximilar, se puede mapear `idExterno` a `_id` e `imagenUrl` a `_url`, sin
-delegar a Ximilar los datos comerciales que deben permanecer en PostgreSQL.
+La estructura de VTEX puede variar. Validar la respuesta real del endpoint antes de
+considerar completa la extracción y respetar los términos y límites de la tienda.

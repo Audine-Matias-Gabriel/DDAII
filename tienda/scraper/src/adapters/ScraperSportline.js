@@ -1,13 +1,18 @@
-const axios = require("axios");
+const ScraperTienda = require("../interfaces/ScraperTienda");
 const { cleanText, absoluteUrl, sleep } = require("../utils/helpers");
 
-class Tienda1Adapter {
+class ScraperSportline extends ScraperTienda {
   constructor(config) {
-    this.config = config;
-    this.http = axios.create({
-      timeout: 30000,
-      headers: { Accept: "application/json", "User-Agent": "KNOWFIT-catalog-scraper/1.0" }
-    });
+    super(config);
+    if (config.httpClient) {
+      this.http = config.httpClient;
+    } else {
+      const axios = require("axios");
+      this.http = axios.create({
+        timeout: 30000,
+        headers: { Accept: "application/json", "User-Agent": "KNOWFIT-catalog-scraper/1.0" }
+      });
+    }
   }
 
   async fetchPage(from) {
@@ -91,14 +96,6 @@ class Tienda1Adapter {
     return "No especificado";
   }
 
-  async getNormalizedCatalog() {
-    const raw = await this.fetchCatalog();
-    const unique = new Map();
-    for (const item of raw) {
-      const product = this.normalizeProduct(item);
-      if (product) unique.set(product.idExterno, product);
-    }
-    return [...unique.values()];
-  }
 }
-module.exports = Tienda1Adapter;
+module.exports = ScraperSportline;
+

@@ -4,7 +4,7 @@ const { createTienda } = require("../models/Tienda");
 const { createProducto } = require("../models/Producto");
 
 async function buildCatalog(adapter, config) {
-  const tienda = createTienda(config.store);
+  const tienda = createTienda({ id: config.store.id, nombre: config.store.nombre, url: config.store.url });
   const products = await adapter.getNormalizedCatalog();
   return {
     generadoEn: new Date().toISOString(),
