@@ -1,9 +1,22 @@
 {
   "name": "knowfit-scraper",
   "version": "1.0.0",
-  "description": "Extractor y normalizador del catalogo Sportline para KNOWFIT",
+  "description": "Extractor y normalizador multi-tienda del catálogo KNOWFIT",
   "main": "src/index.js",
   "type": "commonjs",
-  "scripts": { "start": "node src/index.js", "scrape": "node src/index.js", "test": "node --test" },
-  "dependencies": { "amqplib": "^0.10.8", "axios": "^1.7.9", "dotenv": "^16.4.7" }
+  "scripts": {
+    "start": "node src/index.js",
+    "scrape": "node src/index.js",
+    "scrape:sportline": "node src/index.js --store=SPORTLINE",
+    "scrape:lasmargaritas": "node src/index.js --store=LASMARGARITAS",
+    "scheduler": "node src/scheduler.js",
+    "scheduler:now": "node src/scheduler.js --run-now",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.8",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "node-cron": "^4.6.0"
+  }
 }

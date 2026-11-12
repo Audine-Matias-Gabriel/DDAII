@@ -27,6 +27,9 @@ services:
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     restart: unless-stopped
+  scraper:
+    tienda2:
+      base-url: ${TIENDA2_BASE_URL:https://www.lasmargaritas.com.ar}
 
 volumes:
   postgres_data:

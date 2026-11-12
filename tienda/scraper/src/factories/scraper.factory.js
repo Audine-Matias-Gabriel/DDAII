@@ -1,7 +1,9 @@
 const ScraperSportline = require("../adapters/ScraperSportline");
+const ScraperLasMargaritas = require("../adapters/ScraperLasMargaritas");
 
 const strategies = {
-  SPORTLINE: ScraperSportline
+  SPORTLINE: ScraperSportline,
+  LASMARGARITAS: ScraperLasMargaritas
 };
 
 function createScraper(storeAdapter, config) {

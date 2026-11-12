@@ -1,3 +1,9 @@
+// Procesar --store=<ADAPTER> antes de cargar la config
+const storeArg = process.argv.find(a => a.startsWith("--store="));
+if (storeArg) {
+  process.env.STORE_ADAPTER = storeArg.split("=")[1].trim().toUpperCase();
+}
+
 const config = require("./config/scraper.config");
 const { createScraper } = require("./factories/scraper.factory");
 const { buildCatalog, saveCatalog } = require("./services/catalog.service");
