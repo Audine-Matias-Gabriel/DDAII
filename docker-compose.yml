@@ -30,6 +30,14 @@ services:
   scraper:
     tienda2:
       base-url: ${TIENDA2_BASE_URL:https://www.lasmargaritas.com.ar}
+  ximilar:
+    base-url: https://api.ximilar.com
+    api-token: ${XIMILAR_API_TOKEN:fc75fe782aa06640ce89f0f2401238d6d6e1776a}
+    collection-id: ${XIMILAR_COLLECTION_ID:c3a7cde3-abbd-40a3-8dee-7c8a66781368}
+    timeout:
+      connect: 3s
+      read: 10s
+    mock: false  # se sobreescribe con el perfil "mock"
 
 volumes:
   postgres_data:

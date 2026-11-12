@@ -2,6 +2,7 @@ package com.ddaii.controllers;
 
 import com.ddaii.domain.Genero;
 import com.ddaii.domain.Producto;
+import com.ddaii.dto.ProductoSimilarResponse;
 import com.ddaii.services.ProductoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,8 @@ public class ProductoController {
         this.productoService = productoService;
     }
 
+
+
     /**
      * GET /api/productos
      */
@@ -36,6 +39,17 @@ public class ProductoController {
         return ResponseEntity.ok(
                 productoService.obtenerTodos()
         );
+    }
+
+    @GetMapping("/{id}/similares")
+    public List<ProductoSimilarResponse> similares(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "5") int limite) {
+
+        int limiteSeguro = Math.min(Math.max(limite, 1), 20);
+        return productoService.obtenerSimilares(id, limiteSeguro).stream()
+                .map(ProductoSimilarResponse::from)
+                .toList();
     }
 
     /**

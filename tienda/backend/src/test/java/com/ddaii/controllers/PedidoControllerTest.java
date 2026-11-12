@@ -21,11 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.ddaii.domain.EstadoPedido;
-import com.ddaii.domain.Pedido;
-import com.ddaii.services.PedidoCompraService;
-import com.ddaii.services.PedidoService;
-
 @ExtendWith(MockitoExtension.class)
 class PedidoControllerTest {
 

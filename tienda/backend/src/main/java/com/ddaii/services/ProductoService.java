@@ -49,4 +49,25 @@ public class ProductoService {
 
         return productoRepository.save(producto);
     }
+
+    public List<Producto> obtenerSimilares(Long productoId, int limite) {
+        Producto original = productoRepository.findById(productoId)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + productoId));
+
+        List<String> idsSimilares = ximilarFacade.buscarSimilares(original, limite * 3);
+        if (idsSimilares.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> ids = idsSimilares.stream()
+                .map(Long::valueOf)
+                .toList();
+
+        return productoRepository.findAllById(ids).stream()
+                .filter(p -> p.getTiendaId() != null
+                        && original.getTiendaId() != null
+                        && !p.getTiendaId().equals(original.getTiendaId())
+                .limit(limite)
+                .toList();
+    }
 }

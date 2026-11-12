@@ -23,9 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ddaii.domain.Categoria;
 import com.ddaii.domain.Genero;
-import com.ddaii.domain.Pedido;
 import com.ddaii.domain.Producto;
-import com.ddaii.repositories.PedidoRepository;
 import com.ddaii.repositories.ProductoRepository;
 
 @ExtendWith(MockitoExtension.class)
