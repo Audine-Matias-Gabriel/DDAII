@@ -37,6 +37,13 @@ public class AuthResponse {
             this.premium = premium;
         }
 
+        public UsuarioDTO(com.ddaii.domain.Usuario usuario) {
+            this.id = usuario.getId();
+            this.nombre = usuario.getNombre();
+            this.email = usuario.getEmail();
+            this.premium = usuario.getPremium();
+        }
+
         public Long getId() { return id; }
         public void setId(Long id) { this.id = id; }
         public String getNombre() { return nombre; }

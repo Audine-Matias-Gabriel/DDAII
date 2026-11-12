@@ -1,5 +1,6 @@
 package com.ddaii.services;
 
+import com.ddaii.domain.Favorito;
 import com.ddaii.domain.Producto;
 import com.ddaii.domain.Usuario;
 import com.ddaii.dto.FavoritoDTO;
