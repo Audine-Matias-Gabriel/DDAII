@@ -6,6 +6,7 @@ import com.ddaii.dto.SuscripcionDTO;
 import com.ddaii.dto.SuscripcionResponse;
 import com.ddaii.exceptions.RecursoNoEncontradoException;
 import com.ddaii.integrations.MercadoPagoGateway;
+import com.ddaii.integrations.MercadoPagoGateway.PagoConsultado;
 import com.ddaii.integrations.MercadoPagoGateway.PreferenciaPago;
 import com.ddaii.messaging.EventPublisher;
 import com.ddaii.repositories.SuscripcionRepository;
@@ -52,6 +53,39 @@ public class SuscripcionService {
         s = suscripcionRepository.save(s);
 
         return new SuscripcionResponse(s.getId(), s.getEstado(), preferencia.urlPago());
+    }
+
+    /**
+     * Confirma una suscripción al volver el comprador de Mercado Pago: consulta
+     * el pago a la API y, si está aprobado, pasa la suscripción a APROBADA y
+     * publica SuscripcionActivada. Es idempotente: confirmar dos veces no
+     * republica el evento.
+     */
+    @Transactional
+    public SuscripcionDTO confirmarPagoMercadoPago(Long usuarioId, Long suscripcionId, Long paymentId) {
+        Suscripcion s = suscripcionRepository.findById(suscripcionId)
+                .filter(x -> x.getUsuario().getId().equals(usuarioId))
+                .orElseThrow(() -> new RecursoNoEncontradoException("Suscripción no encontrada: " + suscripcionId));
+
+        if (!"APROBADA".equals(s.getEstado())) {
+            PagoConsultado pago = mercadoPagoGateway.consultarPago(paymentId);
+
+            if (!String.valueOf(suscripcionId).equals(pago.suscripcionRef())) {
+                throw new IllegalArgumentException(
+                        "El pago " + paymentId + " no corresponde a la suscripción " + suscripcionId);
+            }
+
+            if ("approved".equals(pago.estado())) {
+                s.setEstado("APROBADA");
+                s.setIdPago(pago.idPago());
+                s = suscripcionRepository.save(s);
+                eventPublisher.publicarSuscripcionActivada(usuarioId, s.getId(), s.getIdPago());
+            } else if ("rejected".equals(pago.estado()) || "cancelled".equals(pago.estado())) {
+                s.setEstado("RECHAZADA");
+                s = suscripcionRepository.save(s);
+            }
+        }
+        return new SuscripcionDTO(s.getId(), usuarioId, s.getEstado(), s.getIdPago(), s.getFecha());
     }
 
     /**
