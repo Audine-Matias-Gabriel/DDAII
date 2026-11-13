@@ -1,6 +1,7 @@
 package com.ddaii.integrations;
 
 import com.ddaii.exceptions.MercadoPagoException;
+import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
 import com.mercadopago.client.preference.PreferenceClient;
 import com.mercadopago.client.preference.PreferenceItemRequest;
@@ -8,6 +9,7 @@ import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.core.MPRequestOptions;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
+import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,9 @@ public class MercadoPagoGateway {
         this.precioPremium = precioPremium;
         this.frontendUrl = frontendUrl;
     }
+
+    /** Pago consultado: su estado en Mercado Pago y la suscripción a la que pertenece. */
+    public record PagoConsultado(String idPago, String estado, String suscripcionRef) {}
 
     /** Preferencia creada: su id y la URL donde el comprador paga. */
     public record PreferenciaPago(String preferenciaId, String urlPago) {}
@@ -90,6 +95,37 @@ public class MercadoPagoGateway {
         } catch (MPException e) {
             throw new MercadoPagoException(
                     "No se pudo conectar con Mercado Pago: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Consulta un pago a Mercado Pago. Se consulta siempre a la API (no se
+     * confía en lo que llega por la URL de retorno, que el comprador podría
+     * alterar).
+     */
+    public PagoConsultado consultarPago(Long paymentId) {
+        exigirAccessToken();
+        try {
+            Payment pago = new PaymentClient().get(paymentId, opciones());
+            return new PagoConsultado(String.valueOf(pago.getId()), pago.getStatus(),
+                    pago.getExternalReference());
+        } catch (MPApiException e) {
+            String detalle = e.getApiResponse() != null ? e.getApiResponse().getContent() : e.getMessage();
+            throw new MercadoPagoException("No se pudo consultar el pago " + paymentId + ": " + detalle, e);
+        } catch (MPException e) {
+            throw new MercadoPagoException(
+                    "No se pudo conectar con Mercado Pago: " + e.getMessage(), e);
+        }
+    }
+
+    private MPRequestOptions opciones() {
+        return MPRequestOptions.builder().accessToken(accessToken).build();
+    }
+
+    private void exigirAccessToken() {
+        if (accessToken == null || accessToken.isBlank()) {
+            throw new MercadoPagoException(
+                    "Mercado Pago no está configurado: falta la variable MP_ACCESS_TOKEN");
         }
     }
 }

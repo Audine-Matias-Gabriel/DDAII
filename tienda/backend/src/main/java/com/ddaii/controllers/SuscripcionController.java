@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
  * POST /api/suscripciones crea el pago en sandbox y devuelve la URL de pago.
  * El usuario se resuelve desde el token de sesión (Authorization: Bearer).
  * POST /api/suscripciones/webhook confirma el pago (simulación de Mercado Pago).
+ * POST /api/suscripciones/{id}/confirmar?paymentId= confirma el pago real consultando a Mercado Pago.
  * GET  /api/suscripciones/{id}/estado consulta el estado.
  */
 @RestController
@@ -28,6 +29,14 @@ public class SuscripcionController {
     public ResponseEntity<SuscripcionResponse> crear(@AuthenticationPrincipal String usuarioIdStr) {
         Long usuarioId = Long.parseLong(usuarioIdStr);
         return ResponseEntity.ok(suscripcionService.crearPagoPremium(usuarioId, "PREMIUM"));
+    }
+
+    /** El frontend lo llama desde /pago/exito con el payment_id que trae la URL de retorno. */
+    @PostMapping("/{id}/confirmar")
+    public SuscripcionDTO confirmar(@AuthenticationPrincipal String usuarioIdStr,
+                                    @PathVariable Long id,
+                                    @RequestParam Long paymentId) {
+        return suscripcionService.confirmarPagoMercadoPago(Long.parseLong(usuarioIdStr), id, paymentId);
     }
 
     @PostMapping("/webhook")
