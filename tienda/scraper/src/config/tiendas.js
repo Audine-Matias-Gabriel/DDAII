@@ -22,5 +22,13 @@ module.exports = [
     plataforma: "VTEX",
     url: "https://www.sportline.com.ar",
     activa: true
+  },
+  {
+    clave: "GRID",
+    id: 2,
+    nombre: "Grid",
+    plataforma: "VTEX",
+    url: "https://www.grid.com.ar",
+    activa: true
   }
 ];
