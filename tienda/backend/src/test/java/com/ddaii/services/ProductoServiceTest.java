@@ -38,7 +38,7 @@ class ProductoServiceTest {
     private ProductoService productoService;
 
     private Tienda tienda() {
-        Tienda t = new Tienda("tienda1", "https://tienda1.com.ar", true);
+        Tienda t = new Tienda("tienda1", "http://tienda1.com", true);
         t.setId(1L);
         return t;
     }
@@ -51,7 +51,7 @@ class ProductoServiceTest {
                 "REMERA", "Mujer", "MarcaX", "http://tienda1.com/p/1",
                 "http://tienda1.com/img/1.jpg", true, List.of("S", "M"));
 
-        when(tiendaRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(tiendaRepository.findByNombre("tienda1")).thenReturn(Optional.of(t));
         when(productoRepository.findByTienda_IdAndIdExterno(1L, "EXT-001")).thenReturn(Optional.empty());
         when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -77,7 +77,7 @@ class ProductoServiceTest {
                 "REMERA", "Mujer", "MarcaY", "http://tienda1.com/p/2",
                 "http://tienda1.com/img/2.jpg", false, List.of("L"));
 
-        when(tiendaRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(tiendaRepository.findByNombre("tienda1")).thenReturn(Optional.of(t));
         when(productoRepository.findByTienda_IdAndIdExterno(1L, "EXT-001")).thenReturn(Optional.of(existente));
         when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -87,6 +87,53 @@ class ProductoServiceTest {
         assertEquals(2000.0, resultado.getPrecio());
         assertEquals(Boolean.FALSE, resultado.getDisponible());
         assertEquals(List.of("L"), resultado.getTallesDisponibles());
+    }
+
+    @Test
+    void upsertDesdeScrapeado_creaLaTiendaConElDominioDeLaUrlOriginal() {
+        ProductoScrapeado evento = new ProductoScrapeado(
+                2L, "Grid", "52974", "Remera", "desc", 1000.0, "REMERA", "Hombre", "NBA",
+                "https://www.grid.com.ar/remera-nba/p", "https://img/1.jpg", true, List.of("M"));
+        when(tiendaRepository.findByNombre("Grid")).thenReturn(Optional.empty());
+        when(tiendaRepository.save(any(Tienda.class))).thenAnswer(inv -> {
+            Tienda nueva = inv.getArgument(0);
+            nueva.setId(7L);
+            return nueva;
+        });
+        when(productoRepository.findByTienda_IdAndIdExterno(7L, "52974")).thenReturn(Optional.empty());
+        when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Producto resultado = productoService.upsertDesdeScrapeado(evento);
+
+        assertEquals("https://www.grid.com.ar", resultado.getTienda().getUrlBase());
+        // Con nombre, el tiendaId del evento no se usa (podría ser el id de otra tienda).
+        verify(tiendaRepository, never()).findById(any());
+    }
+
+    @Test
+    void upsertDesdeScrapeado_corrigeLaUrlInventadaDeUnaTiendaExistente() {
+        Tienda vieja = new Tienda("Grid", "https://Grid.com.ar", true);
+        vieja.setId(2L);
+        ProductoScrapeado evento = new ProductoScrapeado(
+                2L, "Grid", "1", "Remera", "d", 1.0, "REMERA", "Hombre", "M",
+                "https://www.grid.com.ar/x/p", "https://img/x.jpg", true, List.of());
+        when(tiendaRepository.findByNombre("Grid")).thenReturn(Optional.of(vieja));
+        when(productoRepository.findByTienda_IdAndIdExterno(2L, "1")).thenReturn(Optional.empty());
+        when(productoRepository.save(any(Producto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        productoService.upsertDesdeScrapeado(evento);
+
+        assertEquals("https://www.grid.com.ar", vieja.getUrlBase());
+        verify(tiendaRepository).save(vieja);
+    }
+
+    @Test
+    void urlBaseDeSoloAceptaUrlsHttp() {
+        assertEquals("https://www.sportline.com.ar", ProductoService.urlBaseDe("https://www.sportline.com.ar/boris/p?x=1"));
+        assertEquals("http://localhost:8080", ProductoService.urlBaseDe("http://localhost:8080/a"));
+        assertNull(ProductoService.urlBaseDe("ftp://algo/x"));
+        assertNull(ProductoService.urlBaseDe("no es una url"));
+        assertNull(ProductoService.urlBaseDe(null));
     }
 
     @Test

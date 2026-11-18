@@ -82,20 +82,22 @@ public class ProductoService {
     }
 
     private Tienda resolverTienda(ProductoScrapeado evento) {
-        // El nombre es la clave estable; el id puede variar según el seed/orden de inserción.
-        if (evento.getTienda() != null) {
-            Tienda porNombre = tiendaRepository.findByNombre(evento.getTienda()).orElse(null);
-            if (porNombre != null) {
-                return porNombre;
+        // El nombre es la clave estable del contrato. El id no se usa si viene el nombre:
+        // una tienda nueva con un id que ya existe terminaría asignada a otra tienda.
+        if (evento.getTienda() != null && !evento.getTienda().isBlank()) {
+            String urlBase = urlBaseDe(evento.getUrlOriginal());
+            Tienda tienda = tiendaRepository.findByNombre(evento.getTienda()).orElse(null);
+            if (tienda == null) {
+                return tiendaRepository.save(new Tienda(evento.getTienda(),
+                        urlBase != null ? urlBase : "https://" + evento.getTienda().toLowerCase().replace(" ", "") + ".com.ar",
+                        true));
             }
-            if (evento.getTiendaId() != null) {
-                Tienda porId = tiendaRepository.findById(evento.getTiendaId()).orElse(null);
-                if (porId != null) {
-                    return porId;
-                }
+            // Corrige la URL inventada de versiones anteriores (https://<Nombre>.com.ar) con el dominio real.
+            if (urlBase != null && !urlBase.equals(tienda.getUrlBase())) {
+                tienda.setUrlBase(urlBase);
+                tiendaRepository.save(tienda);
             }
-            return tiendaRepository.save(
-                    new Tienda(evento.getTienda(), "https://" + evento.getTienda() + ".com.ar", true));
+            return tienda;
         }
         if (evento.getTiendaId() != null) {
             return tiendaRepository.findById(evento.getTiendaId())
@@ -103,6 +105,18 @@ public class ProductoService {
                             "Tienda no encontrada: " + evento.getTiendaId()));
         }
         throw new RecursoNoEncontradoException("Tienda no informada en ProductoScrapeado");
+    }
+
+    /** "https://www.grid.com.ar/remera/p" → "https://www.grid.com.ar"; null si no es una URL http(s). */
+    static String urlBaseDe(String urlOriginal) {
+        if (urlOriginal == null || urlOriginal.isBlank()) return null;
+        try {
+            java.net.URI uri = java.net.URI.create(urlOriginal.trim());
+            if (uri.getHost() == null || uri.getScheme() == null || !uri.getScheme().startsWith("http")) return null;
+            return uri.getScheme() + "://" + uri.getHost() + (uri.getPort() > 0 ? ":" + uri.getPort() : "");
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public ProductoDTO toDto(Producto p) {
