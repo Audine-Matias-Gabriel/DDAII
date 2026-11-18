@@ -1,0 +1,10 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:eq="http://ddaii.com/equivalencias">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <eq:EquivalenciaRequest>
+      <eq:pais>AR</eq:pais>
+      <eq:tipoPrenda>CALZADO</eq:tipoPrenda>
+      <eq:talle>38</eq:talle>
+    </eq:EquivalenciaRequest>
+  </soapenv:Body>
+</soapenv:Envelope>

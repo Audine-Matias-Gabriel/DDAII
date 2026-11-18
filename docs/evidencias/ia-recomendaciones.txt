@@ -1,0 +1,6 @@
+# GET /api/recomendaciones?productoId=1&limite=4 (REST, sincrónico)
+[{"id":47,"nombre":"Zapatillas Topper Grove Hi Hombre","categoria":"CALZADO","precio":50000.0,"imagenUrl":"https://sportline.vteximg.com.br/arquivos/ids/2048212/801030000050183_1.jpg.jpg?v=639234660731300000","puntaje":1.0},{"id":149,"nombre":"Zapatillas Topper Drive 2 Hombre","categoria":"CALZADO","precio":50000.0,"imagenUrl":"https://sportline.vteximg.com.br/arquivos/ids/2045823/801020000026555_1.jpg.jpg?v=639234507878370000","puntaje":1.0},{"id":170,"nombre":"Zapatillas Topper Tennis Tie Break Iii Hombre","categoria":"CALZADO","precio":40000.0,"imagenUrl":"https://sportline.vteximg.com.br/arquivos/ids/2047924/801025000029701_1.jpg.jpg?v=639234652392470000","puntaje":1.0},{"id":28,"nombre":"Zapatillas Topper Tarsh Unisex","categoria":"CALZADO","precio":43440.0,"imagenUrl":"https://sportline.vteximg.com.br/arquivos/ids/2045139/801020000025767_1.jpg.jpg?v=639234480292530000","puntaje":0.8}]
+
+# POST /api/recomendaciones/solicitudes (por cola, asincrónico)
+{"mensaje":"Solicitud de recomendación recibida","solicitudId":"b66ef771-b4fd-40e3-a7e7-49eb9fa4f2d5"}
+[HTTP 202]

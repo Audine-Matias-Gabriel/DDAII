@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch="http://ddaii.com/equivalencias" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://ddaii.com/equivalencias" targetNamespace="http://ddaii.com/equivalencias">
+  <wsdl:types>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://ddaii.com/equivalencias">
+
+    <xs:element name="EquivalenciaRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="pais" type="xs:string"/>
+                <xs:element name="tipoPrenda" type="xs:string"/>
+                <xs:element name="talle" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="EquivalenciaResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="pais" type="xs:string"/>
+                <xs:element name="tipoPrenda" type="xs:string"/>
+                <xs:element name="talle" type="xs:string"/>
+                <xs:element name="equivalencias">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element maxOccurs="unbounded" name="equivalencia">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="paisDestino" type="xs:string"/>
+                                        <xs:element name="talle" type="xs:string"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>
+  </wsdl:types>
+  <wsdl:message name="EquivalenciaResponse">
+    <wsdl:part element="tns:EquivalenciaResponse" name="EquivalenciaResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="EquivalenciaRequest">
+    <wsdl:part element="tns:EquivalenciaRequest" name="EquivalenciaRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="EquivalenciasTallesPort">
+    <wsdl:operation name="Equivalencia">
+      <wsdl:input message="tns:EquivalenciaRequest" name="EquivalenciaRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:EquivalenciaResponse" name="EquivalenciaResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="EquivalenciasTallesPortSoap11" type="tns:EquivalenciasTallesPort">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="Equivalencia">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="EquivalenciaRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="EquivalenciaResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="EquivalenciasTallesPortService">
+    <wsdl:port binding="tns:EquivalenciasTallesPortSoap11" name="EquivalenciasTallesPortSoap11">
+      <soap:address location="http://localhost:8080/ws"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

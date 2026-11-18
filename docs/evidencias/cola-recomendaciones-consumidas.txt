@@ -1,0 +1,8 @@
+# Resultado del consumidor de RecomendacionSolicitada (tabla recomendacion)
+# Cada POST /api/recomendaciones/solicitudes publica un evento; el consumidor lo procesa y guarda esto:
+             solicitud_id             | producto_id |           fecha            | recomendados 
+--------------------------------------+-------------+----------------------------+--------------
+ b66ef771-b4fd-40e3-a7e7-49eb9fa4f2d5 |           1 | 2026-11-18 21:04:31.301151 |            3
+ d995139b-d283-457f-8398-18b69ea7eef4 |           1 | 2026-11-18 20:36:09.207594 |            3
+(2 rows)
+

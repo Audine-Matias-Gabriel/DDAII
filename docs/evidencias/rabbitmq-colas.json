@@ -1,0 +1,59 @@
+[
+  {
+    "cola": "producto.scrapeado.dlq",
+    "mensajes": 0,
+    "consumidores": 0,
+    "publicados": 0,
+    "entregados": 0,
+    "argumentos": {}
+  },
+  {
+    "cola": "producto.scrapeado.queue",
+    "mensajes": 0,
+    "consumidores": 1,
+    "publicados": 1870,
+    "entregados": 1870,
+    "argumentos": {
+      "x-dead-letter-exchange": "tienda.exchange",
+      "x-dead-letter-routing-key": "producto.scrapeado.dlq"
+    }
+  },
+  {
+    "cola": "recomendacion.solicitada.dlq",
+    "mensajes": 0,
+    "consumidores": 0,
+    "publicados": 0,
+    "entregados": 0,
+    "argumentos": {}
+  },
+  {
+    "cola": "recomendacion.solicitada.queue",
+    "mensajes": 0,
+    "consumidores": 1,
+    "publicados": 2,
+    "entregados": 2,
+    "argumentos": {
+      "x-dead-letter-exchange": "tienda.exchange",
+      "x-dead-letter-routing-key": "recomendacion.solicitada.dlq"
+    }
+  },
+  {
+    "cola": "suscripcion.activada.dlq",
+    "mensajes": 0,
+    "consumidores": 0,
+    "publicados": 0,
+    "entregados": 0,
+    "argumentos": {}
+  },
+  {
+    "cola": "suscripcion.activada.queue",
+    "mensajes": 0,
+    "consumidores": 1,
+    "publicados": 2,
+    "entregados": 2,
+    "argumentos": {
+      "x-dead-letter-exchange": "tienda.exchange",
+      "x-dead-letter-routing-key": "suscripcion.activada.dlq"
+    }
+  }
+]

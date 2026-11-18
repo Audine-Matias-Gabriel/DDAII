@@ -2,6 +2,7 @@
 # docs/* (y no docs/) para poder versionar los contratos compartidos con el grupo
 docs/*
 !docs/eventos.md
+!docs/evidencias/
 
 # --- Java / Maven ---
 target/
