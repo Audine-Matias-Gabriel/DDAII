@@ -28,6 +28,11 @@ export const api = {
     return handleResponse(r)
   },
 
+  async getTiendas() {
+    const r = await fetch(`${API_BASE}/api/tiendas`)
+    return handleResponse(r)
+  },
+
   async getProducto(id) {
     const r = await fetch(`${API_BASE}/api/productos/${id}`)
     return handleResponse(r)
@@ -111,6 +116,12 @@ export const api = {
       },
       body: JSON.stringify({ usuarioId })
     })
+    return handleResponse(r)
+  },
+
+  // Precio del plan premium: el mismo que se cobra en Mercado Pago (público)
+  async getPlanPremium() {
+    const r = await fetch(`${API_BASE}/api/suscripciones/plan`)
     return handleResponse(r)
   },
 

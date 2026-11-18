@@ -46,6 +46,13 @@ class MercadoPagoGatewayTest {
     }
 
     @Test
+    void exponeElMismoPrecioQueCobra() {
+        // Planes muestra este precio (GET /api/suscripciones/plan): tiene que ser el que va a Mercado Pago.
+        assertThat(new MercadoPagoGateway("t", PRECIO, "http://localhost:5173").precioPremium())
+                .isEqualByComparingTo(PRECIO);
+    }
+
+    @Test
     void conAccessTokenNuloFallaIgual() {
         MercadoPagoGateway gateway =
                 new MercadoPagoGateway(null, PRECIO, "http://localhost:5173");

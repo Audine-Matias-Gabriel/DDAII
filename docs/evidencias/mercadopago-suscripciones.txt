@@ -1,0 +1,8 @@
+ suscripcion | usuario_id |  estado   |   id_pago    | premium 
+-------------+------------+-----------+--------------+---------
+           2 |          3 | PENDIENTE |              | f
+           3 |          4 | PENDIENTE |              | t
+           4 |          4 | APROBADA  | 190338481640 | t
+           5 |          4 | APROBADA  | 189315686190 | t
+(4 rows)
+

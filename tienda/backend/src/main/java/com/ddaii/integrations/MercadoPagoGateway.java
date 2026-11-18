@@ -47,6 +47,11 @@ public class MercadoPagoGateway {
         this.frontendUrl = frontendUrl;
     }
 
+    /** Precio que se cobra por el plan premium (mp.premium-precio), en ARS. */
+    public BigDecimal precioPremium() {
+        return precioPremium;
+    }
+
     /** Pago consultado: su estado en Mercado Pago y la suscripción a la que pertenece. */
     public record PagoConsultado(String idPago, String estado, String suscripcionRef) {}
 

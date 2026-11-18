@@ -2,6 +2,7 @@ package com.ddaii.config;
 
 import com.ddaii.security.TokenAuthFilter;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -39,6 +40,10 @@ public class SecurityConfig {
                 // Catálogo y recomendaciones públicos (invitado puede navegar)
                 .requestMatchers("/api/productos/**", "/api/recomendaciones/**").permitAll()
                 .requestMatchers("/api/productos/{id}/similares").permitAll()
+                // Lista de tiendas para el filtro del catálogo (público como el catálogo)
+                .requestMatchers(HttpMethod.GET, "/api/tiendas").permitAll()
+                // Precio del plan premium para la página Planes
+                .requestMatchers(HttpMethod.GET, "/api/suscripciones/plan").permitAll()
                 // Swagger y documentación
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/v3/api-docs").permitAll()
                 // SOAP

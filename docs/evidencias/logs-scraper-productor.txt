@@ -1,0 +1,9 @@
+[Scheduler] Programado "0 2 * * *" (America/Argentina/Buenos_Aires). Tiendas: SPORTLINE, GRID
+[Scheduler] Inicio (--run-now): Sportline, Grid
+[Sportline] Extraídos: 300. Descartados: 27 (sin categoría: 27). Válidos: 273
+[Sportline] Guardado /app/output/sportline.json
+[Sportline] Eventos confirmados: 273 (origen: api)
+[Grid] Extraídos: 300. Descartados: 38 (sin categoría: 38). Válidos: 262
+[Grid] Guardado /app/output/grid.json
+[Grid] Eventos confirmados: 262 (origen: api)
+[Scheduler] Fin
