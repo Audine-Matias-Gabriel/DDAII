@@ -47,6 +47,12 @@ export default function Plans({ navigate }) {
     }
   }
 
+  // Al entrar a Planes se pide el usuario al backend: premium puede haber
+  // cambiado desde el login (por ejemplo, en otra pestaña).
+  useEffect(() => {
+    if (isAuthenticated) restoreSession()
+  }, [isAuthenticated])
+
   // Al entrar a Planes y al volver a la pestaña (por ejemplo, después de
   // pagar en Mercado Pago).
   useEffect(() => {
@@ -77,6 +83,8 @@ export default function Plans({ navigate }) {
       }
     } catch (e) {
       mostrar(e.message || 'Error al crear el pago premium.', true)
+      // Si el backend dice que ya es premium, se actualiza el usuario y el botón se bloquea.
+      restoreSession()
     } finally {
       setLoading(false)
     }

@@ -11,11 +11,24 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const storedToken = localStorage.getItem('token')
     const storedUser = localStorage.getItem('user')
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+    if (!storedToken || !storedUser) {
+      setLoading(false)
+      return
     }
+    setToken(storedToken)
+    setUser(JSON.parse(storedUser))
     setLoading(false)
+
+    // El usuario guardado es una foto del momento del login: si después se
+    // hizo premium, localStorage sigue diciendo premium=false. Se refresca
+    // desde el backend; si falla (backend caído), queda el guardado.
+    api.me()
+      .then((data) => {
+        const actual = data.usuario || data.user || data
+        setUser(actual)
+        localStorage.setItem('user', JSON.stringify(actual))
+      })
+      .catch(() => {})
   }, [])
 
   const saveSession = useCallback((tokenValue, userValue) => {
