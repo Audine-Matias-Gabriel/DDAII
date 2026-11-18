@@ -136,15 +136,24 @@ del `MP_ACCESS_TOKEN`. En local Mercado Pago no vuelve solo a la tienda: volvé 
 
 Ximilar guarda cada imagen con el **id que el producto tiene en tu base de datos** (`producto-<id>`).
 Cada PC tiene su propia base y numera los productos distinto, así que **una colección de Ximilar sirve
-para una sola base de datos**. Si dos PCs usan la misma colección, en la segunda las imágenes figuran
-como ya subidas y los similares muestran productos equivocados.
+para una sola base de datos**. **No compartas tu token ni tu colección con otra PC:**
+
+- En la otra PC los similares salen equivocados: busca con tus imágenes y devuelve ids que en su base
+  son otros productos.
+- La otra PC sube sola sus imágenes cada 10 minutos: agrega sus productos a tu colección y, si cambia la
+  imagen de un producto, **borra y reemplaza tu registro** con ese id. Tus similares también se rompen.
+- Gastan los mismos créditos (1.000 por mes para toda la cuenta), y el token da acceso a toda la cuenta.
 
 En una PC que no es la que cargó la colección del equipo, elegí una:
 
-- **Sin Ximilar** (alcanza para desarrollar): dejá `XIMILAR_API_KEY` vacío o poné `XIMILAR_MOCK=true`.
-  "Similares" usa el respaldo por categoría.
-- **Con tu propia colección:** creá una colección de Product Similarity en https://app.ximilar.com y usá
-  ese `XIMILAR_COLLECTION_ID`. El catálogo se sube solo (unos 134 créditos de los 1.000 del mes gratuito).
+- **Sin Ximilar** (alcanza para desarrollar y probar): dejá `XIMILAR_API_KEY` vacío o poné
+  `XIMILAR_MOCK=true`. "Similares" usa el respaldo por categoría y todo lo demás anda igual.
+- **Con tu propia cuenta de Ximilar:** creá una cuenta gratuita en https://app.ximilar.com, una colección
+  de Product Similarity, y usá **tu** token y **tu** `XIMILAR_COLLECTION_ID`. Tiene que ser una cuenta
+  aparte: el plan gratuito permite **una sola colección por cuenta**, así que no se puede crear otra en la
+  cuenta del equipo. El catálogo se sube solo (unos 134 créditos de los 1.000 del mes).
+
+Para la demo con Ximilar real, usá la PC que cargó la colección del equipo.
 
 ### Apagar, prender y empezar de cero
 
@@ -157,8 +166,9 @@ En una PC que no es la que cargó la colección del equipo, elegí una:
 | **Empezar de cero** (borra la base: usuarios, suscripciones, productos) | `docker compose down -v` |
 
 > ⚠️ `docker compose down -v` borra la base de datos. Si esa PC tiene Ximilar activo, la base nueva numera
-> los productos distinto y la colección queda desincronizada: hay que usar una colección nueva (o vaciarla)
-> después de empezar de cero.
+> los productos distinto y la colección queda desincronizada: después de empezar de cero hay que vaciar la
+> colección (con el plan gratuito no se puede crear otra en la misma cuenta). Si no hace falta empezar de
+> cero, usá `docker compose down` sin `-v`.
 
 ### Si algo no anda
 
