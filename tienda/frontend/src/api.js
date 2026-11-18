@@ -15,7 +15,8 @@ function authHeaders() {
 async function handleResponse(r) {
   if (!r.ok) {
     const err = await r.json().catch(() => ({}))
-    throw new Error(err.error || err.message || `Error ${r.status}`)
+    // El backend responde { estado, error, mensaje, ruta }: "mensaje" es el texto para el usuario
+    throw new Error(err.mensaje || err.error || err.message || `Error ${r.status}`)
   }
   return r.json()
 }

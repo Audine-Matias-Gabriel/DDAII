@@ -35,6 +35,8 @@ public class ProductoController {
             @RequestParam(required = false) String texto,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamano) {
+        if (pagina < 0) throw new IllegalArgumentException("'pagina' no puede ser negativa");
+        if (tamano < 1 || tamano > 100) throw new IllegalArgumentException("'tamano' tiene que estar entre 1 y 100");
         Pageable pageable = PageRequest.of(pagina, tamano);
         return PageResponse.from(productoService.filtrar(
                 categoria, tienda, genero, precioMin, precioMax, texto, pageable));
