@@ -169,9 +169,13 @@ public class XimilarClient {
                 : Map.of("_url", imagenUrl));
         body.put("k", Math.max(1, Math.min(limite + 1, 30)));
         body.put("fields_to_return", List.of("_id", "product_id"));
+        // $exists deja afuera registros viejos de la colección que no son productos del catálogo.
+        Map<String, Object> condicionTienda = new LinkedHashMap<>();
+        condicionTienda.put("$exists", true);
         if (excluirTiendaId != null) {
-            body.put("filter", Map.of("tienda_id", Map.of("$ne", excluirTiendaId)));
+            condicionTienda.put("$ne", excluirTiendaId);
         }
+        body.put("filter", Map.of("tienda_id", condicionTienda));
 
         try {
             JsonNode respuesta = post("/visualKNN", body);

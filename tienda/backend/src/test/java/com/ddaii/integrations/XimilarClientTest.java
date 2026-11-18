@@ -61,6 +61,7 @@ class XimilarClientTest {
         server.expect(requestTo(BASE + "/similarity/products-new/v2/visualKNN"))
                 .andExpect(jsonPath("$.query_record._id").value("producto-1"))
                 .andExpect(jsonPath("$.filter.tienda_id.$ne").value(1))
+                .andExpect(jsonPath("$.filter.tienda_id.$exists").value(true))
                 .andRespond(withSuccess("""
                         {"status":{"code":200,"text":"OK"},
                          "answer_records":[{"_id":"producto-300","product_id":"300"},
