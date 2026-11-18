@@ -1,34 +1,21 @@
 name: CI
 
+# Corre en todo Pull Request (el equipo integra en try-nuevo y después en main)
+# y en cada push a las ramas de integración.
 on:
   push:
-    branches: [ main ]
+    branches: [ main, try-nuevo ]
   pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  backend:
+    name: Backend (mvn test)
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: webropa
-          POSTGRES_PASSWORD: webropa
-          POSTGRES_DB: webropa
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U webropa -d webropa"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      rabbitmq:
-        image: rabbitmq:3-management-alpine
-        env:
-          RABBITMQ_DEFAULT_USER: guest
-          RABBITMQ_DEFAULT_PASS: guest
-        ports: ["5672:5672"]
-
     steps:
       - uses: actions/checkout@v4
 
@@ -37,28 +24,49 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          cache: maven
+
+      # Los tests son unitarios (Mockito/MockMvc): no necesitan Postgres ni RabbitMQ.
+      - name: mvn test
+        run: mvn -B test
+        working-directory: tienda/backend
+
+  frontend:
+    name: Frontend (npm test + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Backend tests (mvn test)
-        run: mvn -B test
-        working-directory: tienda/backend
-        env:
-          DB_URL: jdbc:postgresql://localhost:5432/webropa
-          DB_USER: webropa
-          DB_PASSWORD: webropa
-          RABBIT_URI_HOST: localhost
-          RABBIT_URI_PORT: 5672
-          RABBIT_URI_USERNAME: guest
-          RABBIT_URI_PASSWORD: guest
+      - name: npm install
+        run: npm install --no-audit --no-fund
+        working-directory: tienda/frontend
 
-      - name: Frontend tests (npm test)
+      - name: npm test
         run: npm test
         working-directory: tienda/frontend
 
-      - name: Scraper tests (npm ci && npm test)
+      - name: npm run build
+        run: npm run build
+        working-directory: tienda/frontend
+
+  scraper:
+    name: Scraper (npm test, sin internet)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: tienda/scraper/package-lock.json
+
+      - name: npm ci && npm test
         run: npm ci && npm test
         working-directory: tienda/scraper

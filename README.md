@@ -97,8 +97,9 @@ Documentación interactiva y ejemplos en Swagger UI. 🔒 = requiere `Authorizat
 | GET | `/api/productos/disponibles` | Todos los productos con stock |
 | GET | `/api/productos/{id}/similares?limite=` | Prendas parecidas de otra tienda (Ximilar; `origen` indica si vino de Ximilar o del respaldo) |
 | GET | `/api/tiendas` | Tiendas del catálogo |
-| GET | `/api/recomendaciones?productoId=&limite=` | Recomendaciones por contenido (IA, sincrónico) |
+| GET | `/api/recomendaciones?productoId=&limite=&estrategia=` | Recomendaciones (IA, sincrónico). `estrategia`: `contenido` (parecidas) o `complementaria` (arma un conjunto). Ver [docs/ia.md](docs/ia.md) |
 | POST | `/api/recomendaciones/solicitudes` | Pide recomendaciones por cola: responde 202 y publica `RecomendacionSolicitada` |
+| GET | `/api/recomendaciones/solicitudes/{solicitudId}` | Resultado que guardó el consumidor de la cola (404 mientras no se procesó) |
 | GET | `/api/suscripciones/plan` | Precio del plan premium (el que se cobra en Mercado Pago) |
 | POST 🔒 | `/api/suscripciones` | Crea el pago premium y devuelve la URL de Mercado Pago |
 | POST 🔒 | `/api/suscripciones/{id}/confirmar?paymentId=` | Confirma el pago al volver de Mercado Pago |
