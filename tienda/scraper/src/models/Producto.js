@@ -1,20 +1,25 @@
-function createProducto(data) {
+/**
+ * Producto final, ya normalizado. Es lo que se guarda en output/<tienda>.json
+ * y lo que se convierte en el evento ProductoScrapeado.
+ */
+function crearProducto(datos) {
   return {
-    id: null,
-    idExterno: String(data.idExterno),
-    nombre: data.nombre || "",
-    descripcion: data.descripcion || "",
-    precio: Number(data.precio || 0),
-    categoria: data.categoria || "Sin categoría",
-    genero: data.genero || "No especificado",
-    marca: data.marca || "Sin marca",
-    tienda: data.tienda,
-    urlOriginal: data.urlOriginal || "",
-    imagenUrl: data.imagenUrl || "",
-    disponible: Boolean(data.disponible),
-    tallesDisponibles: Array.isArray(data.tallesDisponibles)
-      ? [...new Set(data.tallesDisponibles.map(String))]
+    idExterno: String(datos.idExterno),
+    nombre: String(datos.nombre || ""),
+    descripcion: String(datos.descripcion || ""),
+    precio: Number(datos.precio),
+    categoria: datos.categoria,
+    genero: datos.genero,
+    marca: datos.marca || "Sin marca",
+    tiendaId: datos.tiendaId,
+    tienda: datos.tienda,
+    urlOriginal: datos.urlOriginal || "",
+    imagenUrl: datos.imagenUrl || "",
+    disponible: Boolean(datos.disponible),
+    tallesDisponibles: Array.isArray(datos.tallesDisponibles)
+      ? [...new Set(datos.tallesDisponibles.map(String))]
       : []
   };
 }
-module.exports = { createProducto };
+
+module.exports = { crearProducto };
