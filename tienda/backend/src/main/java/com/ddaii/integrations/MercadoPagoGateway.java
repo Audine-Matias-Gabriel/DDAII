@@ -90,6 +90,11 @@ public class MercadoPagoGateway {
         if (usaAutoReturn()) {
             builder.autoReturn("approved");
         }
+        // Webhook: solo con un backend público (por ejemplo, con ngrok). En local el pago se detecta
+        // al volver a /pago/exito o con "Verificar pago" en Planes.
+        if (notificationUrl() != null) {
+            builder.notificationUrl(notificationUrl());
+        }
         PreferenceRequest request = builder.build();
 
         MPRequestOptions opciones = MPRequestOptions.builder()
@@ -165,8 +170,26 @@ public class MercadoPagoGateway {
 
     /** Mercado Pago solo acepta auto_return con back URLs públicas (no localhost). */
     boolean usaAutoReturn() {
-        return frontendUrl != null && frontendUrl.startsWith("https://")
-                && !frontendUrl.contains("localhost") && !frontendUrl.contains("127.0.0.1");
+        return esUrlPublica(frontendUrl);
+    }
+
+    static boolean esUrlPublica(String url) {
+        return url != null && url.startsWith("https://")
+                && !url.contains("localhost") && !url.contains("127.0.0.1");
+    }
+
+    /** URL pública del backend (MP_NOTIFICATION_BASE_URL) para que Mercado Pago mande el webhook. */
+    @Value("${mp.notification-base-url:}")
+    private String notificationBaseUrl = "";
+
+    void setNotificationBaseUrl(String url) {
+        this.notificationBaseUrl = url;
+    }
+
+    /** {base}/api/suscripciones/webhook si la base es https pública; null si no (Mercado Pago no llega a localhost). */
+    String notificationUrl() {
+        if (!esUrlPublica(notificationBaseUrl)) return null;
+        return notificationBaseUrl.replaceAll("/+$", "") + "/api/suscripciones/webhook";
     }
 
     private MPRequestOptions opciones() {
