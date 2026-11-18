@@ -14,15 +14,13 @@ más `p1/filtros-tienda-precio`). Una fila por requisito de la consigna.
 | 7 | IA por REST y por cola | Recomendaciones por contenido: `GET /api/recomendaciones` (sincrónico) y `POST /api/recomendaciones/solicitudes` (asincrónico, 202) | [ia-recomendaciones.txt](ia-recomendaciones.txt), [cola-recomendaciones-consumidas.txt](cola-recomendaciones-consumidas.txt), [07-front-recomendaciones-y-similares.jpg](07-front-recomendaciones-y-similares.jpg) |
 | 8 | Errores y configuración externa | Error manejado por `@RestControllerAdvice`: 404 con `{"error": ...}` | [error-ejemplo.txt](error-ejemplo.txt) |
 | 9 | Frontend para la demo | Catálogo con filtros (Remera + Grid), detalle con "Ver en tienda oficial", "Te puede gustar", "Prendas similares en otras tiendas" y Planes | [05-front-catalogo-filtrado.jpg](05-front-catalogo-filtrado.jpg), [06-front-detalle-ver-en-tienda.jpg](06-front-detalle-ver-en-tienda.jpg), [07-front-recomendaciones-y-similares.jpg](07-front-recomendaciones-y-similares.jpg), [08-front-planes.jpg](08-front-planes.jpg) |
+| 10 | Segunda API externa (Ximilar) | Catálogo subido a la colección de Product Similarity (537 imágenes, ~134 créditos) y similares reales por `visualKNN`: para unas zapatillas negras con suela caramelo de Sportline devuelve zapatillas parecidas de Grid (`origen: "ximilar"`) | [09-front-similares-ximilar.jpg](09-front-similares-ximilar.jpg), [ximilar-respuesta-real.json](ximilar-respuesta-real.json), [ximilar-similares.txt](ximilar-similares.txt), [ximilar-indexado.txt](ximilar-indexado.txt) |
 
 ## Falta (no se puede generar automáticamente)
 
 - **Captura del checkout de Mercado Pago (sandbox)** con la cuenta compradora de prueba, y la de
   Planes diciendo "Ya sos premium" después de pagar. Las tiene que sacar quien tiene las cuentas de prueba.
 - **Video de 2 a 3 minutos** del flujo completo (guion abajo).
-- **Ximilar (2.ª API externa, P3):** hoy "similares" usa el respaldo (productos de la otra tienda),
-  porque el backend corre sin `XIMILAR_API_KEY` y las imágenes no se subieron a la colección.
-  Cuando esté, agregar una respuesta real guardada.
 
 ## Guion del video (2 a 3 minutos)
 
