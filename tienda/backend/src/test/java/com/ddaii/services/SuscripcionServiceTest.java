@@ -154,37 +154,77 @@ class SuscripcionServiceTest {
     }
 
     @Test
-    void confirmarPagoAprobadoPublicaEventoSinMarcarPremiumDirecto() {
+    void webhookConPagoAprobadoApruebaYPublicaEventoSinMarcarPremiumDirecto() {
         Usuario u = new Usuario("Juan", "juan@test.com", "hash");
         u.setId(1L);
         u.setPremium(false);
-
-        com.ddaii.domain.Suscripcion s = new com.ddaii.domain.Suscripcion(u, "PENDIENTE", "MP-1");
+        com.ddaii.domain.Suscripcion s = new com.ddaii.domain.Suscripcion(u, "PENDIENTE", null);
         s.setId(10L);
 
-        when(suscripcionRepository.findByIdPago("MP-1")).thenReturn(java.util.Optional.of(s));
+        when(mercadoPagoGateway.consultarPago(555L))
+                .thenReturn(new MercadoPagoGateway.PagoConsultado("555", "approved", "10"));
+        when(suscripcionRepository.findById(10L)).thenReturn(java.util.Optional.of(s));
         when(suscripcionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        suscripcionService.confirmarPago("MP-1", true);
+        var estado = suscripcionService.procesarNotificacionPago(555L);
 
-        assertEquals("APROBADA", s.getEstado());
-        assertFalse(u.getPremium());
-        verify(eventPublisher, times(1)).publicarSuscripcionActivada(1L, 10L, "MP-1");
+        assertEquals(java.util.Optional.of("APROBADA"), estado);
+        assertEquals("555", s.getIdPago());
+        assertFalse(u.getPremium()); // premium lo marca el consumidor de SuscripcionActivada
+        verify(eventPublisher, times(1)).publicarSuscripcionActivada(1L, 10L, "555");
     }
 
     @Test
-    void confirmarPagoDuplicadoNoRepublicaEvento() {
+    void webhookRepetidoNoRepublicaEvento() {
         Usuario u = new Usuario("Juan", "juan@test.com", "hash");
         u.setId(1L);
-
-        com.ddaii.domain.Suscripcion s = new com.ddaii.domain.Suscripcion(u, "APROBADA", "MP-1");
+        com.ddaii.domain.Suscripcion s = new com.ddaii.domain.Suscripcion(u, "APROBADA", "555");
         s.setId(10L);
 
-        when(suscripcionRepository.findByIdPago("MP-1")).thenReturn(java.util.Optional.of(s));
+        when(mercadoPagoGateway.consultarPago(555L))
+                .thenReturn(new MercadoPagoGateway.PagoConsultado("555", "approved", "10"));
+        when(suscripcionRepository.findById(10L)).thenReturn(java.util.Optional.of(s));
 
-        suscripcionService.confirmarPago("MP-1", true);
+        suscripcionService.procesarNotificacionPago(555L);
 
         verify(eventPublisher, never()).publicarSuscripcionActivada(any(), any(), any());
+    }
+
+    @Test
+    void webhookConPagoRechazadoDejaLaSuscripcionPendiente() {
+        Usuario u = new Usuario("Juan", "juan@test.com", "hash");
+        u.setId(1L);
+        com.ddaii.domain.Suscripcion s = new com.ddaii.domain.Suscripcion(u, "PENDIENTE", null);
+        s.setId(10L);
+
+        when(mercadoPagoGateway.consultarPago(556L))
+                .thenReturn(new MercadoPagoGateway.PagoConsultado("556", "rejected", "10"));
+        when(suscripcionRepository.findById(10L)).thenReturn(java.util.Optional.of(s));
+
+        assertEquals(java.util.Optional.of("PENDIENTE"), suscripcionService.procesarNotificacionPago(556L));
+        verify(eventPublisher, never()).publicarSuscripcionActivada(any(), any(), any());
+    }
+
+    @Test
+    void webhookDeUnPagoAjenoSeIgnora() {
+        when(mercadoPagoGateway.consultarPago(777L))
+                .thenReturn(new MercadoPagoGateway.PagoConsultado("777", "approved", "otra-cosa"));
+
+        assertTrue(suscripcionService.procesarNotificacionPago(777L).isEmpty());
+        verify(suscripcionRepository, never()).save(any());
+    }
+
+    @Test
+    void estadoDeUnaSuscripcionAjenaEs404() {
+        Usuario duenio = new Usuario("Ana", "ana@test.com", "hash");
+        duenio.setId(2L);
+        com.ddaii.domain.Suscripcion s = new com.ddaii.domain.Suscripcion(duenio, "APROBADA", "1");
+        s.setId(10L);
+        when(suscripcionRepository.findById(10L)).thenReturn(java.util.Optional.of(s));
+
+        assertThrows(com.ddaii.exceptions.RecursoNoEncontradoException.class,
+                () -> suscripcionService.estado(1L, 10L));
+        assertEquals("APROBADA", suscripcionService.estado(2L, 10L).getEstado());
     }
 
     @Test
