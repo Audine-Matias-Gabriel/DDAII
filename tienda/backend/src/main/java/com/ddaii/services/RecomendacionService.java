@@ -195,13 +195,38 @@ public class RecomendacionService {
         List<RecomendacionDTO> recomendar(Producto entrada, List<Producto> candidatos, int limite);
     }
 
-    /** Las prendas más parecidas a la de entrada. */
+    /** Nombre para comparar variantes (la misma prenda en otro color tiene otro id pero el mismo nombre). */
+    static String claveNombre(Producto p) {
+        if (p.getNombre() == null || p.getNombre().isBlank()) {
+            return "id:" + p.getId() + ":" + System.identityHashCode(p); // sin nombre: no se compara
+        }
+        return p.getNombre().trim().toLowerCase().replaceAll("\\s+", " ");
+    }
+
+    /** Saca variantes repetidas y la misma prenda de entrada, respetando el orden. */
+    static List<Producto> sinRepetidos(Producto entrada, List<Producto> ordenados) {
+        java.util.Set<String> vistos = new java.util.HashSet<>();
+        vistos.add(claveNombre(entrada));
+        List<Producto> resultado = new ArrayList<>();
+        for (Producto p : ordenados) {
+            if (vistos.add(claveNombre(p))) resultado.add(p);
+        }
+        return resultado;
+    }
+
+    /**
+     * Las prendas más parecidas a la de entrada. El género tiene que combinar (mismo o Unisex):
+     * a una calza de mujer no se le recomienda un short de hombre aunque sea de la misma marca.
+     */
     public static class RecomendacionPorContenido implements EstrategiaRecomendacion {
         @Override
         public List<RecomendacionDTO> recomendar(Producto entrada, List<Producto> candidatos, int limite) {
-            return candidatos.stream()
+            List<Producto> ordenados = candidatos.stream()
                     .filter(p -> puntaje(entrada, p) > 0)
+                    .filter(p -> entrada.getGenero() == null || afinidadGenero(entrada.getGenero(), p.getGenero()) > 0)
                     .sorted(orden(entrada, p -> puntaje(entrada, p)))
+                    .toList();
+            return sinRepetidos(entrada, ordenados).stream()
                     .limit(limite)
                     .map(p -> toDto(entrada, p, puntaje(entrada, p)))
                     .collect(Collectors.toList());
@@ -221,11 +246,11 @@ public class RecomendacionService {
 
             List<List<Producto>> porCategoria = new ArrayList<>();
             for (String c : combinan) {
-                porCategoria.add(candidatos.stream()
+                porCategoria.add(sinRepetidos(entrada, candidatos.stream()
                         .filter(p -> igual(p.getCategoria(), c))
                         .filter(p -> afinidadGenero(entrada.getGenero(), p.getGenero()) > 0)
                         .sorted(orden(entrada, p -> puntajeConjunto(entrada, p)))
-                        .toList());
+                        .toList()));
             }
 
             List<RecomendacionDTO> resultado = new ArrayList<>();

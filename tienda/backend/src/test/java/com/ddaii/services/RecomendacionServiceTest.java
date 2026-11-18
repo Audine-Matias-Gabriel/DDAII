@@ -171,6 +171,38 @@ class RecomendacionServiceTest {
     }
 
     @Test
+    void contenidoNoMezclaGenerosQueNoCombinan() {
+        // Caso real de la validación: a una calza adidas de mujer se le recomendaba un short adidas de hombre.
+        Producto calzaMujer = conId("PANTALON", "Mujer", "ADIDAS", 59999.0);
+        Producto shortHombre = conId("PANTALON", "Hombre", "ADIDAS", 49999.0);
+        Producto calzaMujerOtra = conId("PANTALON", "Mujer", "Atomik", 44900.0);
+        Producto shortUnisex = conId("PANTALON", "Unisex", "Topper", 15599.0);
+
+        List<RecomendacionDTO> r = new RecomendacionService.RecomendacionPorContenido()
+                .recomendar(calzaMujer, List.of(shortHombre, calzaMujerOtra, shortUnisex), 5);
+
+        assertEquals(List.of(calzaMujerOtra.getId(), shortUnisex.getId()),
+                r.stream().map(RecomendacionDTO::getId).toList());
+    }
+
+    @Test
+    void noRepiteVariantesConElMismoNombreNiLaPrendaDeEntrada() {
+        Producto entrada = conId("REMERA", "Hombre", "NBA", 24999.0);
+        entrada.setNombre("REMERA NBA CHICAGO BULLS HOMBRE");
+        Producto mismaOtroColor = conId("REMERA", "Hombre", "NBA", 24999.0);
+        mismaOtroColor.setNombre("Remera NBA Chicago Bulls Hombre");
+        Producto lakers1 = conId("REMERA", "Hombre", "NBA", 24999.0);
+        lakers1.setNombre("REMERA NBA LOS ANGELES LAKERS HOMBRE");
+        Producto lakers2 = conId("REMERA", "Hombre", "NBA", 24999.0);
+        lakers2.setNombre("REMERA NBA LOS ANGELES LAKERS HOMBRE");
+
+        List<RecomendacionDTO> r = new RecomendacionService.RecomendacionPorContenido()
+                .recomendar(entrada, List.of(mismaOtroColor, lakers1, lakers2), 5);
+
+        assertEquals(List.of(lakers1.getId()), r.stream().map(RecomendacionDTO::getId).toList());
+    }
+
+    @Test
     void elLimiteSeValida() {
         assertEquals(5, RecomendacionService.normalizarLimite(null));
         assertEquals(20, RecomendacionService.normalizarLimite(20));
