@@ -44,6 +44,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/tiendas").permitAll()
                 // Precio del plan premium para la página Planes
                 .requestMatchers(HttpMethod.GET, "/api/suscripciones/plan").permitAll()
+                // Webhook de Mercado Pago: lo llama Mercado Pago sin sesión (el pago se verifica contra su API)
+                .requestMatchers(HttpMethod.POST, "/api/suscripciones/webhook").permitAll()
                 // Swagger y documentación
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/v3/api-docs").permitAll()
                 // SOAP

@@ -48,6 +48,10 @@ mp:
   base-url: ${MP_BASE_URL:https://api.mercadopago.com}
   # Precio del plan premium en pesos argentinos
   premium-precio: ${MP_PREMIUM_PRECIO:5000}
+  # Clave secreta del webhook (Tus integraciones → Webhooks). Si está, se valida x-signature
+  webhook-secret: ${MP_WEBHOOK_SECRET:}
+  # URL pública del backend (https). Si está, la preferencia manda notification_url = <url>/api/suscripciones/webhook
+  notification-base-url: ${MP_NOTIFICATION_BASE_URL:}
 
 # Ximilar (plan gratuito: no usar tagging en estos 10 días)
 ximilar:

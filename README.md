@@ -104,8 +104,8 @@ Documentación interactiva y ejemplos en Swagger UI. 🔒 = requiere `Authorizat
 | POST 🔒 | `/api/suscripciones` | Crea el pago premium y devuelve la URL de Mercado Pago |
 | POST 🔒 | `/api/suscripciones/{id}/confirmar?paymentId=` | Confirma el pago al volver de Mercado Pago |
 | POST 🔒 | `/api/suscripciones/verificar` | Busca en Mercado Pago pagos aprobados de las suscripciones pendientes |
-| GET 🔒 | `/api/suscripciones/{id}/estado` | Estado de una suscripción |
-| POST 🔒 | `/api/suscripciones/webhook?idPago=` | Confirmación simulada de un pago ya registrado |
+| GET 🔒 | `/api/suscripciones/{id}/estado` | Estado de una suscripción propia |
+| POST | `/api/suscripciones/webhook` | Webhook de Mercado Pago (`type=payment&data.id=`): consulta el pago y aprueba la suscripción. Ver [docs/pagos.md](docs/pagos.md) |
 | GET 🔒 / POST 🔒 / DELETE 🔒 | `/api/favoritos`, `/api/favoritos/{productoId}` | Favoritos del usuario |
 | POST 🔒 | `/api/similares/indexar?maximo=` | Sube a Ximilar las imágenes pendientes del catálogo |
 | POST | `/ws` (SOAP) | Equivalencias de talles (ver abajo) |

@@ -129,21 +129,36 @@ public class SuscripcionService {
     }
 
     /**
-     * Webhook de Mercado Pago: consulta el estado y publica SuscripcionActivada.
+     * Webhook de Mercado Pago: llega solo el id del pago. Se consulta el pago a la API
+     * (no se confía en la notificación), se busca la suscripción por external_reference y,
+     * si está aprobado, se aprueba y se publica SuscripcionActivada. Idempotente: Mercado
+     * Pago reintenta las notificaciones y una suscripción ya aprobada no republica el evento.
+     *
+     * @return el estado en que quedó la suscripción, o vacío si el pago no es de una suscripción nuestra.
      */
     @Transactional
-    public void confirmarPago(String idPago, boolean aprobado) {
-        Suscripcion s = suscripcionRepository.findByIdPago(idPago)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Pago no encontrado: " + idPago));
-
-        if (!aprobado || "APROBADA".equals(s.getEstado())) {
-            return;
+    public Optional<String> procesarNotificacionPago(Long paymentId) {
+        PagoConsultado pago = mercadoPagoGateway.consultarPago(paymentId);
+        Long suscripcionId;
+        try {
+            suscripcionId = Long.parseLong(String.valueOf(pago.suscripcionRef()).trim());
+        } catch (NumberFormatException e) {
+            return Optional.empty(); // pago de otra cosa (sin external_reference nuestro)
         }
-
-        s.setEstado("APROBADA");
-        suscripcionRepository.save(s);
-
-        eventPublisher.publicarSuscripcionActivada(s.getUsuario().getId(), s.getId(), s.getIdPago());
+        Optional<Suscripcion> encontrada = suscripcionRepository.findById(suscripcionId);
+        if (encontrada.isEmpty()) {
+            return Optional.empty();
+        }
+        Suscripcion s = encontrada.get();
+        if ("APROBADA".equals(s.getEstado())) {
+            return Optional.of(s.getEstado());
+        }
+        // Solo se aprueba: un rechazo no cierra la suscripción porque el comprador puede
+        // reintentar con otra tarjeta en el mismo checkout (llega otra notificación).
+        if ("approved".equals(pago.estado())) {
+            s = aprobar(s, pago.idPago());
+        }
+        return Optional.of(s.getEstado());
     }
 
     /**
@@ -162,9 +177,11 @@ public class SuscripcionService {
         usuarioRepository.save(u);
     }
 
+    /** Estado de una suscripción del usuario de la sesión (una ajena responde 404). */
     @Transactional(readOnly = true)
-    public SuscripcionDTO estado(Long id) {
+    public SuscripcionDTO estado(Long usuarioId, Long id) {
         Suscripcion s = suscripcionRepository.findById(id)
+                .filter(x -> x.getUsuario().getId().equals(usuarioId))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Suscripción no encontrada: " + id));
         return new SuscripcionDTO(s.getId(), s.getUsuario().getId(), s.getEstado(), s.getIdPago(), s.getFecha());
     }
