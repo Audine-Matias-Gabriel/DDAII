@@ -58,3 +58,7 @@ jobs:
       - name: Frontend tests (npm test)
         run: npm test
         working-directory: tienda/frontend
+
+      - name: Scraper tests (npm ci && npm test)
+        run: npm ci && npm test
+        working-directory: tienda/scraper
