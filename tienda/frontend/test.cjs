@@ -132,5 +132,43 @@ test('existe Dockerfile del frontend (build Vite)', () => {
   assert(df.includes('serve'), 'falta servidor estático en Dockerfile');
 });
 
-console.log(`\n${passed} prueba(s) pasada(s), ${failed} fallida(s).`);
-process.exit(failed > 0 ? 1 : 0);
+// --- Pruebas que ejecutan módulos ESM (import dinámico) ---
+
+async function testsAsync() {
+  const { pathToFileURL } = require('url');
+  const { armarQuery } = await import(
+    pathToFileURL(path.join(__dirname, 'src', 'query.js')).href
+  );
+
+  test('armarQuery descarta filtros undefined, null y vacíos', () => {
+    const q = armarQuery({ texto: undefined, categoria: null, genero: '', pagina: 0 });
+    assert(!q.includes('undefined'), `query con "undefined": ${q}`);
+    assert(!q.includes('null'), `query con "null": ${q}`);
+    assert(q === 'pagina=0', `se esperaba "pagina=0" y salió "${q}"`);
+  });
+
+  test('armarQuery conserva los filtros con valor', () => {
+    const q = armarQuery({ categoria: 'remeras', genero: 'mujer', texto: undefined });
+    assert(q === 'categoria=remeras&genero=mujer', `salió "${q}"`);
+  });
+
+  test('armarQuery sin filtros devuelve string vacío', () => {
+    assert(armarQuery({ texto: undefined }) === '', 'debería ser ""');
+    assert(armarQuery() === '', 'debería ser "" sin params');
+  });
+
+  test('api.getProductos usa armarQuery', () => {
+    const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+    assert(api.includes('armarQuery(params)'), 'getProductos no usa armarQuery');
+  });
+}
+
+testsAsync()
+  .catch((err) => {
+    console.error('✗ error cargando módulos ESM -', err.message);
+    failed++;
+  })
+  .finally(() => {
+    console.log(`\n${passed} prueba(s) pasada(s), ${failed} fallida(s).`);
+    process.exit(failed > 0 ? 1 : 0);
+  });
