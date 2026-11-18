@@ -1,52 +1,38 @@
+// Corre el scraper según SCHEDULER_CRON (por defecto todos los días a las 2:00).
+// Con --run-now además corre una vez al arrancar.
 const cron = require("node-cron");
 const config = require("./config/scraper.config");
-const { createScraper } = require("./factories/scraper.factory");
-const { buildCatalog, saveCatalog } = require("./services/catalog.service");
-const { publishProducts } = require("./messaging/rabbitmq.publisher");
+const { correrTiendas } = require("./services/catalog.service");
 
-const STORES = (process.env.STORES || "SPORTLINE,LASMARGARITAS")
-  .split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
-const CRON_EXPRESSION = process.env.SCHEDULER_CRON || "0 2 * * *";
-const TIMEZONE = process.env.SCHEDULER_TIMEZONE || "America/Argentina/Buenos_Aires";
+const tiendas = config.seleccionarTiendas();
+const { cron: expresion, timezone } = config.scheduler;
 
-async function runStore(adapterName) {
-  const store = config.stores[adapterName];
-  if (!store) {
-    console.error(`[Scheduler] Store no configurado: ${adapterName}`);
+if (!cron.validate(expresion)) {
+  console.error(`[Scheduler] SCHEDULER_CRON inválido: "${expresion}"`);
+  process.exit(1);
+}
+
+let corriendo = false;
+async function correr(motivo) {
+  if (corriendo) {
+    console.warn(`[Scheduler] Se saltea la corrida (${motivo}): la anterior sigue en curso.`);
     return;
   }
-
-  console.log(`[Scheduler] Iniciando scraping de ${store.nombre}`);
+  corriendo = true;
+  console.log(`[Scheduler] Inicio (${motivo}): ${tiendas.map(t => t.nombre).join(", ")}`);
   try {
-    const storeConfig = {
-      ...config,
-      storeAdapter: adapterName,
-      store,
-      vtex: store.vtex,
-      outputFile: store.outputFile
-    };
-    const scraper = createScraper(adapterName, storeConfig);
-    const catalog = await buildCatalog(scraper, storeConfig);
-    const output = await saveCatalog(catalog, store.outputFile);
-    console.log(`[Scheduler] ${store.nombre} completado. Productos: ${catalog.totalProductos}. Archivo: ${output}`);
-
-    const published = await publishProducts(catalog.productos, storeConfig);
-    console.log(`[Scheduler] ${store.nombre} publicado. Eventos confirmados: ${published}`);
+    await correrTiendas(tiendas, config);
   } catch (error) {
-    console.error(`[Scheduler] Falló ${store.nombre}:`, error.message);
+    console.error("[Scheduler] Error:", error.message);
+  } finally {
+    corriendo = false;
+    console.log("[Scheduler] Fin");
   }
 }
 
-async function runAll() {
-  for (const adapterName of STORES) {
-    await runStore(adapterName);
-  }
-}
-
-cron.schedule(CRON_EXPRESSION, runAll, { timezone: TIMEZONE });
-console.log(`[Scheduler] Programado: "${CRON_EXPRESSION}" (${TIMEZONE}). Stores: ${STORES.join(", ")}`);
+cron.schedule(expresion, () => correr("cron"), { timezone });
+console.log(`[Scheduler] Programado "${expresion}" (${timezone}). Tiendas: ${tiendas.map(t => t.clave).join(", ")}`);
 
 if (process.argv.includes("--run-now")) {
-  console.log("[Scheduler] Ejecución inmediata solicitada por --run-now");
-  runAll().catch(err => console.error("[Scheduler] Error:", err));
+  correr("--run-now");
 }

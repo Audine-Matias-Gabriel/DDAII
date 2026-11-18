@@ -1,14 +1,15 @@
 {
-  "name": "knowfit-scraper",
+  "name": "webderopa-scraper",
   "version": "1.0.0",
-  "description": "Extractor y normalizador multi-tienda del catálogo KNOWFIT",
+  "description": "Scraper multi-tienda del catálogo de WebDeRopa: extrae, normaliza y publica ProductoScrapeado en RabbitMQ",
   "main": "src/index.js",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node src/index.js",
     "scrape": "node src/index.js",
-    "scrape:sportline": "node src/index.js --store=SPORTLINE",
-    "scrape:lasmargaritas": "node src/index.js --store=LASMARGARITAS",
     "scheduler": "node src/scheduler.js",
     "scheduler:now": "node src/scheduler.js --run-now",
     "test": "node --test"

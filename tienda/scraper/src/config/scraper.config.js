@@ -1,57 +1,68 @@
 require("dotenv").config();
+const path = require("path");
+const tiendas = require("./tiendas");
 
-function storeConfig(prefix, defaults) {
-  return {
-    id: Number(process.env[`${prefix}_STORE_ID`] || defaults.id),
-    nombre: process.env[`${prefix}_STORE_NAME`] || defaults.nombre,
-    eventName: process.env[`${prefix}_EVENT_NAME`] || process.env[`${prefix}_STORE_NAME`] || defaults.nombre,
-    url: (process.env[`${prefix}_STORE_URL`] || defaults.url).replace(/\/$/, ""),
-    vtex: {
-      searchUrl: process.env[`${prefix}_VTEX_SEARCH_URL`] || defaults.searchUrl,
-      pageSize: Math.min(Math.max(Number(process.env.PAGE_SIZE || defaults.pageSize || 50), 1), 50),
-      maxProducts: Math.max(Number(process.env.MAX_PRODUCTS || defaults.maxProducts || 150), 1),
-      requestDelayMs: Math.max(Number(process.env.REQUEST_DELAY_MS || defaults.requestDelayMs || 700), 0)
-    },
-    outputFile: process.env[`${prefix}_OUTPUT_FILE`] || defaults.outputFile
-  };
+function numero(valor, porDefecto, { min = 0, max = Infinity } = {}) {
+  const n = Number(valor);
+  if (valor === undefined || valor === "" || Number.isNaN(n)) return porDefecto;
+  return Math.min(Math.max(n, min), max);
 }
 
-const stores = {
-  SPORTLINE: storeConfig("SPORTLINE", {
-    id: 1,
-    nombre: "Sportline",
-    url: "https://www.sportline.com.ar",
-    searchUrl: "https://www.sportline.com.ar/api/catalog_system/pub/products/search",
-    outputFile: "output/sportline.json"
-  }),
-  LASMARGARITAS: storeConfig("LASMARGARITAS", {
-    id: 2,
-    nombre: "Las Margaritas",
-    url: "https://www.lasmargaritas.com.ar",
-    searchUrl: "https://www.lasmargaritas.com.ar/api/catalog_system/pub/products/search",
-    outputFile: "output/lasmargaritas.json"
-  })
-};
-
-const adapter = (process.env.STORE_ADAPTER || "SPORTLINE").toUpperCase();
-if (!stores[adapter]) {
-  throw new Error(
-    `STORE_ADAPTER no registrado: ${adapter}. Disponibles: ${Object.keys(stores).join(", ")}`
-  );
+function urlRabbit(env) {
+  if (env.RABBITMQ_URL) return env.RABBITMQ_URL;
+  if (env.RABBIT_URI_HOST) {
+    const usuario = encodeURIComponent(env.RABBIT_URI_USERNAME || "guest");
+    const clave = encodeURIComponent(env.RABBIT_URI_PASSWORD || "guest");
+    return `amqp://${usuario}:${clave}@${env.RABBIT_URI_HOST}:${env.RABBIT_URI_PORT || 5672}`;
+  }
+  return "amqp://guest:guest@localhost:5672";
 }
 
-const store = stores[adapter];
+/**
+ * Tiendas que corren: las de `lista` (o TIENDAS) si se pasan, si no las activas.
+ * Tira error si se pide una clave que no existe.
+ */
+function seleccionarTiendas(lista = process.env.TIENDAS) {
+  const claves = String(lista || "")
+    .split(",")
+    .map(c => c.trim().toUpperCase())
+    .filter(Boolean);
+
+  if (!claves.length) return tiendas.filter(t => t.activa);
+
+  return claves.map(clave => {
+    const tienda = tiendas.find(t => t.clave === clave);
+    if (!tienda) {
+      throw new Error(
+        `Tienda no configurada: ${clave}. Disponibles: ${tiendas.map(t => t.clave).join(", ")}`
+      );
+    }
+    return tienda;
+  });
+}
 
 module.exports = {
-  storeAdapter: adapter,
-  store,
-  vtex: store.vtex,
-  outputFile: store.outputFile,
-  stores, // todas las tiendas, para el scheduler
+  tiendas,
+  seleccionarTiendas,
   rabbitmq: {
-    url: process.env.RABBITMQ_URL || "",
-    exchange: process.env.RABBITMQ_EXCHANGE || "knowfit.events",
-    exchangeType: process.env.RABBITMQ_EXCHANGE_TYPE || "topic",
-    routingKey: process.env.RABBITMQ_ROUTING_KEY || "producto.scrapeado"
-  }
+    url: urlRabbit(process.env),
+    exchange: process.env.RABBITMQ_EXCHANGE || process.env.RABBIT_EXCHANGE || "tienda.exchange",
+    routingKey: "producto.scrapeado",
+    queue: "producto.scrapeado.queue",
+    dlq: "producto.scrapeado.dlq",
+    dlqRoutingKey: "producto.scrapeado.dlq",
+    reintentos: 10,
+    esperaReintentoMs: 3000
+  },
+  limites: {
+    maxProductos: numero(process.env.MAX_PRODUCTS, 100, { min: 1 }),
+    tamanoPagina: numero(process.env.PAGE_SIZE, 50, { min: 1, max: 50 }), // 50 es el máximo de VTEX
+    demoraMs: numero(process.env.REQUEST_DELAY_MS, 700, { min: 0 }),
+    timeoutMs: 30000
+  },
+  scheduler: {
+    cron: process.env.SCHEDULER_CRON || "0 2 * * *",
+    timezone: process.env.SCHEDULER_TIMEZONE || "America/Argentina/Buenos_Aires"
+  },
+  dirSalida: path.resolve(__dirname, "..", "..", "output")
 };
