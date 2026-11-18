@@ -50,14 +50,24 @@ services:
       RABBIT_URI_USERNAME: guest
       RABBIT_URI_PASSWORD: guest
       RABBIT_EXCHANGE: tienda.exchange
-      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN}
-      MP_PUBLIC_KEY: ${MP_PUBLIC_KEY}
-      MP_BASE_URL: ${MP_BASE_URL}
-      XIMILAR_API_KEY: ${XIMILAR_API_KEY}
-      XIMILAR_COLLECTION_ID: ${XIMILAR_COLLECTION_ID}
-      XIMILAR_BASE_URL: ${XIMILAR_BASE_URL}
-      XIMILAR_MOCK: ${XIMILAR_MOCK}
+      # ":-" para que una variable vacía (sin .env) use el default y no "" (XIMILAR_MOCK="" rompe el arranque)
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-}
+      MP_PUBLIC_KEY: ${MP_PUBLIC_KEY:-}
+      MP_BASE_URL: ${MP_BASE_URL:-https://api.mercadopago.com}
+      MP_PREMIUM_PRECIO: ${MP_PREMIUM_PRECIO:-5000}
+      # Webhook (opcional): URL https pública del backend (ej. ngrok) y clave secreta para validar la firma
+      MP_NOTIFICATION_BASE_URL: ${MP_NOTIFICATION_BASE_URL:-}
+      MP_WEBHOOK_SECRET: ${MP_WEBHOOK_SECRET:-}
+      # Acepta XIMILAR_API_KEY o XIMILAR_API_TOKEN (el nombre que usaba el servicio Node)
+      XIMILAR_API_KEY: ${XIMILAR_API_KEY:-${XIMILAR_API_TOKEN:-}}
+      XIMILAR_COLLECTION_ID: ${XIMILAR_COLLECTION_ID:-}
+      XIMILAR_BASE_URL: ${XIMILAR_BASE_URL:-https://api.ximilar.com}
+      XIMILAR_MOCK: ${XIMILAR_MOCK:-false}
+      XIMILAR_INDEXADO_AUTOMATICO: ${XIMILAR_INDEXADO_AUTOMATICO:-true}
+      XIMILAR_MAXIMO_POR_CORRIDA: ${XIMILAR_MAXIMO_POR_CORRIDA:-100}
+      XIMILAR_MAXIMO_COLECCION: ${XIMILAR_MAXIMO_COLECCION:-1000}
       CORS_ORIGINS: http://localhost:5173,http://frontend
+      FRONTEND_URL: http://localhost:5173
     ports:
       - "8080:8080"
 
@@ -70,26 +80,25 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      RABBIT_URI_HOST: rabbitmq
-      RABBIT_URI_PORT: 5672
-      RABBIT_URI_USERNAME: guest
-      RABBIT_URI_PASSWORD: guest
-      RABBIT_EXCHANGE: tienda.exchange
-      TIENDA1_CATALOGO_URL: ${TIENDA1_CATALOGO_URL}
-      TIENDA2_CATALOGO_URL: ${TIENDA2_CATALOGO_URL}
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      RABBITMQ_EXCHANGE: tienda.exchange
+      TIENDAS: SPORTLINE,GRID
+      SCHEDULER_CRON: "0 2 * * *"
+      # 300 por tienda para que el catálogo tenga variedad (las primeras páginas son casi todo calzado)
+      MAX_PRODUCTS: ${MAX_PRODUCTS:-300}
 
   frontend:
     build:
       context: ./tienda/frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8080
     container_name: tienda-frontend
     depends_on:
       backend:
         condition: service_started
     ports:
       - "5173:5173"
-    environment:
-      VITE_API_URL: http://backend:8080
 
 volumes:
   pgdata:

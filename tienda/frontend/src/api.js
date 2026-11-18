@@ -1,4 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_URL || ''
+import { armarQuery } from './query.js'
+
+const API_BASE =import.meta.env.VITE_API_URL || ''
 
 function getToken() {
   if (typeof localStorage === 'undefined') return null
@@ -13,7 +15,8 @@ function authHeaders() {
 async function handleResponse(r) {
   if (!r.ok) {
     const err = await r.json().catch(() => ({}))
-    throw new Error(err.error || err.message || `Error ${r.status}`)
+    // El backend responde { estado, error, mensaje, ruta }: "mensaje" es el texto para el usuario
+    throw new Error(err.mensaje || err.error || err.message || `Error ${r.status}`)
   }
   return r.json()
 }
@@ -21,8 +24,13 @@ async function handleResponse(r) {
 export const api = {
   // Productos
   async getProductos(params = {}) {
-    const search = new URLSearchParams(params).toString()
+    const search = armarQuery(params)
     const r = await fetch(`${API_BASE}/api/productos${search ? `?${search}` : ''}`)
+    return handleResponse(r)
+  },
+
+  async getTiendas() {
+    const r = await fetch(`${API_BASE}/api/tiendas`)
     return handleResponse(r)
   },
 
@@ -108,6 +116,33 @@ export const api = {
         ...authHeaders()
       },
       body: JSON.stringify({ usuarioId })
+    })
+    return handleResponse(r)
+  },
+
+  // Precio del plan premium: el mismo que se cobra en Mercado Pago (público)
+  async getPlanPremium() {
+    const r = await fetch(`${API_BASE}/api/suscripciones/plan`)
+    return handleResponse(r)
+  },
+
+  // Busca en Mercado Pago pagos de las suscripciones pendientes del usuario
+  // (en localhost Mercado Pago no vuelve solo a /pago/exito)
+  async verificarSuscripciones() {
+    const r = await fetch(`${API_BASE}/api/suscripciones/verificar`, {
+      method: 'POST',
+      headers: authHeaders()
+    })
+    return handleResponse(r)
+  },
+
+  // Confirma el pago al volver de Mercado Pago (/pago/exito)
+  async confirmarSuscripcion(suscripcionId, paymentId) {
+    const id = encodeURIComponent(suscripcionId)
+    const pago = encodeURIComponent(paymentId)
+    const r = await fetch(`${API_BASE}/api/suscripciones/${id}/confirmar?paymentId=${pago}`, {
+      method: 'POST',
+      headers: authHeaders()
     })
     return handleResponse(r)
   }

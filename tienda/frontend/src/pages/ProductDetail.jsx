@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
 import { useFavorites } from '../context/FavoritesContext'
+import ProductCard from '../components/ProductCard'
 
 export default function ProductDetail({ id, navigate }) {
   const [producto, setProducto] = useState(null)

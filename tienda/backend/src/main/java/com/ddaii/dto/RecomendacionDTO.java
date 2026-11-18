@@ -36,4 +36,16 @@ public class RecomendacionDTO {
     public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
     public double getPuntaje() { return puntaje; }
     public void setPuntaje(double puntaje) { this.puntaje = puntaje; }
+
+    // Datos extra para mostrar y validar la recomendación (no cambian el constructor original).
+    private String genero;
+    private String marca;
+    private TiendaDTO tienda;
+
+    public String getGenero() { return genero; }
+    public void setGenero(String genero) { this.genero = genero; }
+    public String getMarca() { return marca; }
+    public void setMarca(String marca) { this.marca = marca; }
+    public TiendaDTO getTienda() { return tienda; }
+    public void setTienda(TiendaDTO tienda) { this.tienda = tienda; }
 }

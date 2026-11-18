@@ -26,12 +26,13 @@ export default function ProductCard({ producto, navigate }) {
       <div className="card-body">
         <h3>{producto.nombre}</h3>
         <p className="price">${producto.precio}</p>
-        <p className="stock">
-          {producto.disponible ? 'Disponible' : 'Sin stock'}
-          {' · '}
-          Talles: {(producto.tallesDisponibles || []).join(', ')}
-        </p>
-        <p className="desc">{producto.descripcion || ''}</p>
+        {/* Recomendaciones y similares no traen stock ni talles: no mostrar "Sin stock" falso */}
+        {producto.disponible != null && (
+          <p className="stock">
+            {producto.disponible ? 'Disponible' : 'Sin stock'}
+            {producto.tallesDisponibles?.length > 0 && ` · Talles: ${producto.tallesDisponibles.join(', ')}`}
+          </p>
+        )}
         <button className="btn btn-outline" onClick={() => navigate(`/producto/${producto.id}`)}>
           Ver detalle
         </button>

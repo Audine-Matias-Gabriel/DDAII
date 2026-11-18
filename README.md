@@ -17,18 +17,25 @@ Agregador de ropa con integración sincrónica y asincrónica. Entrega en 10 dí
 ## Arquitectura
 
 ```
-frontend (React/JS)  <-->  backend (Spring Boot)  <-->  scraper (Spring Boot)
-                              |                      |
-                              v                      v
-                         Postgres              RabbitMQ  <-->  Ximilar (IA similar)
-                         RabbitMQ
-                              |
-                              v
-                         Mercado Pago (API externa)
+ Sportline / Grid (VTEX)                                   Mercado Pago  Ximilar
+        │ HTTP                                                   ▲         ▲
+        ▼                                                        │ REST    │ REST
+ ┌─────────────┐  ProductoScrapeado  ┌──────────┐   consume   ┌───┴─────────┴───┐  JDBC  ┌──────────┐
+ │   scraper   │ ──────────────────► │ RabbitMQ │ ◄─────────► │     backend     │ ─────► │ Postgres │
+ │  (Node.js)  │  tienda.exchange    │ + DLQs   │  Suscripcion│  (Spring Boot)  │        └──────────┘
+ └─────────────┘                     └──────────┘  Activada,  │ REST · SOAP     │
+                                                   Recomenda- └────────▲────────┘
+                                                   cionSolicitada      │ REST (JSON)
+                                                                ┌──────┴──────┐
+                                                                │  frontend   │
+                                                                │ (React/Vite)│
+                                                                └─────────────┘
 ```
 
+Los dos servicios (backend y scraper) no se llaman entre sí: solo se comunican por RabbitMQ.
+
 - **backend**: catálogo, SOAP de talles, suscripciones/pago Mercado Pago, recomendaciones REST y por cola, similares Ximilar.
-- **scraper**: lee catálogos de tiendas reales, publica `ProductoScrapeado` a RabbitMQ, guarda snapshots.
+- **scraper** (Node.js): lee los catálogos reales de Sportline y Grid (API pública de VTEX), normaliza categoría, género y talles, publica `ProductoScrapeado` a RabbitMQ una vez por día y guarda snapshots. Ver [tienda/scraper/README.md](tienda/scraper/README.md).
 - **frontend mínimo**: catálogo y detalle públicos, "Ver en tienda", filtros, bloque "Te puede gustar", página Planes con botón "Hacerme premium" que redirige a Mercado Pago.
 
 ## Estructura
@@ -36,11 +43,11 @@ frontend (React/JS)  <-->  backend (Spring Boot)  <-->  scraper (Spring Boot)
 ```
 tienda/
   backend/                     # API REST, SOAP y RabbitMQ (Spring Boot)
-  scraper/                     # servicio de scraping (Spring Boot)
+  scraper/                     # servicio de scraping (Node.js)
   frontend/                    # demo web (Node/JS)
-  ximilar-product-similarity/  # integración con Ximilar
+  ximilar-product-similarity/  # prototipo Node de Ximilar (no se usa: la integración está en el backend)
 docker-compose.yml             # PostgreSQL, RabbitMQ, backend, scraper y frontend
-docs/                          # contexto, planes, eventos, IA y evidencias (ignorado por git)
+docs/                          # modelo.md, eventos.md y evidencias/ versionados; el resto es local
 ```
 
 ## Servicios (docker-compose)
@@ -50,8 +57,8 @@ docs/                          # contexto, planes, eventos, IA y evidencias (ign
 | postgres | 5432 | Base de datos del backend |
 | rabbitmq | 5672 / 15672 | Broker de mensajes + panel de administración |
 | backend | 8080 | API REST, SOAP, Swagger UI |
-| scraper | 8081 | Segundo servicio, lectura de catálogos |
-| frontend | 80 / 5173 | Web mínima para la demo |
+| scraper | — | Segundo servicio (Node.js): lee catálogos y publica a RabbitMQ (sin puerto) |
+| frontend | 5173 | Web mínima para la demo |
 
 ## Cómo levantar el proyecto
 
@@ -65,10 +72,71 @@ docker compose up --build
 
 # 3. Verificar
 # Swagger UI:       http://localhost:8080/swagger-ui/index.html
-# WSDL (SOAP):      http://localhost:8080/ws/talles.wsdl
+# WSDL (SOAP):      http://localhost:8080/ws/equivalencias-talles.wsdl
 # RabbitMQ panel:   http://localhost:15672  (guest / guest)
 # Frontend demo:    http://localhost:5173
 ```
+
+Sin `.env` también levanta: Mercado Pago y Ximilar quedan sin credenciales (el pago falla con un
+502 claro y "similares" usa el respaldo). El catálogo se llena solo cuando corre el scraper (al arrancar
+y después todos los días a las 2:00). Para empezar de cero: `docker compose down -v`.
+
+## Endpoints
+
+Documentación interactiva y ejemplos en Swagger UI. 🔒 = requiere `Authorization: Bearer <token>` (de
+`/api/auth/login` o `/api/auth/registro`; en Swagger, botón **Authorize**).
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| POST | `/api/auth/registro` | Crea la cuenta y devuelve `{ token, usuario }` |
+| POST | `/api/auth/login` | Inicia sesión y devuelve `{ token, usuario }` |
+| GET 🔒 | `/api/auth/me` | Usuario de la sesión (incluye `premium`) |
+| POST 🔒 | `/api/auth/logout` | Cierra la sesión |
+| GET | `/api/productos` | Catálogo paginado. Filtros: `categoria`, `tienda` (id), `genero`, `precioMin`, `precioMax`, `texto`, `pagina`, `tamano` (1 a 100) |
+| GET | `/api/productos/{id}` | Detalle del producto |
+| GET | `/api/productos/disponibles` | Todos los productos con stock |
+| GET | `/api/productos/{id}/similares?limite=` | Prendas parecidas de otra tienda (Ximilar; `origen` indica si vino de Ximilar o del respaldo) |
+| GET | `/api/tiendas` | Tiendas del catálogo |
+| GET | `/api/recomendaciones?productoId=&limite=&estrategia=` | Recomendaciones (IA, sincrónico). `estrategia`: `contenido` (parecidas) o `complementaria` (arma un conjunto). Ver [docs/ia.md](docs/ia.md) |
+| POST | `/api/recomendaciones/solicitudes` | Pide recomendaciones por cola: responde 202 y publica `RecomendacionSolicitada` |
+| GET | `/api/recomendaciones/solicitudes/{solicitudId}` | Resultado que guardó el consumidor de la cola (404 mientras no se procesó) |
+| GET | `/api/suscripciones/plan` | Precio del plan premium (el que se cobra en Mercado Pago) |
+| POST 🔒 | `/api/suscripciones` | Crea el pago premium y devuelve la URL de Mercado Pago |
+| POST 🔒 | `/api/suscripciones/{id}/confirmar?paymentId=` | Confirma el pago al volver de Mercado Pago |
+| POST 🔒 | `/api/suscripciones/verificar` | Busca en Mercado Pago pagos aprobados de las suscripciones pendientes |
+| GET 🔒 | `/api/suscripciones/{id}/estado` | Estado de una suscripción propia |
+| POST | `/api/suscripciones/webhook` | Webhook de Mercado Pago (`type=payment&data.id=`): consulta el pago y aprueba la suscripción. Ver [docs/pagos.md](docs/pagos.md) |
+| GET 🔒 / POST 🔒 / DELETE 🔒 | `/api/favoritos`, `/api/favoritos/{productoId}` | Favoritos del usuario |
+| POST 🔒 | `/api/similares/indexar?maximo=` | Sube a Ximilar las imágenes pendientes del catálogo |
+| POST | `/ws` (SOAP) | Equivalencias de talles (ver abajo) |
+
+**Errores:** todos responden `{ "estado": 404, "error": "No encontrado", "mensaje": "Producto no encontrado: 9", "ruta": "/api/productos/9" }`.
+Los errores del cliente son 4xx con un mensaje para mostrar; los 500 no muestran detalles internos (quedan en el log).
+
+## Cómo probar el SOAP
+
+WSDL: `http://localhost:8080/ws/equivalencias-talles.wsdl`. Endpoint: `POST http://localhost:8080/ws`.
+Prendas: `REMERA` (S, M, L), `PANTALON` (40, 42 AR) y `CALZADO` (38, 39 AR); sistemas `AR`, `US`, `EU`.
+
+```xml
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:eq="http://ddaii.com/equivalencias">
+  <soapenv:Body>
+    <eq:EquivalenciaRequest>
+      <eq:pais>AR</eq:pais>
+      <eq:tipoPrenda>CALZADO</eq:tipoPrenda>
+      <eq:talle>38</eq:talle>
+    </eq:EquivalenciaRequest>
+  </soapenv:Body>
+</soapenv:Envelope>
+```
+
+Respuesta: `US → 6`, `EU → 38`. Con el archivo de ejemplo del repo:
+
+```powershell
+curl.exe -X POST http://localhost:8080/ws -H "Content-Type: text/xml" --data-binary "@docs/evidencias/soap-request.xml"
+```
+
+En Postman: `POST http://localhost:8080/ws`, header `Content-Type: text/xml` y ese XML como body raw.
 
 ## Pruebas
 
@@ -80,9 +148,43 @@ mvn test
 # Frontend (Node)
 cd ../frontend
 npm test
+
+# Scraper (Node, sin internet)
+cd ../scraper
+npm ci && npm test
 ```
 
-El pipeline de GitHub Actions corre `mvn test` y `npm test` en cada Pull Request.
+El pipeline de GitHub Actions corre `mvn test` y los `npm test` del frontend y del scraper en cada Pull Request.
+
+## Prendas similares con Ximilar
+
+`GET /api/productos/{id}/similares` devuelve prendas de **otra tienda** que se parecen visualmente, usando
+[Ximilar Product Similarity](https://docs.ximilar.com/visual-search/overview) (patrón Facade: `XimilarFacade`).
+
+1. **Configurar:** en `.env` poner `XIMILAR_API_KEY` y `XIMILAR_COLLECTION_ID` de la cuenta de Ximilar
+   (nunca en `.env.example`). Sin ellas, o con `XIMILAR_MOCK=true`, no se llama a la API.
+2. **Cargar el catálogo en la colección:** cada producto se sube como un registro
+   (`_id = producto-<id>`, `_url` = imagen, `product_id`, `tienda_id`), de a 10 por llamada.
+   - Automático: con `XIMILAR_INDEXADO_AUTOMATICO=true` (por defecto en compose) se suben solas las imágenes
+     nuevas o cambiadas cada 10 minutos, hasta 100 por corrida.
+   - A mano (con sesión iniciada): `POST /api/similares/indexar?maximo=100`. Responde cuántas subió, cuántas
+     quedan y los créditos estimados. Repetir hasta `pendientesDespues = 0`.
+3. **Buscar:** `visualKNN` por el `_id` del producto, filtrando `tienda_id != tienda del producto`. Cada
+   similar trae `origen: "ximilar"`. Si Ximilar no está configurado o falla, el endpoint usa el respaldo
+   (misma categoría en otra tienda) y marca `origen: "catalogo"`.
+
+**Créditos (plan gratuito: 1.000 por mes, colección de hasta 1.000 registros):**
+
+| Operación | Créditos | Uso en este proyecto |
+|---|---|---|
+| Subir una imagen (sin procesar) | 0,25 | ~537 productos ≈ **134 créditos**, una sola vez. Después solo los nuevos |
+| Buscar similares por `_id` | 0,25 | Una vez por detalle de producto abierto |
+| Buscar por URL externa | 1 | Solo si el producto todavía no está en la colección |
+| Tagging de fashion | 15 | **No se usa** |
+
+Topes para no pasarse: `XIMILAR_MAXIMO_POR_CORRIDA` (100) y `XIMILAR_MAXIMO_COLECCION` (1.000).
+
+**Créditos usados (18/11/2026):** carga inicial de 537 imágenes = **134,25 créditos**, más unas 15 búsquedas de prueba (~4 créditos). En total, unos **138 de los 1.000** del mes. La colección tiene 561 registros: 537 productos y 24 de pruebas anteriores, que la búsqueda ignora porque no tienen `tienda_id`. Evidencia en [docs/evidencias](docs/evidencias/README.md).
 
 ## Trabajo por integrante (resumen del plan de 10 días)
 

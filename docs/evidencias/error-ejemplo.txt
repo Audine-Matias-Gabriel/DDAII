@@ -1,0 +1,3 @@
+# GET /api/productos/999999 (error manejado por @RestControllerAdvice)
+{"error":"Producto no encontrado: 999999"}
+[HTTP 404]

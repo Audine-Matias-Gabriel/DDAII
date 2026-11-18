@@ -1,0 +1,23 @@
+{
+  "name": "webderopa-scraper",
+  "version": "1.0.0",
+  "description": "Scraper multi-tienda del catálogo de WebDeRopa: extrae, normaliza y publica ProductoScrapeado en RabbitMQ",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "scrape": "node src/index.js",
+    "scheduler": "node src/scheduler.js",
+    "scheduler:now": "node src/scheduler.js --run-now",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.8",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "node-cron": "^4.6.0"
+  }
+}

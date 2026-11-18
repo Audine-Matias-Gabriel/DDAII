@@ -1,0 +1,816 @@
+{
+  "fecha": "2026-11-18T22:38:38.813Z",
+  "aciertos": "10/10",
+  "casos": [
+    {
+      "caso": 1,
+      "estrategia": "contenido",
+      "entrada": {
+        "id": 36,
+        "nombre": "Remera Puma Essential Script Mujer",
+        "categoria": "REMERA",
+        "genero": "Mujer",
+        "marca": "Puma",
+        "precio": 49999,
+        "tienda": "Sportline"
+      },
+      "esperado": "Remeras de mujer (o unisex), Puma o precio cercano",
+      "obtenido": [
+        {
+          "id": 150,
+          "nombre": "Remera adidas Adizero Essentials Mujer",
+          "categoria": "REMERA",
+          "precio": 59999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2095114/004102000JF3497_1.jpg.jpg?v=639288553989630000",
+          "puntaje": 0.8,
+          "genero": "Mujer",
+          "marca": "ADIDAS",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 331,
+          "nombre": "REMERA NIKE SPORTSWEAR ESSENTIALS MUJER",
+          "categoria": "REMERA",
+          "precio": 39999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/1725065/302-2397_1.jpg?v=638997749534300000",
+          "puntaje": 0.8,
+          "genero": "Mujer",
+          "marca": "Nike Sportswear",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 492,
+          "nombre": "REMERA JORDAN MVP MUJER",
+          "categoria": "REMERA",
+          "precio": 39999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/1699990/302-2339_1.jpg?v=638917371302200000",
+          "puntaje": 0.8,
+          "genero": "Mujer",
+          "marca": "Jordan",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 394,
+          "nombre": "REMERA NBA CHICAGO BULLS NIÑOS",
+          "categoria": "REMERA",
+          "precio": 39999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3321505/398-1594_1.jpg.jpg?v=639226524799400000",
+          "puntaje": 0.7,
+          "genero": "Unisex",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        }
+      ],
+      "pasa": true
+    },
+    {
+      "caso": 2,
+      "estrategia": "contenido",
+      "entrada": {
+        "id": 279,
+        "nombre": "REMERA NBA CHICAGO BULLS HOMBRE",
+        "categoria": "REMERA",
+        "genero": "Hombre",
+        "marca": "NBA",
+        "precio": 24999,
+        "tienda": "Grid"
+      },
+      "esperado": "Remeras de hombre, NBA, precio cercano (~$25.000)",
+      "obtenido": [
+        {
+          "id": 370,
+          "nombre": "REMERA NBA LOS ANGELES LAKERS HOMBRE",
+          "categoria": "REMERA",
+          "precio": 24999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3352436/398-1348_1.jpg.jpg?v=639268215838600000",
+          "puntaje": 1,
+          "genero": "Hombre",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 392,
+          "nombre": "REMERA NBA DALLAS MAVERICKS HOMBRE",
+          "categoria": "REMERA",
+          "precio": 24999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3322305/398-1317_1.jpg.jpg?v=639250000143630000",
+          "puntaje": 1,
+          "genero": "Hombre",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 283,
+          "nombre": "REMERA NBA BOSTON CELTICS HOMBRE",
+          "categoria": "REMERA",
+          "precio": 19999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/1705622/398-1025_1.jpg?v=639287046501630000",
+          "puntaje": 1,
+          "genero": "Hombre",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 335,
+          "nombre": "REMERA NBA MIAMI HEAT HOMBRE",
+          "categoria": "REMERA",
+          "precio": 19999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/2261652/398-1022_1.jpg?v=639003644305530000",
+          "puntaje": 1,
+          "genero": "Hombre",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        }
+      ],
+      "pasa": true
+    },
+    {
+      "caso": 3,
+      "estrategia": "contenido",
+      "entrada": {
+        "id": 5,
+        "nombre": "Camiseta De Fútbol adidas Titular Boca Juniors 26 Hombre",
+        "categoria": "REMERA",
+        "genero": "Hombre",
+        "marca": "ADIDAS",
+        "precio": 159999,
+        "tienda": "Sportline"
+      },
+      "esperado": "Remeras/camisetas de hombre, adidas, precio alto",
+      "obtenido": [
+        {
+          "id": 208,
+          "nombre": "Camiseta De Fútbol adidas Afa X Messi 2026 Hombre",
+          "categoria": "REMERA",
+          "precio": 159999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2077293/004632000KW2021_1.jpg.jpg?v=639266112883200000",
+          "puntaje": 1,
+          "genero": "Hombre",
+          "marca": "ADIDAS",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 254,
+          "nombre": "Camiseta De Fútbol adidas Titular Boca Juniors 26 Niño",
+          "categoria": "REMERA",
+          "precio": 119999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2005432/004670000KB6247_1.jpg.jpg?v=639230113595030000",
+          "puntaje": 0.9,
+          "genero": "Unisex",
+          "marca": "ADIDAS",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 82,
+          "nombre": "Camiseta De Fútbol adidas Originals Suplente River Plate 26 Hombre",
+          "categoria": "REMERA",
+          "precio": 159999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2009565/005632000KD1519_1.jpg.jpg?v=639230522365570000",
+          "puntaje": 0.8,
+          "genero": "Hombre",
+          "marca": "Adidas Originals",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 236,
+          "nombre": "Camiseta De Fútbol adidas Originals Suplente Boca Juniors 26 Hombre",
+          "categoria": "REMERA",
+          "precio": 159999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2044194/005632000KD1518_1.jpg.jpg?v=639234399175000000",
+          "puntaje": 0.8,
+          "genero": "Hombre",
+          "marca": "Adidas Originals",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        }
+      ],
+      "pasa": true
+    },
+    {
+      "caso": 4,
+      "estrategia": "contenido",
+      "entrada": {
+        "id": 153,
+        "nombre": "Calza adidas Optime Essential Mujer",
+        "categoria": "PANTALON",
+        "genero": "Mujer",
+        "marca": "ADIDAS",
+        "precio": 59999,
+        "tienda": "Sportline"
+      },
+      "esperado": "Pantalones/calzas de mujer, adidas",
+      "obtenido": [
+        {
+          "id": 157,
+          "nombre": "Calza adidas Essentials Logo Mujer",
+          "categoria": "PANTALON",
+          "precio": 54999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2003330/004580000JG3941_1.jpg.jpg?v=639229923034800000",
+          "puntaje": 1,
+          "genero": "Mujer",
+          "marca": "ADIDAS",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 225,
+          "nombre": "Pantalón adidas Dayready Mujer",
+          "categoria": "PANTALON",
+          "precio": 79999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2064181/004272000KV1159_1.jpg.jpg?v=639247110588400000",
+          "puntaje": 0.9,
+          "genero": "Mujer",
+          "marca": "ADIDAS",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 206,
+          "nombre": "Calza Atomik Manifest Biker Mujer",
+          "categoria": "PANTALON",
+          "precio": 44900,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2077688/014584000255110_1.jpg.jpg?v=639266951327670000",
+          "puntaje": 0.8,
+          "genero": "Mujer",
+          "marca": "Atomik",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 176,
+          "nombre": "Pantalón adidas Seasonal Essentials Mujer",
+          "categoria": "PANTALON",
+          "precio": 99999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2098805/004272000KV6852_1.jpg.jpg?v=639292510485130000",
+          "puntaje": 0.8,
+          "genero": "Mujer",
+          "marca": "ADIDAS",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        }
+      ],
+      "pasa": true
+    },
+    {
+      "caso": 5,
+      "estrategia": "contenido",
+      "entrada": {
+        "id": 58,
+        "nombre": "Short adidas Tiro 26 Essentials Hombre",
+        "categoria": "PANTALON",
+        "genero": "Hombre",
+        "marca": "ADIDAS",
+        "precio": 49999,
+        "tienda": "Sportline"
+      },
+      "esperado": "Pantalones/shorts de hombre, adidas",
+      "obtenido": [
+        {
+          "id": 405,
+          "nombre": "SHORT NBA CHICAGO BULLS HOMBRE",
+          "categoria": "PANTALON",
+          "precio": 49999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3313323/398-1635_1.jpg.jpg?v=639215331864130000",
+          "puntaje": 0.8,
+          "genero": "Hombre",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 304,
+          "nombre": "SHORT NBA BOSTON CELTICS HOMBRE",
+          "categoria": "PANTALON",
+          "precio": 54999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3319930/398-1633_1.jpg.jpg?v=639222347527370000",
+          "puntaje": 0.8,
+          "genero": "Hombre",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 340,
+          "nombre": "Pantalón NBA CARGO POCKET REGULAR FIT JOGGERS LOS ANGELES LAKERS HOMBRE",
+          "categoria": "PANTALON",
+          "precio": 44999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/1634571/398-0814_1.jpg?v=638844889686270000",
+          "puntaje": 0.8,
+          "genero": "Hombre",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 393,
+          "nombre": "SHORT NBA LOS ANGELES LAKERS HOMBRE",
+          "categoria": "PANTALON",
+          "precio": 54999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3321893/398-1630_1.jpg.jpg?v=639223107335170000",
+          "puntaje": 0.8,
+          "genero": "Hombre",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        }
+      ],
+      "pasa": true
+    },
+    {
+      "caso": 6,
+      "estrategia": "contenido",
+      "entrada": {
+        "id": 287,
+        "nombre": "ZAPATILLAS NIKE AIR FORCE 1 '07 DE MUJER",
+        "categoria": "CALZADO",
+        "genero": "Mujer",
+        "marca": "Nike Sportswear",
+        "precio": 169999,
+        "tienda": "Grid"
+      },
+      "esperado": "Calzado de mujer, Nike, precio cercano (~$170.000)",
+      "obtenido": [
+        {
+          "id": 423,
+          "nombre": "ZAPATILLAS NIKE SPORTSWEAR DUNK LOW MUJER",
+          "categoria": "CALZADO",
+          "precio": 169999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3209251/328-1025_1.jpg.jpg?v=639161221804500000",
+          "puntaje": 1,
+          "genero": "Mujer",
+          "marca": "Nike Sportswear",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 488,
+          "nombre": "ZAPATILLAS NIKE SPORTSWEAR AIR FORCE 1 '07 MUJER",
+          "categoria": "CALZADO",
+          "precio": 169999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/1745277/328-0601_1.jpg?v=638941617622630000",
+          "puntaje": 1,
+          "genero": "Mujer",
+          "marca": "Nike Sportswear",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 443,
+          "nombre": "ZAPATILLAS NIKE SPORTSWEAR AIR MAX 90 MUJER",
+          "categoria": "CALZADO",
+          "precio": 149999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3118991/328-0985_1.jpg.jpg?v=639128992886930000",
+          "puntaje": 1,
+          "genero": "Mujer",
+          "marca": "Nike Sportswear",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 537,
+          "nombre": "ZAPATILLAS NIKE SPORTSWEAR GAMMA FORCE MUJER",
+          "categoria": "CALZADO",
+          "precio": 199999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3355848/328-1251_1.jpg.jpg?v=639286371803330000",
+          "puntaje": 1,
+          "genero": "Mujer",
+          "marca": "Nike Sportswear",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        }
+      ],
+      "pasa": true
+    },
+    {
+      "caso": 7,
+      "estrategia": "contenido",
+      "entrada": {
+        "id": 2,
+        "nombre": "Sandalias Crocs Crocband Unisex",
+        "categoria": "CALZADO",
+        "genero": "Unisex",
+        "marca": "Crocs",
+        "precio": 74999,
+        "tienda": "Sportline"
+      },
+      "esperado": "Calzado unisex o de cualquier género, Crocs o precio cercano",
+      "obtenido": [
+        {
+          "id": 53,
+          "nombre": "Sandalias Crocs Classic Unisex",
+          "categoria": "CALZADO",
+          "precio": 59999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2022292/037039010001001_1.jpg.jpg?v=639231379892900000",
+          "puntaje": 1,
+          "genero": "Unisex",
+          "marca": "Crocs",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 172,
+          "nombre": "Sandalias Crocs Crocband Kids Niño",
+          "categoria": "CALZADO",
+          "precio": 59999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2022656/037084010998001_1.jpg.jpg?v=639231388017070000",
+          "puntaje": 1,
+          "genero": "Unisex",
+          "marca": "Crocs",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 141,
+          "nombre": "Zapatillas Puma Court Classic Clean Adp Unisex",
+          "categoria": "CALZADO",
+          "precio": 75999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2038178/480025040581002_1.jpg.jpg?v=639233701774270000",
+          "puntaje": 0.8,
+          "genero": "Unisex",
+          "marca": "Puma",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 257,
+          "nombre": "Zapatillas Topper Strong Pace 4 Cs Unisex",
+          "categoria": "CALZADO",
+          "precio": 72999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2047873/801025000027428_1.jpg.jpg?v=639234635038430000",
+          "puntaje": 0.8,
+          "genero": "Unisex",
+          "marca": "Topper",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        }
+      ],
+      "pasa": true
+    },
+    {
+      "caso": 8,
+      "estrategia": "contenido",
+      "entrada": {
+        "id": 147,
+        "nombre": "Short Topper Mix Niño",
+        "categoria": "PANTALON",
+        "genero": "Unisex",
+        "marca": "Topper",
+        "precio": 15599,
+        "tienda": "Sportline"
+      },
+      "esperado": "Pantalones unisex/niños, precio bajo",
+      "obtenido": [
+        {
+          "id": 278,
+          "nombre": "SHORT NBA LOS ANGELES LAKERS MUJER",
+          "categoria": "PANTALON",
+          "precio": 19999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3354727/398-1358_1.jpg.jpg?v=639271661887230000",
+          "puntaje": 0.7,
+          "genero": "Mujer",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 299,
+          "nombre": "SHORT NBA CHICAGO BULLS MUJER",
+          "categoria": "PANTALON",
+          "precio": 19999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3350761/398-0588_1.jpg.jpg?v=639263891417270000",
+          "puntaje": 0.7,
+          "genero": "Mujer",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 339,
+          "nombre": "Short NBA LOGO PRINT REGULAR FIT BASKETBALL CHICAGO BULLS NIÑOS",
+          "categoria": "PANTALON",
+          "precio": 34999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/2262256/398-0750_1.jpg?v=639003649887630000",
+          "puntaje": 0.6,
+          "genero": "Unisex",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 398,
+          "nombre": "SHORT NBA CHICAGO BULLS NIÑOS",
+          "categoria": "PANTALON",
+          "precio": 34999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3319700/398-1628_1.jpg.jpg?v=639221410260130000",
+          "puntaje": 0.6,
+          "genero": "Unisex",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        }
+      ],
+      "pasa": true
+    },
+    {
+      "caso": 9,
+      "estrategia": "complementaria",
+      "entrada": {
+        "id": 36,
+        "nombre": "Remera Puma Essential Script Mujer",
+        "categoria": "REMERA",
+        "genero": "Mujer",
+        "marca": "Puma",
+        "precio": 49999,
+        "tienda": "Sportline"
+      },
+      "esperado": "Conjunto: un pantalón y un calzado de mujer (o unisex)",
+      "obtenido": [
+        {
+          "id": 157,
+          "nombre": "Calza adidas Essentials Logo Mujer",
+          "categoria": "PANTALON",
+          "precio": 54999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2003330/004580000JG3941_1.jpg.jpg?v=639229923034800000",
+          "puntaje": 0.7,
+          "genero": "Mujer",
+          "marca": "ADIDAS",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 4,
+          "nombre": "Ojotas Puma Cool Cat 3.0 Sport Woman Slide Mujer",
+          "categoria": "CALZADO",
+          "precio": 54999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2092847/480041040896001_1.jpg.jpg?v=639286397435100000",
+          "puntaje": 1,
+          "genero": "Mujer",
+          "marca": "Puma",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 206,
+          "nombre": "Calza Atomik Manifest Biker Mujer",
+          "categoria": "PANTALON",
+          "precio": 44900,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2077688/014584000255110_1.jpg.jpg?v=639266951327670000",
+          "puntaje": 0.7,
+          "genero": "Mujer",
+          "marca": "Atomik",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 15,
+          "nombre": "Ojotas Puma Cool Cat 3.0 Mujer",
+          "categoria": "CALZADO",
+          "precio": 54999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2089117/480041040895902_1.jpg.jpg?v=639282482066000000",
+          "puntaje": 1,
+          "genero": "Mujer",
+          "marca": "Puma",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        }
+      ],
+      "pasa": true
+    },
+    {
+      "caso": 10,
+      "estrategia": "complementaria",
+      "entrada": {
+        "id": 1,
+        "nombre": "Zapatillas Topper Boris Hombre",
+        "categoria": "CALZADO",
+        "genero": "Hombre",
+        "marca": "Topper",
+        "precio": 40000,
+        "tienda": "Sportline"
+      },
+      "esperado": "Conjunto: una remera y un pantalón de hombre (o unisex)",
+      "obtenido": [
+        {
+          "id": 148,
+          "nombre": "Remera Topper Brand Hombre",
+          "categoria": "REMERA",
+          "precio": 22199,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2049760/801102000167410_1.jpg.jpg?v=639234761635800000",
+          "puntaje": 0.9,
+          "genero": "Hombre",
+          "marca": "Topper",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 282,
+          "nombre": "SHORT MLB NEW YORK YANKEES HOMBRE",
+          "categoria": "PANTALON",
+          "precio": 39999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/1711400/046-0054_1.jpg?v=639258430260400000",
+          "puntaje": 0.7,
+          "genero": "Hombre",
+          "marca": "MLB",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 180,
+          "nombre": "Remera Under Armour Ua Tech 2.0 Hombre",
+          "categoria": "REMERA",
+          "precio": 39999,
+          "imagenUrl": "https://sportline.vteximg.com.br/arquivos/ids/2089406/048102354529430_1.jpg.jpg?v=639282546153000000",
+          "puntaje": 0.7,
+          "genero": "Hombre",
+          "marca": "Under Armour",
+          "tienda": {
+            "id": 1,
+            "nombre": "Sportline",
+            "urlBase": "https://Sportline.com.ar",
+            "activa": true
+          }
+        },
+        {
+          "id": 313,
+          "nombre": "SHORT NBA CHICAGO BULLS HOMBRE",
+          "categoria": "PANTALON",
+          "precio": 39999,
+          "imagenUrl": "https://essential.vteximg.com.br/arquivos/ids/3371467/398-1053_1.jpg?v=639293294211900000",
+          "puntaje": 0.7,
+          "genero": "Hombre",
+          "marca": "NBA",
+          "tienda": {
+            "id": 2,
+            "nombre": "Grid",
+            "urlBase": "https://Grid.com.ar",
+            "activa": true
+          }
+        }
+      ],
+      "pasa": true
+    }
+  ]
+}

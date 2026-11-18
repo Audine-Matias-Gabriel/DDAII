@@ -2,6 +2,8 @@ package com.ddaii.config;
 
 import com.ddaii.security.TokenAuthFilter;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -26,6 +28,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // Usa la config CORS de WebConfig; sin esto el preflight OPTIONS
+            // de los endpoints autenticados devuelve 403 en el navegador.
+            .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -35,6 +40,12 @@ public class SecurityConfig {
                 // Catálogo y recomendaciones públicos (invitado puede navegar)
                 .requestMatchers("/api/productos/**", "/api/recomendaciones/**").permitAll()
                 .requestMatchers("/api/productos/{id}/similares").permitAll()
+                // Lista de tiendas para el filtro del catálogo (público como el catálogo)
+                .requestMatchers(HttpMethod.GET, "/api/tiendas").permitAll()
+                // Precio del plan premium para la página Planes
+                .requestMatchers(HttpMethod.GET, "/api/suscripciones/plan").permitAll()
+                // Webhook de Mercado Pago: lo llama Mercado Pago sin sesión (el pago se verifica contra su API)
+                .requestMatchers(HttpMethod.POST, "/api/suscripciones/webhook").permitAll()
                 // Swagger y documentación
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/v3/api-docs").permitAll()
                 // SOAP

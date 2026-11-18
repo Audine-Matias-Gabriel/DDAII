@@ -1,0 +1,18 @@
+# Webhook de Mercado Pago (POST /api/suscripciones/webhook, sin sesión)
+# El backend consulta cada pago a la API de Mercado Pago (sandbox) antes de aprobar.
+
+## Formato actual, por query: pago real aprobado de la suscripción 4 (ya aprobada: idempotente, no republica)
+{"procesado":true,"pago":190338481640,"estadoSuscripcion":"APROBADA"}
+[HTTP 200]
+
+## Formato actual, por cuerpo JSON (como lo manda Mercado Pago)
+{"procesado":true,"pago":189315686190,"estadoSuscripcion":"APROBADA"}
+[HTTP 200]
+
+## Notificación que no es de un pago (se ignora con 200)
+{"motivo":"notificación que no es de un pago","procesado":false}
+[HTTP 200]
+
+## Pago inexistente en Mercado Pago (502: Mercado Pago reintenta la notificación)
+{"estado":502,"error":"Mercado Pago no disponible","mensaje":"No se pudo consultar el pago 1: {\"message\":\"Payment not found\",\"error\":\"not_found\",\"status\":404,\"cause\":[{\"code\":2000,\"description\":\"Payment not found\",\"data\":\"18-11-2026T22:59:30UTC;3666d53f-1c05-480f-ae76-97ebeb48acb6\"}]}","ruta":"/api/suscripciones/webhook"}
+[HTTP 502]

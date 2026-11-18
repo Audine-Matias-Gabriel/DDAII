@@ -30,6 +30,17 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     List<Producto> findByTienda_IdNotAndIdNot(Long tiendaId, Long id, Pageable pageable);
 
+    /** Productos con imagen que todavía no están en Ximilar (o cuya imagen cambió). */
+    @Query("SELECT p FROM Producto p WHERE p.imagenUrl IS NOT NULL AND p.imagenUrl <> '' " +
+           "AND (p.ximilarImagenUrl IS NULL OR p.ximilarImagenUrl <> p.imagenUrl) ORDER BY p.id")
+    List<Producto> pendientesDeXimilar(Pageable pageable);
+
+    @Query("SELECT COUNT(p) FROM Producto p WHERE p.imagenUrl IS NOT NULL AND p.imagenUrl <> '' " +
+           "AND (p.ximilarImagenUrl IS NULL OR p.ximilarImagenUrl <> p.imagenUrl)")
+    long contarPendientesDeXimilar();
+
+    long countByXimilarImagenUrlIsNotNull();
+
     @Query("SELECT p FROM Producto p " +
            "WHERE (:categoria IS NULL OR p.categoria = :categoria) " +
            "AND (:tiendaId IS NULL OR p.tienda.id = :tiendaId) " +

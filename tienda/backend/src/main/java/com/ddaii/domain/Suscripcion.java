@@ -21,7 +21,11 @@ public class Suscripcion {
     @Column(nullable = false)
     private String estado;
 
+    /** Id del pago en Mercado Pago. Queda vacío hasta que se confirma el pago. */
     private String idPago;
+
+    /** Id de la preferencia de Checkout Pro creada al iniciar el pago. */
+    private String preferenciaId;
 
     @Column(nullable = false)
     private LocalDateTime fecha = LocalDateTime.now();
@@ -42,6 +46,8 @@ public class Suscripcion {
     public void setEstado(String estado) { this.estado = estado; }
     public String getIdPago() { return idPago; }
     public void setIdPago(String idPago) { this.idPago = idPago; }
+    public String getPreferenciaId() { return preferenciaId; }
+    public void setPreferenciaId(String preferenciaId) { this.preferenciaId = preferenciaId; }
     public LocalDateTime getFecha() { return fecha; }
     public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
 }

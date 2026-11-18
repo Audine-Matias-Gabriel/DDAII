@@ -105,10 +105,78 @@ test('existe src/pages/Plans.jsx con flujo premium', () => {
   assert(plans.includes('urlPago'), 'falta urlPago');
 });
 
+test('existe src/pages/PagoResultado.jsx y se rutea /pago/exito', () => {
+  const pr = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'PagoResultado.jsx'), 'utf8');
+  assert(pr.includes('confirmarSuscripcion'), 'falta confirmarSuscripcion en PagoResultado');
+  const app = fs.readFileSync(path.join(__dirname, 'src', 'App.jsx'), 'utf8');
+  assert(app.includes('/pago/exito'), 'falta ruta /pago/exito en App');
+  assert(app.includes('/pago/error'), 'falta ruta /pago/error en App');
+  const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+  assert(api.includes('/confirmar?paymentId='), 'falta endpoint confirmar en api.js');
+});
+
 test('existe src/pages/ProductDetail.jsx con recomendaciones y similares', () => {
   const detail = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'ProductDetail.jsx'), 'utf8');
   assert(detail.includes('getRecomendaciones'), 'falta llamadas a recomendaciones');
   assert(detail.includes('getSimilares'), 'falta llamadas a similares');
+});
+
+test('el catálogo filtra por tienda, precio y género Niña', () => {
+  const home = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Home.jsx'), 'utf8');
+  assert(home.includes('api.getTiendas()'), 'falta cargar las tiendas');
+  for (const campo of ['tienda:', 'precioMin:', 'precioMax:']) {
+    assert(home.includes(campo), `falta mandar ${campo} al backend`);
+  }
+  assert(home.includes('value="Niña"'), 'falta la opción Niña');
+  const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+  assert(api.includes('/api/tiendas'), 'falta getTiendas en api.js');
+});
+
+test('Planes muestra el precio que define el backend (no uno fijo)', () => {
+  const plans = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Plans.jsx'), 'utf8');
+  assert(plans.includes('api.getPlanPremium()'), 'Planes no pide el precio al backend');
+  // El plan gratuito ($0) sí es fijo; el premium no.
+  assert(!/\$[1-9][\d.]* \/ mes/.test(plans), 'Planes tiene un precio premium fijo en el código');
+  const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+  assert(api.includes('/api/suscripciones/plan'), 'falta getPlanPremium en api.js');
+});
+
+test('el catálogo descarta respuestas de consultas viejas', () => {
+  const home = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Home.jsx'), 'utf8');
+  assert(home.includes('consulta !== ultimaConsulta.current'), 'una respuesta vieja puede pisar a la nueva');
+});
+
+test('la tarjeta no inventa "Sin stock" cuando el producto no trae disponible', () => {
+  const card = fs.readFileSync(path.join(__dirname, 'src', 'components', 'ProductCard.jsx'), 'utf8');
+  assert(card.includes('producto.disponible != null'), 'ProductCard muestra stock aunque no venga el dato');
+});
+
+test('la tarjeta del catálogo no muestra la descripción', () => {
+  const card = fs.readFileSync(path.join(__dirname, 'src', 'components', 'ProductCard.jsx'), 'utf8');
+  assert(!card.includes('producto.descripcion'), 'ProductCard muestra la descripción');
+});
+
+test('la sesión guardada se refresca con /api/auth/me (premium al día)', () => {
+  const auth = fs.readFileSync(path.join(__dirname, 'src', 'context', 'AuthContext.jsx'), 'utf8');
+  const efecto = auth.slice(auth.indexOf('useEffect('), auth.indexOf('const saveSession'));
+  assert(efecto.includes('api.me()'), 'AuthProvider no refresca el usuario al cargar');
+  const plans = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Plans.jsx'), 'utf8');
+  assert(/if \(isAuthenticated\) restoreSession\(\)/.test(plans), 'Planes no refresca el usuario al entrar');
+});
+
+test('las páginas importan los componentes que usan', () => {
+  const componentes = fs.readdirSync(path.join(__dirname, 'src', 'components'))
+    .filter((f) => f.endsWith('.jsx'))
+    .map((f) => f.replace('.jsx', ''));
+  const dirPages = path.join(__dirname, 'src', 'pages');
+  for (const archivo of fs.readdirSync(dirPages).filter((f) => f.endsWith('.jsx'))) {
+    const fuente = fs.readFileSync(path.join(dirPages, archivo), 'utf8');
+    for (const c of componentes) {
+      if (fuente.includes(`<${c}`)) {
+        assert(new RegExp(`import\\s+${c}\\s+from`).test(fuente), `${archivo} usa <${c}> sin importarlo`);
+      }
+    }
+  }
 });
 
 test('existe .env.example con VITE_API_URL', () => {
@@ -122,5 +190,43 @@ test('existe Dockerfile del frontend (build Vite)', () => {
   assert(df.includes('serve'), 'falta servidor estático en Dockerfile');
 });
 
-console.log(`\n${passed} prueba(s) pasada(s), ${failed} fallida(s).`);
-process.exit(failed > 0 ? 1 : 0);
+// --- Pruebas que ejecutan módulos ESM (import dinámico) ---
+
+async function testsAsync() {
+  const { pathToFileURL } = require('url');
+  const { armarQuery } = await import(
+    pathToFileURL(path.join(__dirname, 'src', 'query.js')).href
+  );
+
+  test('armarQuery descarta filtros undefined, null y vacíos', () => {
+    const q = armarQuery({ texto: undefined, categoria: null, genero: '', pagina: 0 });
+    assert(!q.includes('undefined'), `query con "undefined": ${q}`);
+    assert(!q.includes('null'), `query con "null": ${q}`);
+    assert(q === 'pagina=0', `se esperaba "pagina=0" y salió "${q}"`);
+  });
+
+  test('armarQuery conserva los filtros con valor', () => {
+    const q = armarQuery({ categoria: 'remeras', genero: 'mujer', texto: undefined });
+    assert(q === 'categoria=remeras&genero=mujer', `salió "${q}"`);
+  });
+
+  test('armarQuery sin filtros devuelve string vacío', () => {
+    assert(armarQuery({ texto: undefined }) === '', 'debería ser ""');
+    assert(armarQuery() === '', 'debería ser "" sin params');
+  });
+
+  test('api.getProductos usa armarQuery', () => {
+    const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+    assert(api.includes('armarQuery(params)'), 'getProductos no usa armarQuery');
+  });
+}
+
+testsAsync()
+  .catch((err) => {
+    console.error('✗ error cargando módulos ESM -', err.message);
+    failed++;
+  })
+  .finally(() => {
+    console.log(`\n${passed} prueba(s) pasada(s), ${failed} fallida(s).`);
+    process.exit(failed > 0 ? 1 : 0);
+  });

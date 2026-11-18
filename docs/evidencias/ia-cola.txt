@@ -1,0 +1,11 @@
+# 1) POST /api/recomendaciones/solicitudes  -> 202 y publica RecomendacionSolicitada en tienda.exchange
+{"mensaje":"Solicitud de recomendación recibida","solicitudId":"02265291-4de5-4e6b-8869-de758cc41be2"}
+[HTTP 202]
+
+# 2) El consumidor (RabbitListeners) la procesa y guarda el resultado. GET /api/recomendaciones/solicitudes/02265291-4de5-4e6b-8869-de758cc41be2
+{"solicitudId":"02265291-4de5-4e6b-8869-de758cc41be2","productoId":36,"procesadaEn":"2026-11-18T22:38:52.88461","recomendaciones":[{"id":150,"nombre":"Remera adidas Adizero Essentials Mujer","categoria":"REMERA","precio":59999.0,"imagenUrl":"https://sportline.vteximg.com.br/arquivos/ids/2095114/004102000JF3497_1.jpg.jpg?v=639288553989630000","puntaje":0.8,"genero":"Mujer","marca":"ADIDAS","tienda":{"id":1,"nombre":"Sportline","urlBase":"https://Sportline.com.ar","activa":true}},{"id":331,"nombre":"REMERA NIKE SPORTSWEAR ESSENTIALS MUJER","categoria":"REMERA","precio":39999.0,"imagenUrl":"https://essential.vteximg.com.br/arquivos/ids/1725065/302-2397_1.jpg?v=638997749534300000","puntaje":0.8,"genero":"Mujer","marca":"Nike Sportswear","tienda":{"id":2,"nombre":"Grid","urlBase":"https://Grid.com.ar","activa":true}},{"id":492,"nombre":"REMERA JORDAN MVP MUJER","categoria":"REMERA","precio":39999.0,"imagenUrl":"https://essential.vteximg.com.br/arquivos/ids/1699990/302-2339_1.jpg?v=638917371302200000","puntaje":0.8,"genero":"Mujer","marca":"Jordan","tienda":{"id":2,"nombre":"Grid","urlBase":"https://Grid.com.ar","activa":true}}]}
+[HTTP 200]
+
+# 3) Cola después de procesar (recomendacion.solicitada.queue y su DLQ)
+recomendacion.solicitada.dlq mensajes: 0 consumidores: 0 publicados: 0
+recomendacion.solicitada.queue mensajes: 0 consumidores: 1 publicados: 3
