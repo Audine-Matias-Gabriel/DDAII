@@ -121,6 +121,21 @@ test('existe src/pages/ProductDetail.jsx con recomendaciones y similares', () =>
   assert(detail.includes('getSimilares'), 'falta llamadas a similares');
 });
 
+test('las páginas importan los componentes que usan', () => {
+  const componentes = fs.readdirSync(path.join(__dirname, 'src', 'components'))
+    .filter((f) => f.endsWith('.jsx'))
+    .map((f) => f.replace('.jsx', ''));
+  const dirPages = path.join(__dirname, 'src', 'pages');
+  for (const archivo of fs.readdirSync(dirPages).filter((f) => f.endsWith('.jsx'))) {
+    const fuente = fs.readFileSync(path.join(dirPages, archivo), 'utf8');
+    for (const c of componentes) {
+      if (fuente.includes(`<${c}`)) {
+        assert(new RegExp(`import\\s+${c}\\s+from`).test(fuente), `${archivo} usa <${c}> sin importarlo`);
+      }
+    }
+  }
+});
+
 test('existe .env.example con VITE_API_URL', () => {
   const env = fs.readFileSync(path.join(__dirname, '.env.example'), 'utf8');
   assert(env.includes('VITE_API_URL'), 'falta VITE_API_URL en .env.example');
