@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api } from '../api'
 import ProductCard from '../components/ProductCard'
 
@@ -24,6 +24,9 @@ export default function Home({ navigate }) {
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const [filtros, setFiltros] = useState(FILTROS_VACIOS)
+  // Número de la última consulta: si cambian dos filtros seguidos, una respuesta
+  // vieja que llega tarde no pisa a la nueva.
+  const ultimaConsulta = useRef(0)
 
   const min = precio(filtros.precioMin)
   const max = precio(filtros.precioMax)
@@ -41,6 +44,7 @@ export default function Home({ navigate }) {
 
   async function cargar() {
     if (rangoInvalido) return
+    const consulta = ++ultimaConsulta.current
     setLoading(true)
     setMsg('')
     try {
@@ -54,11 +58,13 @@ export default function Home({ navigate }) {
         pagina: 0,
         tamano: 20
       })
+      if (consulta !== ultimaConsulta.current) return
       setProductos(data.contenido || data || [])
     } catch (e) {
+      if (consulta !== ultimaConsulta.current) return
       setMsg('No se pudo cargar el catálogo. ¿Está levantado el backend en http://localhost:8080?')
     } finally {
-      setLoading(false)
+      if (consulta === ultimaConsulta.current) setLoading(false)
     }
   }
 
