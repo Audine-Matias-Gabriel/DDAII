@@ -1,19 +1,21 @@
 package com.ddaii.integrations;
 
+import com.ddaii.domain.Producto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 /**
- * Fachada de Ximilar (docs/PLAN-INTEGRACION.md 6).
- * Sube imágenes del catálogo a una colección y busca prendas similares.
+ * Fachada de Ximilar (patrón Facade): el resto del backend habla de productos,
+ * no de registros, _id ni filtros de la API.
  *
- * Por defecto usa la API real de Ximilar. Se puede forzar modo mock con la variable
- * de entorno XIMILAR_MOCK=true para la demo sin consumir créditos.
+ * Con XIMILAR_MOCK=true no llama a la API ni gasta créditos: subir "anda" y la
+ * búsqueda devuelve vacío, así SimilaresService usa su respaldo local.
  *
- * Límites plan gratuito: 1.000 créditos/mes. Subir una imagen = 0,25 créditos.
- * No se usa tagging (cuesta 15 créditos/foto).
+ * Plan gratuito: 1.000 créditos por mes. Subir una imagen = 0,25; buscar por _id = 0,25.
+ * No se usa tagging (cuesta 15 créditos por foto).
  */
 @Service
 public class XimilarFacade {
@@ -27,26 +29,43 @@ public class XimilarFacade {
         this.mockMode = mockMode;
     }
 
-    /**
-     * Busca IDs de productos similares en Ximilar.
-     * En modo mock devuelve IDs fijos (1, 2, 3) para la demo.
-     */
-    public List<Long> buscarSimilares(String imagenUrl, int limite) {
-        if (mockMode) {
-            List<Long> mock = List.of(1L, 2L, 3L);
-            return mock.subList(0, Math.min(limite, mock.size()));
-        }
-        return ximilarClient.buscarSimilares(imagenUrl, limite);
+    /** Hay credenciales y no está en modo mock: se usa la API real. */
+    public boolean activo() {
+        return !mockMode && ximilarClient.configurado();
+    }
+
+    public boolean modoMock() {
+        return mockMode;
+    }
+
+    /** IDs de productos de otra tienda parecidos al dado, del más parecido al menos. */
+    public List<Long> buscarSimilares(Producto producto, int limite) {
+        if (!activo()) return List.of();
+        Long tiendaId = producto.getTienda() != null ? producto.getTienda().getId() : null;
+        return ximilarClient.buscarSimilares(
+                producto.getId(), producto.getImagenUrl(), producto.indexadoEnXimilar(), tiendaId, limite);
     }
 
     /**
-     * Sube una imagen a la colección de Ximilar.
-     * En modo mock devuelve true sin consumir créditos.
+     * Sube hasta 10 productos. Los que ya estaban con otra imagen se borran antes.
+     * Devuelve los ids que quedaron en la colección.
      */
-    public boolean subirImagenAColeccion(String imagenUrl) {
-        if (mockMode) {
-            return true;
+    public Set<Long> subir(List<Producto> productos) {
+        if (!activo()) {
+            // En mock o sin credenciales no se marca nada como subido.
+            return Set.of();
         }
-        return ximilarClient.subirImagenAColeccion(imagenUrl);
+        List<Long> conImagenVieja = productos.stream()
+                .filter(p -> p.getXimilarImagenUrl() != null)
+                .map(Producto::getId)
+                .toList();
+        if (!conImagenVieja.isEmpty()) {
+            ximilarClient.eliminar(conImagenVieja);
+        }
+        List<XimilarClient.Registro> registros = productos.stream()
+                .map(p -> new XimilarClient.Registro(
+                        p.getId(), p.getImagenUrl(), p.getTienda() != null ? p.getTienda().getId() : null))
+                .toList();
+        return ximilarClient.insertar(registros).subidos();
     }
 }
