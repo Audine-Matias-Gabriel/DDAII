@@ -29,7 +29,8 @@ export default function App() {
   }, [])
 
   function getHashRoute() {
-    const hash = window.location.hash.replace('#/', '')
+    // '#/planes' -> '/planes' (se conserva la barra inicial)
+    const hash = window.location.hash.replace(/^#/, '')
     return hash || '/'
   }
 
