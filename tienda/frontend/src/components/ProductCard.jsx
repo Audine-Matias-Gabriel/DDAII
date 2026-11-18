@@ -31,7 +31,6 @@ export default function ProductCard({ producto, navigate }) {
           {' · '}
           Talles: {(producto.tallesDisponibles || []).join(', ')}
         </p>
-        <p className="desc">{producto.descripcion || ''}</p>
         <button className="btn btn-outline" onClick={() => navigate(`/producto/${producto.id}`)}>
           Ver detalle
         </button>
