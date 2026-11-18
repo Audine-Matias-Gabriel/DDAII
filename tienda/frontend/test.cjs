@@ -121,6 +121,19 @@ test('existe src/pages/ProductDetail.jsx con recomendaciones y similares', () =>
   assert(detail.includes('getSimilares'), 'falta llamadas a similares');
 });
 
+test('la tarjeta del catálogo no muestra la descripción', () => {
+  const card = fs.readFileSync(path.join(__dirname, 'src', 'components', 'ProductCard.jsx'), 'utf8');
+  assert(!card.includes('producto.descripcion'), 'ProductCard muestra la descripción');
+});
+
+test('la sesión guardada se refresca con /api/auth/me (premium al día)', () => {
+  const auth = fs.readFileSync(path.join(__dirname, 'src', 'context', 'AuthContext.jsx'), 'utf8');
+  const efecto = auth.slice(auth.indexOf('useEffect('), auth.indexOf('const saveSession'));
+  assert(efecto.includes('api.me()'), 'AuthProvider no refresca el usuario al cargar');
+  const plans = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Plans.jsx'), 'utf8');
+  assert(/if \(isAuthenticated\) restoreSession\(\)/.test(plans), 'Planes no refresca el usuario al entrar');
+});
+
 test('las páginas importan los componentes que usan', () => {
   const componentes = fs.readdirSync(path.join(__dirname, 'src', 'components'))
     .filter((f) => f.endsWith('.jsx'))
