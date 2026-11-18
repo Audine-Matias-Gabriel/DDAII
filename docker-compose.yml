@@ -54,6 +54,10 @@ services:
       MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-}
       MP_PUBLIC_KEY: ${MP_PUBLIC_KEY:-}
       MP_BASE_URL: ${MP_BASE_URL:-https://api.mercadopago.com}
+      MP_PREMIUM_PRECIO: ${MP_PREMIUM_PRECIO:-5000}
+      # Webhook (opcional): URL https pública del backend (ej. ngrok) y clave secreta para validar la firma
+      MP_NOTIFICATION_BASE_URL: ${MP_NOTIFICATION_BASE_URL:-}
+      MP_WEBHOOK_SECRET: ${MP_WEBHOOK_SECRET:-}
       # Acepta XIMILAR_API_KEY o XIMILAR_API_TOKEN (el nombre que usaba el servicio Node)
       XIMILAR_API_KEY: ${XIMILAR_API_KEY:-${XIMILAR_API_TOKEN:-}}
       XIMILAR_COLLECTION_ID: ${XIMILAR_COLLECTION_ID:-}
