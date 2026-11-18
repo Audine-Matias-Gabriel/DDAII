@@ -28,6 +28,16 @@ public class AuthService {
      * Registro de un nuevo usuario. La contraseña se guarda hasheada con BCrypt.
      */
     public AuthResponse registrar(String nombre, String email, String password) {
+        if (nombre == null || nombre.isBlank()) {
+            throw new IllegalArgumentException("El nombre es obligatorio");
+        }
+        email = email == null ? null : email.trim();
+        if (email == null || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            throw new IllegalArgumentException("El email no es válido");
+        }
+        if (password == null || password.length() < 6) {
+            throw new IllegalArgumentException("La contraseña tiene que tener al menos 6 caracteres");
+        }
         if (usuarioRepository.findByEmail(email) != null) {
             throw new IllegalArgumentException("El email ya está registrado: " + email);
         }
