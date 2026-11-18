@@ -62,24 +62,113 @@ docs/                          # modelo.md, eventos.md y evidencias/ versionados
 
 ## Cómo levantar el proyecto
 
-```bash
-# 1. Copiar variables de entorno
-cp .env.example .env
-# editar .env con tus valores (claves de Mercado Pago/Ximilar en sandbox)
+### Requisitos
 
-# 2. Levantar toda la pila
-docker compose up --build
+- [Git](https://git-scm.com/downloads) y [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  (en Windows, con WSL 2). **Docker Desktop tiene que estar abierto** antes de levantar.
+- Libres los puertos **5432, 5672, 15672, 8080 y 5173**. Si tenés instalado Postgres o RabbitMQ en tu
+  PC, detené esos servicios: si no, el contenedor no arranca ("port is already allocated").
+- No hace falta instalar Java, Maven ni Node: todo se compila dentro de Docker.
 
-# 3. Verificar
-# Swagger UI:       http://localhost:8080/swagger-ui/index.html
-# WSDL (SOAP):      http://localhost:8080/ws/equivalencias-talles.wsdl
-# RabbitMQ panel:   http://localhost:15672  (guest / guest)
-# Frontend demo:    http://localhost:5173
-```
+### Paso a paso
 
-Sin `.env` también levanta: Mercado Pago y Ximilar quedan sin credenciales (el pago falla con un
-502 claro y "similares" usa el respaldo). El catálogo se llena solo cuando corre el scraper (al arrancar
-y después todos los días a las 2:00). Para empezar de cero: `docker compose down -v`.
+1. **Clonar el repo** y entrar a la carpeta:
+
+   ```powershell
+   git clone https://github.com/Audine-Matias-Gabriel/DDAII.git
+   ```
+
+   ```powershell
+   cd DDAII
+   ```
+
+2. **Crear el `.env`** a partir del ejemplo. En PowerShell (Windows):
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+   En Git Bash, Linux o Mac: `cp .env.example .env`.
+
+3. **Completar las claves** en `.env` (el archivo no se sube al repo; las claves se pasan por privado,
+   nunca por el repo ni el chat del grupo):
+
+   | Variable | Qué poner | Si la dejás vacía |
+   |---|---|---|
+   | `MP_ACCESS_TOKEN` | Access token **de prueba de la cuenta vendedora** de Mercado Pago (Tus integraciones → Credenciales de prueba) | "Hacerme premium" responde un error claro (502) |
+   | `XIMILAR_API_KEY` (o `XIMILAR_API_TOKEN`) y `XIMILAR_COLLECTION_ID` | Token y colección de Ximilar. **Leé [Ximilar en otra PC](#ximilar-en-otra-pc) antes de usar la colección del equipo** | "Similares" muestra productos de la misma categoría en la otra tienda |
+
+   Todo lo demás ya tiene un valor que funciona con Docker.
+
+4. **Levantar todo:**
+
+   ```powershell
+   docker compose up -d --build
+   ```
+
+   La primera vez tarda unos minutos (compila el backend y el front). El **scraper** corre al arrancar y
+   en 1 o 2 minutos llena el catálogo con las dos tiendas; después corre solo todos los días a las 2:00.
+   Para ver cómo va (salís con `Ctrl+C`, no apaga nada):
+
+   ```powershell
+   docker compose logs -f scraper
+   ```
+
+   Está listo cuando dice `Eventos confirmados` para Sportline y para Grid.
+
+5. **Abrir:**
+
+   | Qué | Dónde |
+   |---|---|
+   | Tienda | http://localhost:5173 |
+   | Swagger UI | http://localhost:8080/swagger-ui/index.html |
+   | WSDL (SOAP) | http://localhost:8080/ws/equivalencias-talles.wsdl |
+   | Panel de RabbitMQ | http://localhost:15672 (usuario y clave: `guest`) |
+
+### Pagar en el sandbox
+
+Para probar el plan premium: crear una cuenta en la tienda, ir a **Planes → Hacerme premium** y pagar en
+Mercado Pago **con la cuenta compradora de prueba** (no con una cuenta real). La cuenta vendedora es la
+del `MP_ACCESS_TOKEN`. En local Mercado Pago no vuelve solo a la tienda: volvé a Planes y se confirma solo
+(o con "Verificar pago"). Detalle en [docs/pagos.md](docs/pagos.md).
+
+### Ximilar en otra PC
+
+Ximilar guarda cada imagen con el **id que el producto tiene en tu base de datos** (`producto-<id>`).
+Cada PC tiene su propia base y numera los productos distinto, así que **una colección de Ximilar sirve
+para una sola base de datos**. Si dos PCs usan la misma colección, en la segunda las imágenes figuran
+como ya subidas y los similares muestran productos equivocados.
+
+En una PC que no es la que cargó la colección del equipo, elegí una:
+
+- **Sin Ximilar** (alcanza para desarrollar): dejá `XIMILAR_API_KEY` vacío o poné `XIMILAR_MOCK=true`.
+  "Similares" usa el respaldo por categoría.
+- **Con tu propia colección:** creá una colección de Product Similarity en https://app.ximilar.com y usá
+  ese `XIMILAR_COLLECTION_ID`. El catálogo se sube solo (unos 134 créditos de los 1.000 del mes gratuito).
+
+### Apagar, prender y empezar de cero
+
+| Para | Comando |
+|---|---|
+| Apagar (conserva los datos) | `docker compose stop` |
+| Volver a prender | `docker compose start` |
+| Actualizar después de un `git pull` | `docker compose up -d --build` |
+| Borrar los contenedores (conserva la base) | `docker compose down` |
+| **Empezar de cero** (borra la base: usuarios, suscripciones, productos) | `docker compose down -v` |
+
+> ⚠️ `docker compose down -v` borra la base de datos. Si esa PC tiene Ximilar activo, la base nueva numera
+> los productos distinto y la colección queda desincronizada: hay que usar una colección nueva (o vaciarla)
+> después de empezar de cero.
+
+### Si algo no anda
+
+| Síntoma | Qué hacer |
+|---|---|
+| `port is already allocated` | Otro programa usa ese puerto (Postgres, RabbitMQ u otro proyecto). Cerralo y volvé a levantar |
+| `Cannot connect to the Docker daemon` / `pipe ... docker_engine` | Abrí Docker Desktop y esperá a que diga que está corriendo |
+| El catálogo dice "No se encontraron productos" | El scraper todavía no terminó: mirá `docker compose logs -f scraper` |
+| "Hacerme premium" da error 502 | Falta `MP_ACCESS_TOKEN` en `.env`. Después de cambiar el `.env`: `docker compose up -d` |
+| Cambié el `.env` y no toma los valores | `docker compose up -d` (recrea los contenedores con las variables nuevas) |
 
 ## Endpoints
 
@@ -163,6 +252,7 @@ El pipeline de GitHub Actions corre `mvn test` y los `npm test` del frontend y d
 
 1. **Configurar:** en `.env` poner `XIMILAR_API_KEY` y `XIMILAR_COLLECTION_ID` de la cuenta de Ximilar
    (nunca en `.env.example`). Sin ellas, o con `XIMILAR_MOCK=true`, no se llama a la API.
+   **Una colección por base de datos:** ver [Ximilar en otra PC](#ximilar-en-otra-pc).
 2. **Cargar el catálogo en la colección:** cada producto se sube como un registro
    (`_id = producto-<id>`, `_url` = imagen, `product_id`, `tienda_id`), de a 10 por llamada.
    - Automático: con `XIMILAR_INDEXADO_AUTOMATICO=true` (por defecto en compose) se suben solas las imágenes
