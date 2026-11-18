@@ -110,5 +110,16 @@ export const api = {
       body: JSON.stringify({ usuarioId })
     })
     return handleResponse(r)
+  },
+
+  // Confirma el pago al volver de Mercado Pago (/pago/exito)
+  async confirmarSuscripcion(suscripcionId, paymentId) {
+    const id = encodeURIComponent(suscripcionId)
+    const pago = encodeURIComponent(paymentId)
+    const r = await fetch(`${API_BASE}/api/suscripciones/${id}/confirmar?paymentId=${pago}`, {
+      method: 'POST',
+      headers: authHeaders()
+    })
+    return handleResponse(r)
   }
 }
