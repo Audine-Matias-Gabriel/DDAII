@@ -17,7 +17,7 @@ Agregador de ropa con integración sincrónica y asincrónica. Entrega en 10 dí
 ## Arquitectura
 
 ```
-frontend (React/JS)  <-->  backend (Spring Boot)  <-->  scraper (Spring Boot)
+frontend (React/JS)  <-->  backend (Spring Boot)  <-->  scraper (Node.js)
                               |                      |
                               v                      v
                          Postgres              RabbitMQ  <-->  Ximilar (IA similar)
@@ -28,7 +28,7 @@ frontend (React/JS)  <-->  backend (Spring Boot)  <-->  scraper (Spring Boot)
 ```
 
 - **backend**: catálogo, SOAP de talles, suscripciones/pago Mercado Pago, recomendaciones REST y por cola, similares Ximilar.
-- **scraper**: lee catálogos de tiendas reales, publica `ProductoScrapeado` a RabbitMQ, guarda snapshots.
+- **scraper** (Node.js): lee los catálogos reales de Sportline y Grid (API pública de VTEX), normaliza categoría, género y talles, publica `ProductoScrapeado` a RabbitMQ una vez por día y guarda snapshots. Ver [tienda/scraper/README.md](tienda/scraper/README.md).
 - **frontend mínimo**: catálogo y detalle públicos, "Ver en tienda", filtros, bloque "Te puede gustar", página Planes con botón "Hacerme premium" que redirige a Mercado Pago.
 
 ## Estructura
@@ -36,7 +36,7 @@ frontend (React/JS)  <-->  backend (Spring Boot)  <-->  scraper (Spring Boot)
 ```
 tienda/
   backend/                     # API REST, SOAP y RabbitMQ (Spring Boot)
-  scraper/                     # servicio de scraping (Spring Boot)
+  scraper/                     # servicio de scraping (Node.js)
   frontend/                    # demo web (Node/JS)
   ximilar-product-similarity/  # integración con Ximilar
 docker-compose.yml             # PostgreSQL, RabbitMQ, backend, scraper y frontend
@@ -50,7 +50,7 @@ docs/                          # contexto, planes, eventos, IA y evidencias (ign
 | postgres | 5432 | Base de datos del backend |
 | rabbitmq | 5672 / 15672 | Broker de mensajes + panel de administración |
 | backend | 8080 | API REST, SOAP, Swagger UI |
-| scraper | 8081 | Segundo servicio, lectura de catálogos |
+| scraper | — | Segundo servicio (Node.js): lee catálogos y publica a RabbitMQ (sin puerto) |
 | frontend | 80 / 5173 | Web mínima para la demo |
 
 ## Cómo levantar el proyecto
@@ -80,9 +80,13 @@ mvn test
 # Frontend (Node)
 cd ../frontend
 npm test
+
+# Scraper (Node, sin internet)
+cd ../scraper
+npm ci && npm test
 ```
 
-El pipeline de GitHub Actions corre `mvn test` y `npm test` en cada Pull Request.
+El pipeline de GitHub Actions corre `mvn test` y los `npm test` del frontend y del scraper en cada Pull Request.
 
 ## Trabajo por integrante (resumen del plan de 10 días)
 

@@ -72,13 +72,12 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      RABBIT_URI_HOST: rabbitmq
-      RABBIT_URI_PORT: 5672
-      RABBIT_URI_USERNAME: guest
-      RABBIT_URI_PASSWORD: guest
-      RABBIT_EXCHANGE: tienda.exchange
-      TIENDA1_CATALOGO_URL: ${TIENDA1_CATALOGO_URL}
-      TIENDA2_CATALOGO_URL: ${TIENDA2_CATALOGO_URL}
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      RABBITMQ_EXCHANGE: tienda.exchange
+      TIENDAS: SPORTLINE,GRID
+      SCHEDULER_CRON: "0 2 * * *"
+      # 300 por tienda para que el catálogo tenga variedad (las primeras páginas son casi todo calzado)
+      MAX_PRODUCTS: ${MAX_PRODUCTS:-300}
 
   frontend:
     build:
