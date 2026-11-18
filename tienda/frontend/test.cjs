@@ -141,6 +141,16 @@ test('Planes muestra el precio que define el backend (no uno fijo)', () => {
   assert(api.includes('/api/suscripciones/plan'), 'falta getPlanPremium en api.js');
 });
 
+test('el catálogo descarta respuestas de consultas viejas', () => {
+  const home = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Home.jsx'), 'utf8');
+  assert(home.includes('consulta !== ultimaConsulta.current'), 'una respuesta vieja puede pisar a la nueva');
+});
+
+test('la tarjeta no inventa "Sin stock" cuando el producto no trae disponible', () => {
+  const card = fs.readFileSync(path.join(__dirname, 'src', 'components', 'ProductCard.jsx'), 'utf8');
+  assert(card.includes('producto.disponible != null'), 'ProductCard muestra stock aunque no venga el dato');
+});
+
 test('la tarjeta del catálogo no muestra la descripción', () => {
   const card = fs.readFileSync(path.join(__dirname, 'src', 'components', 'ProductCard.jsx'), 'utf8');
   assert(!card.includes('producto.descripcion'), 'ProductCard muestra la descripción');
