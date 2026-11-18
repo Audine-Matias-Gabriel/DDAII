@@ -9,6 +9,8 @@ import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.core.MPRequestOptions;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
+import com.mercadopago.net.MPResultsResourcesPage;
+import com.mercadopago.net.MPSearchRequest;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import org.slf4j.Logger;
@@ -18,6 +20,8 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Único punto de contacto con la API de Mercado Pago (patrón Facade): el resto
@@ -67,17 +71,21 @@ public class MercadoPagoGateway {
                 .unitPrice(precioPremium)
                 .build();
 
-        // Sin auto_return: Mercado Pago lo exige con URLs HTTPS y el frontend
-        // corre en localhost. El comprador vuelve con "Volver al sitio".
-        PreferenceRequest request = PreferenceRequest.builder()
+        PreferenceRequest.PreferenceRequestBuilder builder = PreferenceRequest.builder()
                 .items(List.of(item))
                 .externalReference(String.valueOf(suscripcionId))
                 .backUrls(PreferenceBackUrlsRequest.builder()
                         .success(frontendUrl + "/pago/exito")
                         .failure(frontendUrl + "/pago/error")
                         .pending(frontendUrl + "/pago/error")
-                        .build())
-                .build();
+                        .build());
+        // auto_return (volver solo al sitio al aprobarse) Mercado Pago lo rechaza
+        // con URLs localhost ("invalid_auto_return"). En local el pago se detecta
+        // igual con buscarPagoAprobado (POST /api/suscripciones/verificar).
+        if (usaAutoReturn()) {
+            builder.autoReturn("approved");
+        }
+        PreferenceRequest request = builder.build();
 
         MPRequestOptions opciones = MPRequestOptions.builder()
                 .accessToken(accessToken)
@@ -116,6 +124,44 @@ public class MercadoPagoGateway {
             throw new MercadoPagoException(
                     "No se pudo conectar con Mercado Pago: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Busca en Mercado Pago un pago aprobado de la suscripción (por
+     * {@code external_reference}). Sirve cuando el comprador no vuelve por la
+     * back URL: en localhost Mercado Pago no redirige solo.
+     */
+    public Optional<PagoConsultado> buscarPagoAprobado(Long suscripcionId) {
+        exigirAccessToken();
+        String referencia = String.valueOf(suscripcionId);
+        MPSearchRequest busqueda = MPSearchRequest.builder()
+                .limit(10)
+                .offset(0)
+                .filters(Map.of("external_reference", referencia))
+                .build();
+        try {
+            MPResultsResourcesPage<Payment> pagina = new PaymentClient().search(busqueda, opciones());
+            List<Payment> pagos = pagina.getResults() != null ? pagina.getResults() : List.of();
+            return pagos.stream()
+                    .filter(p -> "approved".equals(p.getStatus()))
+                    .filter(p -> referencia.equals(p.getExternalReference()))
+                    .findFirst()
+                    .map(p -> new PagoConsultado(String.valueOf(p.getId()), p.getStatus(),
+                            p.getExternalReference()));
+        } catch (MPApiException e) {
+            String detalle = e.getApiResponse() != null ? e.getApiResponse().getContent() : e.getMessage();
+            throw new MercadoPagoException(
+                    "No se pudieron buscar los pagos de la suscripción " + suscripcionId + ": " + detalle, e);
+        } catch (MPException e) {
+            throw new MercadoPagoException(
+                    "No se pudo conectar con Mercado Pago: " + e.getMessage(), e);
+        }
+    }
+
+    /** Mercado Pago solo acepta auto_return con back URLs públicas (no localhost). */
+    boolean usaAutoReturn() {
+        return frontendUrl != null && frontendUrl.startsWith("https://")
+                && !frontendUrl.contains("localhost") && !frontendUrl.contains("127.0.0.1");
     }
 
     private MPRequestOptions opciones() {

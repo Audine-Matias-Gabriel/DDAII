@@ -112,6 +112,16 @@ export const api = {
     return handleResponse(r)
   },
 
+  // Busca en Mercado Pago pagos de las suscripciones pendientes del usuario
+  // (en localhost Mercado Pago no vuelve solo a /pago/exito)
+  async verificarSuscripciones() {
+    const r = await fetch(`${API_BASE}/api/suscripciones/verificar`, {
+      method: 'POST',
+      headers: authHeaders()
+    })
+    return handleResponse(r)
+  },
+
   // Confirma el pago al volver de Mercado Pago (/pago/exito)
   async confirmarSuscripcion(suscripcionId, paymentId) {
     const id = encodeURIComponent(suscripcionId)

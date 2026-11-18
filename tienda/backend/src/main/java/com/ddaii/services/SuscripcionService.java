@@ -14,6 +14,10 @@ import com.ddaii.repositories.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 /**
  * Suscripciones al plan premium con Mercado Pago (docs/PLAN-INTEGRACION.md 2.7-2.9 y 7).
  */
@@ -46,6 +50,10 @@ public class SuscripcionService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado: " + usuarioId));
 
+        if (Boolean.TRUE.equals(usuario.getPremium())) {
+            throw new IllegalArgumentException("Ya sos premium: no hace falta volver a pagar.");
+        }
+
         Suscripcion s = suscripcionRepository.save(new Suscripcion(usuario, "PENDIENTE", null));
 
         PreferenciaPago preferencia = mercadoPagoGateway.crearPreferenciaPremium(s.getId());
@@ -76,16 +84,48 @@ public class SuscripcionService {
             }
 
             if ("approved".equals(pago.estado())) {
-                s.setEstado("APROBADA");
-                s.setIdPago(pago.idPago());
-                s = suscripcionRepository.save(s);
-                eventPublisher.publicarSuscripcionActivada(usuarioId, s.getId(), s.getIdPago());
+                s = aprobar(s, pago.idPago());
             } else if ("rejected".equals(pago.estado()) || "cancelled".equals(pago.estado())) {
                 s.setEstado("RECHAZADA");
                 s = suscripcionRepository.save(s);
             }
         }
-        return new SuscripcionDTO(s.getId(), usuarioId, s.getEstado(), s.getIdPago(), s.getFecha());
+        return aDTO(s);
+    }
+
+    /**
+     * Para cuando el comprador no vuelve por la back URL (en localhost Mercado
+     * Pago no redirige solo): busca en Mercado Pago un pago aprobado para cada
+     * suscripción PENDIENTE del usuario y la aprueba. Devuelve todas sus
+     * suscripciones, de la más nueva a la más vieja.
+     */
+    @Transactional
+    public List<SuscripcionDTO> verificarPagosPendientes(Long usuarioId) {
+        List<Suscripcion> suscripciones = suscripcionRepository.findByUsuarioIdOrderByIdDesc(usuarioId);
+        List<SuscripcionDTO> resultado = new ArrayList<>();
+        for (Suscripcion s : suscripciones) {
+            if ("PENDIENTE".equals(s.getEstado())) {
+                Optional<PagoConsultado> pago = mercadoPagoGateway.buscarPagoAprobado(s.getId());
+                if (pago.isPresent()) {
+                    s = aprobar(s, pago.get().idPago());
+                }
+            }
+            resultado.add(aDTO(s));
+        }
+        return resultado;
+    }
+
+    /** Pasa la suscripción a APROBADA y publica SuscripcionActivada (marca premium). */
+    private Suscripcion aprobar(Suscripcion s, String idPago) {
+        s.setEstado("APROBADA");
+        s.setIdPago(idPago);
+        s = suscripcionRepository.save(s);
+        eventPublisher.publicarSuscripcionActivada(s.getUsuario().getId(), s.getId(), s.getIdPago());
+        return s;
+    }
+
+    private SuscripcionDTO aDTO(Suscripcion s) {
+        return new SuscripcionDTO(s.getId(), s.getUsuario().getId(), s.getEstado(), s.getIdPago(), s.getFecha());
     }
 
     /**

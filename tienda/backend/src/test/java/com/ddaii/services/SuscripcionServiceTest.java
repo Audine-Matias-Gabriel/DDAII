@@ -188,6 +188,49 @@ class SuscripcionServiceTest {
     }
 
     @Test
+    void crearPagoPremiumSiYaEsPremiumNoCreaNada() {
+        Usuario u = new Usuario("Juan", "juan@test.com", "hash");
+        u.setId(1L);
+        u.setPremium(true);
+        when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(u));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> suscripcionService.crearPagoPremium(1L, "PREMIUM"));
+
+        verify(suscripcionRepository, never()).save(any());
+        verify(mercadoPagoGateway, never()).crearPreferenciaPremium(any());
+    }
+
+    @Test
+    void verificarPagosPendientesApruebaLaQueTienePagoAprobado() {
+        Usuario u = new Usuario("Juan", "juan@test.com", "hash");
+        u.setId(1L);
+        com.ddaii.domain.Suscripcion conPago = new com.ddaii.domain.Suscripcion(u, "PENDIENTE", null);
+        conPago.setId(11L);
+        com.ddaii.domain.Suscripcion sinPago = new com.ddaii.domain.Suscripcion(u, "PENDIENTE", null);
+        sinPago.setId(10L);
+        com.ddaii.domain.Suscripcion rechazada = new com.ddaii.domain.Suscripcion(u, "RECHAZADA", null);
+        rechazada.setId(9L);
+
+        when(suscripcionRepository.findByUsuarioIdOrderByIdDesc(1L))
+                .thenReturn(java.util.List.of(conPago, sinPago, rechazada));
+        when(mercadoPagoGateway.buscarPagoAprobado(11L))
+                .thenReturn(java.util.Optional.of(new PagoConsultado("555", "approved", "11")));
+        when(mercadoPagoGateway.buscarPagoAprobado(10L)).thenReturn(java.util.Optional.empty());
+        when(suscripcionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        java.util.List<com.ddaii.dto.SuscripcionDTO> resultado = suscripcionService.verificarPagosPendientes(1L);
+
+        assertEquals(3, resultado.size());
+        assertEquals("APROBADA", resultado.get(0).getEstado());
+        assertEquals("555", resultado.get(0).getIdPago());
+        assertEquals("PENDIENTE", resultado.get(1).getEstado());
+        assertEquals("RECHAZADA", resultado.get(2).getEstado());
+        verify(mercadoPagoGateway, never()).buscarPagoAprobado(9L);
+        verify(eventPublisher, times(1)).publicarSuscripcionActivada(1L, 11L, "555");
+    }
+
+    @Test
     void marcarPremiumActivaUsuarioDeFormaIdempotente() {
         Usuario u = new Usuario("Juan", "juan@test.com", "hash");
         u.setId(1L);
