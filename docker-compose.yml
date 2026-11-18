@@ -58,6 +58,7 @@ services:
       XIMILAR_BASE_URL: ${XIMILAR_BASE_URL}
       XIMILAR_MOCK: ${XIMILAR_MOCK}
       CORS_ORIGINS: http://localhost:5173,http://frontend
+      FRONTEND_URL: http://localhost:5173
     ports:
       - "8080:8080"
 
