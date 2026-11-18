@@ -2,12 +2,14 @@ package com.ddaii.controllers;
 
 import com.ddaii.dto.SuscripcionDTO;
 import com.ddaii.dto.SuscripcionResponse;
+import com.ddaii.integrations.MercadoPagoGateway;
 import com.ddaii.services.SuscripcionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Suscripciones al plan premium con Mercado Pago (docs/PLAN-INTEGRACION.md 2.7-2.9).
@@ -23,9 +25,21 @@ import java.util.List;
 public class SuscripcionController {
 
     private final SuscripcionService suscripcionService;
+    private final MercadoPagoGateway mercadoPagoGateway;
 
-    public SuscripcionController(SuscripcionService suscripcionService) {
+    public SuscripcionController(SuscripcionService suscripcionService,
+                                 MercadoPagoGateway mercadoPagoGateway) {
         this.suscripcionService = suscripcionService;
+        this.mercadoPagoGateway = mercadoPagoGateway;
+    }
+
+    /** Datos del plan premium para mostrar en Planes: el mismo precio que se cobra en Mercado Pago. Público. */
+    @GetMapping("/plan")
+    public Map<String, Object> plan() {
+        return Map.of(
+                "nombre", "PREMIUM",
+                "precio", mercadoPagoGateway.precioPremium(),
+                "moneda", "ARS");
     }
 
     @PostMapping

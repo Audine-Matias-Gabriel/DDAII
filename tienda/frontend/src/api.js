@@ -119,6 +119,12 @@ export const api = {
     return handleResponse(r)
   },
 
+  // Precio del plan premium: el mismo que se cobra en Mercado Pago (público)
+  async getPlanPremium() {
+    const r = await fetch(`${API_BASE}/api/suscripciones/plan`)
+    return handleResponse(r)
+  },
+
   // Busca en Mercado Pago pagos de las suscripciones pendientes del usuario
   // (en localhost Mercado Pago no vuelve solo a /pago/exito)
   async verificarSuscripciones() {

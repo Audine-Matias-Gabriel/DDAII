@@ -42,6 +42,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/productos/{id}/similares").permitAll()
                 // Lista de tiendas para el filtro del catálogo (público como el catálogo)
                 .requestMatchers(HttpMethod.GET, "/api/tiendas").permitAll()
+                // Precio del plan premium para la página Planes
+                .requestMatchers(HttpMethod.GET, "/api/suscripciones/plan").permitAll()
                 // Swagger y documentación
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/v3/api-docs").permitAll()
                 // SOAP

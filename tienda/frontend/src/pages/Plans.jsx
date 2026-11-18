@@ -10,6 +10,17 @@ export default function Plans({ navigate }) {
   const [msgError, setMsgError] = useState(false)
   const [aprobada, setAprobada] = useState(false)
   const [hayPendiente, setHayPendiente] = useState(false)
+  const [precio, setPrecio] = useState(null)
+
+  // El precio lo define el backend (mp.premium-precio), así coincide con lo que cobra Mercado Pago.
+  useEffect(() => {
+    api.getPlanPremium()
+      .then((plan) => setPrecio(Number(plan.precio)))
+      .catch(() => setPrecio(null))
+  }, [])
+  const precioTexto = precio != null && Number.isFinite(precio)
+    ? `$${precio.toLocaleString('es-AR')} / mes`
+    : 'Precio no disponible'
 
   // Premium si el backend ya lo marcó o si hay una suscripción aprobada
   // (el flag premium se activa por un evento, puede tardar un instante).
@@ -107,7 +118,7 @@ export default function Plans({ navigate }) {
         <div className="plan-card">
           <div className="plan-body">
             <h3>Premium</h3>
-            <p className="price">$999 / mes</p>
+            <p className="price">{precioTexto}</p>
             <p>Experiencia premium. Pago de prueba con Mercado Pago (sandbox).</p>
             <button
               className="btn btn-primary"
