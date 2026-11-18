@@ -105,6 +105,16 @@ test('existe src/pages/Plans.jsx con flujo premium', () => {
   assert(plans.includes('urlPago'), 'falta urlPago');
 });
 
+test('existe src/pages/PagoResultado.jsx y se rutea /pago/exito', () => {
+  const pr = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'PagoResultado.jsx'), 'utf8');
+  assert(pr.includes('confirmarSuscripcion'), 'falta confirmarSuscripcion en PagoResultado');
+  const app = fs.readFileSync(path.join(__dirname, 'src', 'App.jsx'), 'utf8');
+  assert(app.includes('/pago/exito'), 'falta ruta /pago/exito en App');
+  assert(app.includes('/pago/error'), 'falta ruta /pago/error en App');
+  const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+  assert(api.includes('/confirmar?paymentId='), 'falta endpoint confirmar en api.js');
+});
+
 test('existe src/pages/ProductDetail.jsx con recomendaciones y similares', () => {
   const detail = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'ProductDetail.jsx'), 'utf8');
   assert(detail.includes('getRecomendaciones'), 'falta llamadas a recomendaciones');
