@@ -1,19 +1,27 @@
 /**
- * Mapea el modelo interno Producto al contrato compartido con el backend (P2).
- * Mantener estos nombres sincronizados con ProductoScrapeadoEvent.java.
+ * Producto normalizado → evento ProductoScrapeado.
+ * Contrato: tienda/backend/src/main/java/com/ddaii/events/ProductoScrapeado.java
+ * (mismos nombres de campo; el backend hace upsert por nombre de tienda + idExterno).
  */
-function toProductoScrapeadoEvent(producto, storeName) {
+function toProductoScrapeadoEvent(producto, tienda) {
   if (!producto || producto.idExterno == null) {
     throw new Error("No se puede publicar un producto sin idExterno.");
   }
+  const precio = Number(producto.precio);
+  if (!Number.isFinite(precio)) {
+    throw new Error(`Precio inválido en ${producto.idExterno}: ${producto.precio}`);
+  }
 
   return {
-    tienda: String(storeName || producto.tienda || ""),
+    tipo: "ProductoScrapeado",
+    tiendaId: Number(tienda?.id ?? producto.tiendaId),
+    tienda: String(tienda?.nombre ?? producto.tienda ?? ""),
     idExterno: String(producto.idExterno),
     nombre: String(producto.nombre || ""),
-    precio: Number(producto.precio || 0),
-    categoria: String(producto.categoria || "Sin categoría"),
-    genero: String(producto.genero || "No especificado"),
+    descripcion: String(producto.descripcion || ""),
+    precio,
+    categoria: String(producto.categoria || ""),
+    genero: String(producto.genero || "Unisex"),
     marca: String(producto.marca || "Sin marca"),
     urlOriginal: String(producto.urlOriginal || ""),
     imagenUrl: String(producto.imagenUrl || ""),
