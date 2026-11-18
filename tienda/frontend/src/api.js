@@ -1,4 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_URL || ''
+import { armarQuery } from './query.js'
+
+const API_BASE =import.meta.env.VITE_API_URL || ''
 
 function getToken() {
   if (typeof localStorage === 'undefined') return null
@@ -21,7 +23,7 @@ async function handleResponse(r) {
 export const api = {
   // Productos
   async getProductos(params = {}) {
-    const search = new URLSearchParams(params).toString()
+    const search = armarQuery(params)
     const r = await fetch(`${API_BASE}/api/productos${search ? `?${search}` : ''}`)
     return handleResponse(r)
   },
