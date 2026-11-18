@@ -88,6 +88,36 @@ npm ci && npm test
 
 El pipeline de GitHub Actions corre `mvn test` y los `npm test` del frontend y del scraper en cada Pull Request.
 
+## Prendas similares con Ximilar
+
+`GET /api/productos/{id}/similares` devuelve prendas de **otra tienda** que se parecen visualmente, usando
+[Ximilar Product Similarity](https://docs.ximilar.com/visual-search/overview) (patrón Facade: `XimilarFacade`).
+
+1. **Configurar:** en `.env` poner `XIMILAR_API_KEY` y `XIMILAR_COLLECTION_ID` de la cuenta de Ximilar
+   (nunca en `.env.example`). Sin ellas, o con `XIMILAR_MOCK=true`, no se llama a la API.
+2. **Cargar el catálogo en la colección:** cada producto se sube como un registro
+   (`_id = producto-<id>`, `_url` = imagen, `product_id`, `tienda_id`), de a 10 por llamada.
+   - Automático: con `XIMILAR_INDEXADO_AUTOMATICO=true` (por defecto en compose) se suben solas las imágenes
+     nuevas o cambiadas cada 10 minutos, hasta 100 por corrida.
+   - A mano (con sesión iniciada): `POST /api/similares/indexar?maximo=100`. Responde cuántas subió, cuántas
+     quedan y los créditos estimados. Repetir hasta `pendientesDespues = 0`.
+3. **Buscar:** `visualKNN` por el `_id` del producto, filtrando `tienda_id != tienda del producto`. Cada
+   similar trae `origen: "ximilar"`. Si Ximilar no está configurado o falla, el endpoint usa el respaldo
+   (misma categoría en otra tienda) y marca `origen: "catalogo"`.
+
+**Créditos (plan gratuito: 1.000 por mes, colección de hasta 1.000 registros):**
+
+| Operación | Créditos | Uso en este proyecto |
+|---|---|---|
+| Subir una imagen (sin procesar) | 0,25 | ~537 productos ≈ **134 créditos**, una sola vez. Después solo los nuevos |
+| Buscar similares por `_id` | 0,25 | Una vez por detalle de producto abierto |
+| Buscar por URL externa | 1 | Solo si el producto todavía no está en la colección |
+| Tagging de fashion | 15 | **No se usa** |
+
+Topes para no pasarse: `XIMILAR_MAXIMO_POR_CORRIDA` (100) y `XIMILAR_MAXIMO_COLECCION` (1.000).
+
+**Créditos usados (18/11/2026):** carga inicial de 537 imágenes = **134,25 créditos**, más unas 15 búsquedas de prueba (~4 créditos). En total, unos **138 de los 1.000** del mes. La colección tiene 561 registros: 537 productos y 24 de pruebas anteriores, que la búsqueda ignora porque no tienen `tienda_id`. Evidencia en [docs/evidencias](docs/evidencias/README.md).
+
 ## Trabajo por integrante (resumen del plan de 10 días)
 
 - **P1 — Frontend y evidencias:** frontend mínimo, borrado de carrito, filtros, detalle con "Ver en tienda", login simple (header `X-Usuario-Id`), bloque "Te puede gustar", página Planes/premium, Dockerfile del frontend, evidencias en `docs/evidencias/`. Revisa PR de P4.

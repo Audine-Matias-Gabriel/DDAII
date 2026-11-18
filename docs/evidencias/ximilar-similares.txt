@@ -1,0 +1,19 @@
+# GET /api/productos/{id}/similares?limite=4 con Ximilar activo (origen = ximilar)
+
+## Producto 1: Zapatillas Topper Boris Hombre (Sportline)
+- 482 ZAPATILLAS PUMA PARK LIFESTYLE SK8 HOMBRE | Grid | origen: ximilar
+- 381 ZAPATILLAS ADIDAS SPORTSWEAR BREAK START 2000 UNISEX | Grid | origen: ximilar
+- 458 ZAPATILLAS JORDAN SESSION HOMBRE | Grid | origen: ximilar
+- 307 ZAPATILLAS NIKE SPORTSWEAR KILLSHOT 2 NIÑOS | Grid | origen: ximilar
+
+## Producto 280: ZAPATILLAS NIKE SPORTSWEAR AVA ROVER HOMBRE (Grid)
+- 131 Zapatillas Nike W In-Season Tr 14 Mujer | Sportline | origen: ximilar
+- 145 Zapatillas Nike W In-Season Tr 14 Mujer | Sportline | origen: ximilar
+- 104 Zapatillas Puma Softride Sera Wns Adp Mujer | Sportline | origen: ximilar
+- 62 Zapatillas Puma Flyer Lite 4 Adp Hombre | Sportline | origen: ximilar
+
+## Producto 150: Remera adidas Adizero Essentials Mujer (Sportline)
+- 408 REMERA ADIDAS ORIGINALS CROP MUJER | Grid | origen: ximilar
+- 521 REMERA ADIDAS ORIGINALS 3 TIRAS HOMBRE | Grid | origen: ximilar
+- 469 REMERA ADIDAS ORIGINALS GFX T HOMBRE | Grid | origen: ximilar
+- 465 ZAPATILLAS ADIDAS PERFORMANCE ADIZERO BOSTON 13 MUJER | Grid | origen: ximilar

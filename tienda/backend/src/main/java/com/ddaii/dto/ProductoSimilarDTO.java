@@ -11,6 +11,8 @@ public class ProductoSimilarDTO {
     private String imagenUrl;
     private String urlOriginal;
     private Double precio;
+    /** "ximilar" (parecido visual) o "catalogo" (respaldo: misma categoría en otra tienda). */
+    private String origen;
 
     public ProductoSimilarDTO() {}
 
@@ -36,4 +38,6 @@ public class ProductoSimilarDTO {
     public void setUrlOriginal(String urlOriginal) { this.urlOriginal = urlOriginal; }
     public Double getPrecio() { return precio; }
     public void setPrecio(Double precio) { this.precio = precio; }
+    public String getOrigen() { return origen; }
+    public void setOrigen(String origen) { this.origen = origen; }
 }

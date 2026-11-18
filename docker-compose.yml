@@ -54,10 +54,14 @@ services:
       MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-}
       MP_PUBLIC_KEY: ${MP_PUBLIC_KEY:-}
       MP_BASE_URL: ${MP_BASE_URL:-https://api.mercadopago.com}
-      XIMILAR_API_KEY: ${XIMILAR_API_KEY:-}
+      # Acepta XIMILAR_API_KEY o XIMILAR_API_TOKEN (el nombre que usaba el servicio Node)
+      XIMILAR_API_KEY: ${XIMILAR_API_KEY:-${XIMILAR_API_TOKEN:-}}
       XIMILAR_COLLECTION_ID: ${XIMILAR_COLLECTION_ID:-}
       XIMILAR_BASE_URL: ${XIMILAR_BASE_URL:-https://api.ximilar.com}
       XIMILAR_MOCK: ${XIMILAR_MOCK:-false}
+      XIMILAR_INDEXADO_AUTOMATICO: ${XIMILAR_INDEXADO_AUTOMATICO:-true}
+      XIMILAR_MAXIMO_POR_CORRIDA: ${XIMILAR_MAXIMO_POR_CORRIDA:-100}
+      XIMILAR_MAXIMO_COLECCION: ${XIMILAR_MAXIMO_COLECCION:-1000}
       CORS_ORIGINS: http://localhost:5173,http://frontend
       FRONTEND_URL: http://localhost:5173
     ports:

@@ -1,0 +1,7 @@
+# POST /api/similares/indexar?maximo=100 hasta que no queden pendientes (2026-11-18T21:53Z)
+{"activo":true,"mensaje":"subidas 100 imágenes (~25.00 créditos), fallidas 0, en la colección 105, pendientes 432","pendientesAntes":532,"subidos":100,"fallidos":0,"enColeccion":105,"pendientesDespues":432,"creditosEstimados":25.0}
+{"activo":true,"mensaje":"subidas 100 imágenes (~25.00 créditos), fallidas 0, en la colección 205, pendientes 332","pendientesAntes":432,"subidos":100,"fallidos":0,"enColeccion":205,"pendientesDespues":332,"creditosEstimados":25.0}
+{"activo":true,"mensaje":"subidas 100 imágenes (~25.00 créditos), fallidas 0, en la colección 305, pendientes 232","pendientesAntes":332,"subidos":100,"fallidos":0,"enColeccion":305,"pendientesDespues":232,"creditosEstimados":25.0}
+{"activo":true,"mensaje":"subidas 100 imágenes (~25.00 créditos), fallidas 0, en la colección 405, pendientes 132","pendientesAntes":232,"subidos":100,"fallidos":0,"enColeccion":405,"pendientesDespues":132,"creditosEstimados":25.0}
+{"activo":true,"mensaje":"subidas 100 imágenes (~25.00 créditos), fallidas 0, en la colección 505, pendientes 32","pendientesAntes":132,"subidos":100,"fallidos":0,"enColeccion":505,"pendientesDespues":32,"creditosEstimados":25.0}
+{"activo":true,"mensaje":"subidas 32 imágenes (~8.00 créditos), fallidas 0, en la colección 537, pendientes 0","pendientesAntes":32,"subidos":32,"fallidos":0,"enColeccion":537,"pendientesDespues":0,"creditosEstimados":8.0}

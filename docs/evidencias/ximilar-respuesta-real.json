@@ -1,0 +1,82 @@
+{
+  "endpoint": "POST https://api.ximilar.com/similarity/products-new/v2/visualKNN",
+  "headers": {
+    "Authorization": "Token <oculto>",
+    "collection-id": "<oculto>"
+  },
+  "request": {
+    "query_record": {
+      "_id": "producto-1"
+    },
+    "k": 5,
+    "fields_to_return": [
+      "_id",
+      "product_id",
+      "tienda_id",
+      "_url"
+    ],
+    "filter": {
+      "tienda_id": {
+        "$exists": true,
+        "$ne": 1
+      }
+    }
+  },
+  "response": {
+    "status": {
+      "code": 200,
+      "text": "OK"
+    },
+    "statistics": {
+      "OperationTime": 29
+    },
+    "answer_records": [
+      {
+        "product_id": "482",
+        "tienda_id": 2,
+        "_id": "producto-482",
+        "_url": "https://essential.vteximg.com.br/arquivos/ids/2096931/968-0510_1.jpg?v=639150565194730000"
+      },
+      {
+        "product_id": "381",
+        "tienda_id": 2,
+        "_id": "producto-381",
+        "_url": "https://essential.vteximg.com.br/arquivos/ids/3341640/268-1533_1.jpg.jpg?v=639251571887200000"
+      },
+      {
+        "product_id": "458",
+        "tienda_id": 2,
+        "_id": "producto-458",
+        "_url": "https://essential.vteximg.com.br/arquivos/ids/2585893/328-0890_1.jpg?v=639088528808900000"
+      },
+      {
+        "product_id": "307",
+        "tienda_id": 2,
+        "_id": "producto-307",
+        "_url": "https://essential.vteximg.com.br/arquivos/ids/3258039/IF0500-001_1.jpg.jpg?v=639180770099600000"
+      },
+      {
+        "product_id": "519",
+        "tienda_id": 2,
+        "_id": "producto-519",
+        "_url": "https://essential.vteximg.com.br/arquivos/ids/3374902/329-0110_1.jpg.jpg?v=639299075722300000"
+      }
+    ],
+    "answer_distances": [
+      0.43862936,
+      0.45514643,
+      0.48604697,
+      0.4926995,
+      0.4967335
+    ],
+    "query_records": [
+      {
+        "product_id": "1",
+        "tienda_id": 1,
+        "_id": "producto-1",
+        "_url": "https://sportline.vteximg.com.br/arquivos/ids/2047532/801025000025678_1.jpg.jpg?v=639234625478000000"
+      }
+    ],
+    "answer_count": 5
+  }
+}

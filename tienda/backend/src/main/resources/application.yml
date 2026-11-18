@@ -54,6 +54,11 @@ ximilar:
   collection-id: ${XIMILAR_COLLECTION_ID:}
   base-url: ${XIMILAR_BASE_URL:https://api.ximilar.com}
   mock: ${XIMILAR_MOCK:false}
+  # Sube solas las imágenes nuevas del catálogo cada 10 minutos (si hay credenciales)
+  indexado-automatico: ${XIMILAR_INDEXADO_AUTOMATICO:false}
+  # Tope de imágenes por corrida (0,25 créditos cada una) y de registros en la colección (plan gratuito: 1.000)
+  maximo-por-corrida: ${XIMILAR_MAXIMO_POR_CORRIDA:100}
+  maximo-coleccion: ${XIMILAR_MAXIMO_COLECCION:1000}
 
 # CORS (frontend)
 app:

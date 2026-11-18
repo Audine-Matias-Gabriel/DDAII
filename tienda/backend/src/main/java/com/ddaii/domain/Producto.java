@@ -40,6 +40,13 @@ public class Producto {
     private String urlOriginal;
     private String imagenUrl;
 
+    /**
+     * URL de la imagen que está subida a la colección de Ximilar (null = no subida).
+     * Si difiere de imagenUrl, el producto se vuelve a subir.
+     */
+    @Column(name = "ximilar_imagen_url", length = 1000)
+    private String ximilarImagenUrl;
+
     @Column(nullable = false)
     private Boolean disponible = true;
 
@@ -88,6 +95,13 @@ public class Producto {
     public void setUrlOriginal(String urlOriginal) { this.urlOriginal = urlOriginal; }
     public String getImagenUrl() { return imagenUrl; }
     public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
+    public String getXimilarImagenUrl() { return ximilarImagenUrl; }
+    public void setXimilarImagenUrl(String ximilarImagenUrl) { this.ximilarImagenUrl = ximilarImagenUrl; }
+
+    /** Está en la colección de Ximilar con su imagen actual. */
+    public boolean indexadoEnXimilar() {
+        return imagenUrl != null && imagenUrl.equals(ximilarImagenUrl);
+    }
     public Boolean getDisponible() { return disponible; }
     public void setDisponible(Boolean disponible) { this.disponible = disponible; }
     public List<String> getTallesDisponibles() { return tallesDisponibles; }
