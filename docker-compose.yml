@@ -82,14 +82,14 @@ services:
     build:
       context: ./tienda/frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8080
     container_name: tienda-frontend
     depends_on:
       backend:
         condition: service_started
     ports:
       - "5173:5173"
-    environment:
-      VITE_API_URL: http://backend:8080
 
 volumes:
   pgdata:
