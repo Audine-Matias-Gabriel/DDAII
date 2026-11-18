@@ -4,6 +4,7 @@ docs/*
 !docs/eventos.md
 !docs/modelo.md
 !docs/ia.md
+!docs/pagos.md
 !docs/evidencias/
 
 # --- Java / Maven ---

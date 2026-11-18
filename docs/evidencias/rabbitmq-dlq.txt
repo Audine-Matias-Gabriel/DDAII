@@ -1,0 +1,27 @@
+# Cola de errores (DLQ): un ProductoScrapeado sin tienda que el consumidor no puede procesar
+
+## 1) Se publica en tienda.exchange con routing key producto.scrapeado
+{"routed":true}
+
+## 2) El backend reintenta 3 veces y lo rechaza sin reencolar (log del backend)
+2026-11-18T22:59:49.143Z  WARN 1 --- [tienda-backend] [ntContainer#0-1] o.s.a.r.r.RejectAndDontRequeueRecoverer  : Retries exhausted for message (Body:'[B@71d7a403(byte[122])' MessageProperties [headers={}, contentType=application
+org.springframework.amqp.rabbit.support.ListenerExecutionFailedException: Listener method 'public void com.ddaii.messaging.RabbitListeners.consumirProductoScrapeado(com.ddaii.events.ProductoScrapeado)' threw exception
+Caused by: com.ddaii.exceptions.RecursoNoEncontradoException: Tienda no informada en ProductoScrapeado
+2026-11-18T22:59:49.154Z  WARN 1 --- [tienda-backend] [ntContainer#0-1] s.a.r.l.ConditionalRejectingErrorHandler : Execution of Rabbit message listener failed.
+
+## 3) Estado de las colas
+producto.scrapeado.dlq mensajes: 1
+producto.scrapeado.queue mensajes: 1
+
+## 4) El mensaje en la DLQ, con el motivo (x-death)
+payload: {"tipo":"ProductoScrapeado","idExterno":"prueba-dlq","nombre":"Mensaje de prueba sin tienda","precio":1,"disponible":true}
+x-death: [{"cola":"producto.scrapeado.queue","motivo":"rejected","veces":1,"exchange":"tienda.exchange","routing":["producto.scrapeado"]}]
+(el mensaje de prueba se consumió de la DLQ al leerlo, para dejarla en 0)
+
+## 5) Estado final (las estadísticas del panel se actualizan cada ~5 s; en el paso 3 el mensaje todavía figuraba sin ack)
+producto.scrapeado.dlq mensajes: 0 consumidores: 0
+producto.scrapeado.queue mensajes: 0 consumidores: 1
+recomendacion.solicitada.dlq mensajes: 0 consumidores: 0
+recomendacion.solicitada.queue mensajes: 0 consumidores: 1
+suscripcion.activada.dlq mensajes: 0 consumidores: 0
+suscripcion.activada.queue mensajes: 0 consumidores: 1
