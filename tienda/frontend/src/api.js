@@ -28,6 +28,11 @@ export const api = {
     return handleResponse(r)
   },
 
+  async getTiendas() {
+    const r = await fetch(`${API_BASE}/api/tiendas`)
+    return handleResponse(r)
+  },
+
   async getProducto(id) {
     const r = await fetch(`${API_BASE}/api/productos/${id}`)
     return handleResponse(r)

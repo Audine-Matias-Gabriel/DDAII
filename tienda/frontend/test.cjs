@@ -121,6 +121,17 @@ test('existe src/pages/ProductDetail.jsx con recomendaciones y similares', () =>
   assert(detail.includes('getSimilares'), 'falta llamadas a similares');
 });
 
+test('el catálogo filtra por tienda, precio y género Niña', () => {
+  const home = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Home.jsx'), 'utf8');
+  assert(home.includes('api.getTiendas()'), 'falta cargar las tiendas');
+  for (const campo of ['tienda:', 'precioMin:', 'precioMax:']) {
+    assert(home.includes(campo), `falta mandar ${campo} al backend`);
+  }
+  assert(home.includes('value="Niña"'), 'falta la opción Niña');
+  const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+  assert(api.includes('/api/tiendas'), 'falta getTiendas en api.js');
+});
+
 test('la tarjeta del catálogo no muestra la descripción', () => {
   const card = fs.readFileSync(path.join(__dirname, 'src', 'components', 'ProductCard.jsx'), 'utf8');
   assert(!card.includes('producto.descripcion'), 'ProductCard muestra la descripción');

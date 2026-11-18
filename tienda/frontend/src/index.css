@@ -210,6 +210,10 @@ label {
   align-items: flex-end;
 }
 
+.filtros .filtro-precio {
+  width: 8.5rem;
+}
+
 /* Cards */
 .grid {
   display: grid;

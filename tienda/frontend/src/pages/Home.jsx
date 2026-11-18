@@ -2,21 +2,45 @@ import { useState, useEffect } from 'react'
 import { api } from '../api'
 import ProductCard from '../components/ProductCard'
 
+const FILTROS_VACIOS = {
+  texto: '',
+  categoria: '',
+  genero: '',
+  tienda: '',
+  precioMin: '',
+  precioMax: ''
+}
+
+// Precio válido (número >= 0) o undefined para no mandarlo.
+function precio(valor) {
+  if (valor === '' || valor == null) return undefined
+  const n = Number(valor)
+  return Number.isFinite(n) && n >= 0 ? n : undefined
+}
+
 export default function Home({ navigate }) {
   const [productos, setProductos] = useState([])
+  const [tiendas, setTiendas] = useState([])
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
-  const [filtros, setFiltros] = useState({
-    texto: '',
-    categoria: '',
-    genero: ''
-  })
+  const [filtros, setFiltros] = useState(FILTROS_VACIOS)
+
+  const min = precio(filtros.precioMin)
+  const max = precio(filtros.precioMax)
+  const rangoInvalido = min !== undefined && max !== undefined && min > max
+
+  useEffect(() => {
+    api.getTiendas()
+      .then((lista) => setTiendas(Array.isArray(lista) ? lista : []))
+      .catch(() => setTiendas([]))
+  }, [])
 
   useEffect(() => {
     cargar()
-  }, [filtros.texto, filtros.categoria, filtros.genero])
+  }, [filtros.texto, filtros.categoria, filtros.genero, filtros.tienda, filtros.precioMin, filtros.precioMax])
 
   async function cargar() {
+    if (rangoInvalido) return
     setLoading(true)
     setMsg('')
     try {
@@ -24,6 +48,9 @@ export default function Home({ navigate }) {
         texto: filtros.texto || undefined,
         categoria: filtros.categoria || undefined,
         genero: filtros.genero || undefined,
+        tienda: filtros.tienda || undefined,
+        precioMin: min,
+        precioMax: max,
         pagina: 0,
         tamano: 20
       })
@@ -33,6 +60,10 @@ export default function Home({ navigate }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  function cambiar(campo) {
+    return (e) => setFiltros({ ...filtros, [campo]: e.target.value })
   }
 
   return (
@@ -45,31 +76,59 @@ export default function Home({ navigate }) {
           type="text"
           placeholder="Buscar producto..."
           value={filtros.texto}
-          onChange={(e) => setFiltros({ ...filtros, texto: e.target.value })}
+          onChange={cambiar('texto')}
         />
-        <select
-          value={filtros.categoria}
-          onChange={(e) => setFiltros({ ...filtros, categoria: e.target.value })}
-        >
+        <select value={filtros.categoria} onChange={cambiar('categoria')} aria-label="Categoría">
           <option value="">Todas las categorías</option>
           <option value="REMERA">Remera</option>
           <option value="PANTALON">Pantalón</option>
           <option value="CALZADO">Calzado</option>
           <option value="VESTIDO">Vestido</option>
         </select>
-        <select
-          value={filtros.genero}
-          onChange={(e) => setFiltros({ ...filtros, genero: e.target.value })}
-        >
+        <select value={filtros.genero} onChange={cambiar('genero')} aria-label="Género">
           <option value="">Todos los géneros</option>
           <option value="Mujer">Mujer</option>
           <option value="Hombre">Hombre</option>
           <option value="Unisex">Unisex</option>
+          <option value="Niña">Niña</option>
         </select>
-        <button className="btn btn-primary" onClick={cargar}>
+        <select value={filtros.tienda} onChange={cambiar('tienda')} aria-label="Tienda">
+          <option value="">Todas las tiendas</option>
+          {tiendas.map((t) => (
+            <option key={t.id} value={t.id}>{t.nombre}</option>
+          ))}
+        </select>
+        <input
+          type="number"
+          min="0"
+          step="1000"
+          placeholder="Precio mín."
+          aria-label="Precio mínimo"
+          className="filtro-precio"
+          value={filtros.precioMin}
+          onChange={cambiar('precioMin')}
+        />
+        <input
+          type="number"
+          min="0"
+          step="1000"
+          placeholder="Precio máx."
+          aria-label="Precio máximo"
+          className="filtro-precio"
+          value={filtros.precioMax}
+          onChange={cambiar('precioMax')}
+        />
+        <button className="btn btn-primary" onClick={cargar} disabled={rangoInvalido}>
           Aplicar filtros
         </button>
+        <button className="btn btn-outline" onClick={() => setFiltros(FILTROS_VACIOS)}>
+          Limpiar
+        </button>
       </div>
+
+      {rangoInvalido && (
+        <p className="mensaje err">El precio mínimo no puede ser mayor que el máximo.</p>
+      )}
 
       {loading ? (
         <p>Cargando productos...</p>
