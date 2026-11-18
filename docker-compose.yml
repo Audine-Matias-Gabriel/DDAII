@@ -50,13 +50,14 @@ services:
       RABBIT_URI_USERNAME: guest
       RABBIT_URI_PASSWORD: guest
       RABBIT_EXCHANGE: tienda.exchange
-      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN}
-      MP_PUBLIC_KEY: ${MP_PUBLIC_KEY}
-      MP_BASE_URL: ${MP_BASE_URL}
-      XIMILAR_API_KEY: ${XIMILAR_API_KEY}
-      XIMILAR_COLLECTION_ID: ${XIMILAR_COLLECTION_ID}
-      XIMILAR_BASE_URL: ${XIMILAR_BASE_URL}
-      XIMILAR_MOCK: ${XIMILAR_MOCK}
+      # ":-" para que una variable vacía (sin .env) use el default y no "" (XIMILAR_MOCK="" rompe el arranque)
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-}
+      MP_PUBLIC_KEY: ${MP_PUBLIC_KEY:-}
+      MP_BASE_URL: ${MP_BASE_URL:-https://api.mercadopago.com}
+      XIMILAR_API_KEY: ${XIMILAR_API_KEY:-}
+      XIMILAR_COLLECTION_ID: ${XIMILAR_COLLECTION_ID:-}
+      XIMILAR_BASE_URL: ${XIMILAR_BASE_URL:-https://api.ximilar.com}
+      XIMILAR_MOCK: ${XIMILAR_MOCK:-false}
       CORS_ORIGINS: http://localhost:5173,http://frontend
       FRONTEND_URL: http://localhost:5173
     ports:
