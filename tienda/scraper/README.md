@@ -33,7 +33,7 @@ src/
   events/ProductoScrapeadoEvent.js
   messaging/rabbitmq.publisher.js
   services/catalog.service.js   # extraer → normalizar → deduplicar → guardar output → publicar
-  index.js                # una corrida (todas las tiendas o --tienda=SPORTLINE)
+  index.js                # una corrida (todas las tiendas o --tienda=NEWSPORT)
   scheduler.js            # cron diario (+ --run-now)
 output/                   # último catálogo de cada tienda (respaldo para la demo)
 tests/                    # node --test, sin internet
@@ -143,15 +143,17 @@ Si no hay nada: `generoPorDefecto` de la tienda, o `Unisex`.
 |---|---|---|---|
 | `SPORTLINE` | [Sportline](https://www.sportline.com.ar) | VTEX | Multimarca deportiva: calzado, remeras, shorts, pantalones |
 | `GRID` | [Grid](https://www.grid.com.ar) | VTEX | Multimarca urbana: zapatillas, remeras, camisetas NBA, shorts |
+| `NEWSPORT` | [Newsport](https://www.newsport.com.ar) | VTEX | Multimarca deportiva y urbana: calzado, ropa y accesorios |
 
 **Cómo se verificó que son VTEX:** `https://<dominio>/api/catalog_system/pub/products/search?_from=0&_to=2`
 devuelve un array JSON con `productId`, `items` (con `variations: ["Talle"]`) y `categories`.
 
-**robots.txt (revisado el 18/11/2026):** ninguna de las dos bloquea `/api/`.
+**robots.txt (revisado el 22/11/2026):** ninguna de las tres bloquea `/api/`.
 Sportline bloquea checkout y URLs con filtros (`_q=`, `map=`, `page=`, `order=`).
 Grid bloquea cuenta, login, checkout, búsqueda (`/busca/`), filtros (`map=`, `page=`) y pide
-`Crawl-delay: 0.5`; el scraper espera 700 ms entre páginas (`REQUEST_DELAY_MS`) y se
-identifica con el User-Agent `WebDeRopa-catalog-scraper/1.0`.
+`Crawl-delay: 0.5`. Newsport bloquea imágenes, cuenta, login, checkout, búsqueda
+(`/busca/`), `quick-view` y `espiar`. El scraper espera 700 ms entre páginas
+(`REQUEST_DELAY_MS`) y se identifica con el User-Agent `WebDeRopa-catalog-scraper/1.0`.
 
 Las Margaritas (de la versión anterior) se sacó: es una tienda de belleza.
 
@@ -175,7 +177,7 @@ npm ci
 npm test                                  # sin internet
 cp .env.example .env                      # fuera de Docker
 docker compose up -d rabbitmq             # desde la raíz del repo
-npm run scrape -- --tienda=SPORTLINE      # una tienda, una vez
+npm run scrape -- --tienda=SPORTLINE      # una tienda, una vez (también NEWSPORT o GRID)
 npm run scrape                            # todas las de TIENDAS (o las activas)
 npm run scheduler:now                     # corre ya y después según SCHEDULER_CRON
 ```
@@ -195,7 +197,8 @@ hora de Buenos Aires).
 | `SCHEDULER_CRON` | `0 2 * * *` | Frecuencia |
 | `SCHEDULER_TIMEZONE` | `America/Argentina/Buenos_Aires` | Zona horaria del cron |
 
-**Respaldo por snapshot:** cada corrida exitosa guarda `output/<clave>.json`. Si la extracción
+**Respaldo por snapshot:** cada corrida exitosa guarda `output/<clave>.json`. Hay un archivo por
+tienda (`sportline.json`, `grid.json` y `newsport.json`). Si la extracción
 falla (sin internet, tienda caída) o no trae productos, se publica ese archivo y el log dice
 `[<tienda>] usando snapshot`. La imagen de Docker incluye `output/`, así la demo funciona
 aunque no haya internet.

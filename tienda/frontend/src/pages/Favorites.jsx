@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
 import { useFavorites } from '../context/FavoritesContext'
 import { useAuth } from '../context/AuthContext'
 import ProductCard from '../components/ProductCard'
 
 export default function Favorites({ navigate }) {
-  const { isAuthenticated, user } = useAuth()
-  const { favorites, favoriteProducts, loading, removeFavorite } = useFavorites()
+  const { isAuthenticated } = useAuth()
+  const { favorites, favoriteProducts, loading } = useFavorites()
 
   const items = isAuthenticated ? favoriteProducts : favorites.map((id) => ({ id }))
 

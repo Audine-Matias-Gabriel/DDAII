@@ -26,8 +26,20 @@ test("todas las tiendas configuradas tienen un extractor", () => {
   assert.equal(new Set(tiendas.map(t => t.id)).size, tiendas.length);
 });
 
+test("Newsport está configurada como tienda VTEX activa", () => {
+  const tienda = tiendas.find(t => t.clave === "NEWSPORT");
+  assert.ok(tienda, "falta la entrada NEWSPORT en tiendas.js");
+  assert.equal(tienda.id, 3);
+  assert.equal(tienda.nombre, "Newsport");
+  assert.equal(tienda.plataforma, "VTEX");
+  assert.equal(tienda.url, "https://www.newsport.com.ar");
+  assert.equal(tienda.activa, true);
+  assert.ok(crearExtractor(tienda, { httpClient: {} }) instanceof ExtractorVtex);
+});
+
 test("TIENDAS elige qué tiendas corren", () => {
   assert.deepEqual(seleccionarTiendas("sportline").map(t => t.clave), ["SPORTLINE"]);
+  assert.deepEqual(seleccionarTiendas("newsport").map(t => t.clave), ["NEWSPORT"]);
   assert.deepEqual(seleccionarTiendas("").map(t => t.clave), tiendas.filter(t => t.activa).map(t => t.clave));
   assert.throws(() => seleccionarTiendas("LASMARGARITAS"), /Tienda no configurada/);
 });

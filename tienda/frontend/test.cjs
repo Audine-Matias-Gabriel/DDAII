@@ -77,10 +77,25 @@ test('existe src/context/FavoritesContext.jsx', () => {
   assert(ctx.includes('toggleFavorite'), 'falta toggleFavorite');
 });
 
+test('FavoritesContext sincroniza los favoritos con el backend', () => {
+  const ctx = fs.readFileSync(path.join(__dirname, 'src', 'context', 'FavoritesContext.jsx'), 'utf8');
+  assert(ctx.includes('api.getFavoritos()'), 'no carga los favoritos del usuario');
+  assert(ctx.includes('api.addFavorito('), 'no guarda favoritos en el backend');
+  assert(ctx.includes('api.removeFavorito('), 'no quita favoritos del backend');
+});
+
 test('existe src/components/Navbar.jsx con botón de cuenta', () => {
   const nav = fs.readFileSync(path.join(__dirname, 'src', 'components', 'Navbar.jsx'), 'utf8');
   assert(nav.includes('Ingresar / Crear cuenta'), 'falta botón de cuenta');
   assert(nav.includes('Cerrar sesión'), 'falta botón cerrar sesión');
+});
+
+test('Navbar tiene una pestaña de Favoritos solo para usuarios logueados', () => {
+  const nav = fs.readFileSync(path.join(__dirname, 'src', 'components', 'Navbar.jsx'), 'utf8');
+  assert(nav.includes('isAuthenticated && ('), 'la pestaña no está condicionada al login');
+  assert(nav.includes('href="#/favoritos"'), 'falta el enlace a /favoritos');
+  assert(nav.includes("navigate('/favoritos')"), 'el enlace no navega a /favoritos');
+  assert(nav.includes("route === '/favoritos'"), 'la pestaña no se marca como activa');
 });
 
 test('existe src/components/AuthModal.jsx', () => {

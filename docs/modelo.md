@@ -43,7 +43,7 @@ puede estar una vez por tienda (no se deduplica entre tiendas). La crea o actual
 | Campo | Tipo | Notas |
 |---|---|---|
 | `id` | Long | Generado |
-| `nombre` | String, obligatorio | Clave estable del contrato con el scraper (`Sportline`, `Grid`) |
+| `nombre` | String, obligatorio | Clave estable del contrato con el scraper (`Sportline`, `Grid`, `Newsport`) |
 | `urlBase` | String, obligatorio | Dominio de la tienda, tomado de `urlOriginal` (`https://www.grid.com.ar`) |
 | `activa` | Boolean | |
 

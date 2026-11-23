@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useFavorites } from '../context/FavoritesContext'
 import AuthModal from './AuthModal'
 
 export default function Navbar({ route, navigate }) {
-  const { user, isAuthenticated, logout, loading } = useAuth()
-  const { favorites } = useFavorites()
+  const { user, isAuthenticated, logout } = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
 
   return (
@@ -13,7 +11,7 @@ export default function Navbar({ route, navigate }) {
       <nav className="navbar">
         <div className="navbar-content">
           <div className="logo" onClick={() => navigate('/')}>
-            👕 Tienda
+            👕 KnowFit
           </div>
 
           <div className="nav-links">
@@ -47,6 +45,18 @@ export default function Navbar({ route, navigate }) {
             >
               Planes
             </a>
+            {isAuthenticated && (
+              <a
+                href="#/favoritos"
+                onClick={(e) => {
+                  e.preventDefault()
+                  navigate('/favoritos')
+                }}
+                className={route === '/favoritos' ? 'active' : ''}
+              >
+                Favoritos
+              </a>
+            )}
           </div>
 
           <div className="nav-actions">

@@ -82,7 +82,7 @@ services:
     environment:
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
       RABBITMQ_EXCHANGE: tienda.exchange
-      TIENDAS: SPORTLINE,GRID
+      TIENDAS: SPORTLINE,GRID,NEWSPORT
       SCHEDULER_CRON: "0 2 * * *"
       # 300 por tienda para que el catálogo tenga variedad (las primeras páginas son casi todo calzado)
       MAX_PRODUCTS: ${MAX_PRODUCTS:-300}

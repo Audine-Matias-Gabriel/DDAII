@@ -30,5 +30,13 @@ module.exports = [
     plataforma: "VTEX",
     url: "https://www.grid.com.ar",
     activa: true
+  },
+  {
+    clave: "NEWSPORT",
+    id: 3,
+    nombre: "Newsport",
+    plataforma: "VTEX",
+    url: "https://www.newsport.com.ar",
+    activa: true
   }
 ];

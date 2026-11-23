@@ -81,7 +81,7 @@ backend ──RecomendacionSolic.─┘──► suscripcion.activada.queue ─�
 |---|---|---|---|
 | `tipo` | string | no | Siempre `ProductoScrapeado` |
 | `tiendaId` | entero | no | Id de la tienda en `tiendas.js` del scraper. Solo se usa si no viene `tienda` |
-| `tienda` | string | sí | Nombre de la tienda (`Sportline`, `Grid`): es la clave |
+| `tienda` | string | sí | Nombre de la tienda (`Sportline`, `Grid`, `Newsport`): es la clave |
 | `idExterno` | string | sí | Id del producto en la tienda (VTEX `productId`) |
 | `nombre` | string | sí | Hasta 255 caracteres |
 | `descripcion` | string | no | Sin HTML, hasta 1000 caracteres |
