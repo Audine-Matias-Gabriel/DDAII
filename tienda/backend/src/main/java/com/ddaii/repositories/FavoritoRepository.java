@@ -2,6 +2,7 @@ package com.ddaii.repositories;
 
 import com.ddaii.domain.Favorito;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,8 @@ public interface FavoritoRepository extends JpaRepository<Favorito, Long> {
 
     boolean existsByUsuarioIdAndProductoId(Long usuarioId, Long productoId);
 
+    // @Modifying: sin esto Spring ejecuta el DELETE como si fuera un SELECT y falla (error 500).
+    @Modifying
     @Query("DELETE FROM Favorito f WHERE f.usuario.id = :usuarioId AND f.producto.id = :productoId")
     void deleteByUsuarioIdAndProductoId(@Param("usuarioId") Long usuarioId,
                                         @Param("productoId") Long productoId);
