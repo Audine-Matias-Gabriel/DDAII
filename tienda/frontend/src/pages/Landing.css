@@ -1,0 +1,811 @@
+/* Landing (página de inicio): portada con una diapositiva por tienda, tarjetas para
+   elegir tienda y cierre al catálogo completo. Los colores de cada tienda llegan
+   como variables --t-* (ver estiloTema en src/tiendas.js). */
+
+.landing-main {
+  padding: 0;
+}
+
+.landing {
+  --l-display: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue', Arial, sans-serif;
+  --l-alto-portada: clamp(500px, calc(100vh - 150px), 660px);
+  animation: landing-aparecer 0.4s ease;
+}
+
+@keyframes landing-aparecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Franja superior: es el h1 de la página */
+.landing-franja {
+  margin: 0;
+  padding: 0.6rem 1rem;
+  background: #0f172a;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.landing-franja strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.landing-aviso {
+  max-width: 1200px;
+  margin: 1.5rem auto 0;
+  padding: 0 1.5rem;
+}
+
+/* ---------- Carrusel de portada ---------- */
+
+.carrusel {
+  position: relative;
+  overflow: hidden;
+  background: #111111;
+  touch-action: pan-y;
+}
+
+.carrusel-esqueleto {
+  min-height: var(--l-alto-portada);
+  background: linear-gradient(100deg, #1e293b 30%, #334155 50%, #1e293b 70%);
+  background-size: 300% 100%;
+  animation: landing-brillo 1.4s ease-in-out infinite;
+}
+
+@keyframes landing-brillo {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+
+/* Todas las diapositivas en la misma celda: el alto es el de la más alta */
+.carrusel-pista {
+  display: grid;
+}
+
+.slide-grupo {
+  grid-area: 1 / 1;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.7s ease, visibility 0s linear 0.7s;
+}
+
+.slide-grupo.activa {
+  z-index: 1;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.7s ease;
+}
+
+.slide {
+  position: relative;
+  display: block;
+  height: 100%;
+  min-height: var(--l-alto-portada);
+  overflow: hidden;
+  color: var(--t-texto);
+  background:
+    radial-gradient(circle at 74% 46%, rgba(255, 255, 255, 0.22), transparent 55%),
+    linear-gradient(115deg, var(--t-fondo) 0%, var(--t-fondo) 42%, var(--t-fondo-2) 100%);
+}
+
+.slide:focus-visible {
+  outline: 3px solid var(--t-texto);
+  outline-offset: -8px;
+}
+
+/* Nombre gigante de fondo */
+.slide-marca-agua {
+  position: absolute;
+  left: -0.04em;
+  bottom: -0.14em;
+  font-family: var(--l-display);
+  font-weight: 800;
+  font-size: clamp(7rem, 24vw, 22rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--t-texto);
+  opacity: 0.07;
+  pointer-events: none;
+  user-select: none;
+}
+
+.slide-contenido {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  min-height: var(--l-alto-portada);
+  margin: 0 auto;
+  padding: 3rem 1.5rem 6rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: 2.5rem;
+}
+
+/* Entrada escalonada del texto al mostrarse la diapositiva */
+.slide-texto > * {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.slide-grupo.activa .slide-texto > * {
+  opacity: 1;
+  transform: none;
+}
+
+.slide-grupo.activa .slide-texto > :nth-child(2) { transition-delay: 0.08s; }
+.slide-grupo.activa .slide-texto > :nth-child(3) { transition-delay: 0.16s; }
+.slide-grupo.activa .slide-texto > :nth-child(4) { transition-delay: 0.24s; }
+.slide-grupo.activa .slide-texto > :nth-child(5) { transition-delay: 0.32s; }
+
+.slide-eyebrow {
+  display: inline-block;
+  margin: 0 0 1rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 3px;
+  background: var(--t-acento);
+  color: var(--t-acento-texto);
+  font-family: var(--l-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.slide-titulo {
+  margin: 0;
+  font-family: var(--l-display);
+  font-size: clamp(3.75rem, 9vw, 7.5rem);
+  font-weight: 800;
+  line-height: 0.88;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.slide-lema {
+  max-width: 26rem;
+  margin: 1.1rem 0 0;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  line-height: 1.45;
+}
+
+.slide-marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slide-marcas li {
+  padding: 0.3rem 0.75rem;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Parece botón pero es parte del link de la diapositiva */
+.slide-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
+  padding: 0.9rem 1.5rem;
+  border-radius: 3px;
+  background: var(--t-texto);
+  color: var(--t-fondo);
+  font-family: var(--l-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.slide-cta-flecha {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.slide:hover .slide-cta-flecha {
+  transform: translateX(5px);
+}
+
+/* Collage de productos de la tienda */
+.slide-collage {
+  position: relative;
+  justify-self: end;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1 / 0.92;
+}
+
+.pieza {
+  position: absolute;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.55), 0 10px 20px -10px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.7s ease, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pieza img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pieza-principal {
+  z-index: 2;
+  left: 17%;
+  top: 7%;
+  width: 62%;
+  aspect-ratio: 1;
+  transform: translateY(30px) rotate(-3deg);
+}
+
+.pieza-principal img {
+  padding: 6% 6% 20%;
+}
+
+.pieza-principal figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #eef0f3;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.82rem;
+}
+
+.pieza-principal figcaption span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pieza-principal figcaption strong {
+  flex-shrink: 0;
+  padding: 0.25rem 0.55rem;
+  border-radius: 4px;
+  background: var(--t-marca);
+  color: var(--t-marca-texto);
+  font-size: 0.85rem;
+}
+
+.pieza-chica {
+  aspect-ratio: 1;
+}
+
+.pieza-chica img {
+  padding: 8%;
+}
+
+/* Arriba a la izquierda, sobre la esquina vacía de la foto grande */
+.pieza-1 {
+  z-index: 3;
+  left: 0;
+  top: 0;
+  width: 30%;
+  transform: translateY(40px) rotate(-8deg);
+}
+
+/* Abajo a la derecha, asomando detrás de la foto grande */
+.pieza-2 {
+  z-index: 1;
+  right: 0;
+  bottom: 8%;
+  width: 30%;
+  transform: translateY(40px) rotate(6deg);
+}
+
+.slide-grupo.activa .pieza {
+  opacity: 1;
+}
+
+.slide-grupo.activa .pieza-principal {
+  transform: rotate(-3deg);
+  transition-delay: 0.1s;
+}
+
+.slide-grupo.activa .pieza-1 {
+  transform: rotate(-8deg);
+  transition-delay: 0.25s;
+}
+
+.slide-grupo.activa .pieza-2 {
+  transform: rotate(6deg);
+  transition-delay: 0.35s;
+}
+
+.slide-grupo.activa .slide:hover .pieza-principal {
+  transform: rotate(-1deg) scale(1.03);
+  transition-delay: 0s;
+}
+
+.slide-sticker {
+  position: absolute;
+  z-index: 4;
+  left: 3%;
+  bottom: 1%;
+  display: grid;
+  place-content: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: var(--t-acento);
+  color: var(--t-acento-texto);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.5);
+  font-family: var(--l-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: rotate(-10deg) scale(0.6);
+  transition: opacity 0.5s ease 0.5s, transform 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) 0.5s;
+}
+
+.slide-sticker strong {
+  display: block;
+  font-size: 2.3rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.slide-grupo.activa .slide-sticker {
+  opacity: 1;
+  transform: rotate(-10deg);
+}
+
+/* Controles: toman los colores de la diapositiva activa */
+.carrusel-controles {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem 1.5rem;
+  color: var(--t-texto);
+  transition: color 0.5s ease;
+  pointer-events: none;
+}
+
+.carrusel-controles > * {
+  pointer-events: auto;
+}
+
+.carrusel-tabs {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.carrusel-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: var(--l-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.carrusel-tab:hover,
+.carrusel-tab.activa {
+  opacity: 1;
+}
+
+.carrusel-tab-barra {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(127, 127, 127, 0.45);
+  background: color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.carrusel-tab-progreso {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  transform-origin: left center;
+}
+
+.carrusel-tab-progreso.corriendo {
+  animation: landing-progreso linear forwards;
+}
+
+@keyframes landing-progreso {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.carrusel-botones {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.carrusel-boton {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.carrusel-boton:hover {
+  background: var(--t-texto);
+  color: var(--t-fondo);
+}
+
+.carrusel-boton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.carrusel-tab:focus-visible,
+.carrusel-boton:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+/* ---------- Elegí tu tienda ---------- */
+
+.landing-seccion {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4.5rem 1.5rem 4rem;
+}
+
+.landing-encabezado {
+  max-width: 40rem;
+  margin: 0 auto 2.5rem;
+  text-align: center;
+}
+
+.landing-eyebrow {
+  margin: 0 0 0.5rem;
+  color: #2563eb;
+  font-family: var(--l-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.landing-encabezado h2 {
+  margin: 0;
+  color: #0f172a;
+  font-family: var(--l-display);
+  font-size: clamp(2.4rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.landing-encabezado p:last-child {
+  margin: 0.9rem 0 0;
+  color: #475569;
+  font-size: 1.05rem;
+}
+
+.tiendas-grilla {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tiendas-grilla > li {
+  display: flex;
+}
+
+.tile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 32px -16px rgba(15, 23, 42, 0.25);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tile:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.06), 0 24px 48px -18px rgba(15, 23, 42, 0.35);
+}
+
+.tile:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 4px;
+}
+
+.tile-imagen {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 0.85;
+  overflow: hidden;
+  background: var(--t-tinte);
+}
+
+/* multiply: el fondo blanco de la foto toma el color de la tienda */
+.tile-imagen img {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.tile:hover .tile-imagen img {
+  transform: scale(1.07) rotate(-3deg);
+}
+
+.tile-placeholder {
+  font-size: 4rem;
+}
+
+.tile-cuerpo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1.5rem 1.25rem 1.75rem;
+  border-top: 6px solid var(--t-marca);
+  text-align: center;
+}
+
+.tile-cuerpo h3 {
+  margin: 0;
+  color: #0f172a;
+  font-family: var(--l-display);
+  font-size: 2.1rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.tile-bajada {
+  margin: 0;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tile-detalle {
+  margin: 0.2rem 0 1.1rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.tile-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding: 0.7rem 1.4rem;
+  border-radius: 3px;
+  background: #111111;
+  color: #ffffff;
+  font-family: var(--l-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tile:hover .tile-cta {
+  background: var(--t-marca);
+  color: var(--t-marca-texto);
+}
+
+.tile-esqueleto {
+  min-height: 420px;
+  background: linear-gradient(100deg, #e2e8f0 30%, #f1f5f9 50%, #e2e8f0 70%);
+  background-size: 300% 100%;
+  box-shadow: none;
+  animation: landing-brillo 1.4s ease-in-out infinite;
+}
+
+/* ---------- Cierre ---------- */
+
+.landing-cierre {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.landing-cierre-contenido {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4.5rem 1.5rem;
+  text-align: center;
+}
+
+.landing-cierre .landing-eyebrow {
+  color: #93c5fd;
+}
+
+.landing-cierre h2 {
+  margin: 0;
+  font-family: var(--l-display);
+  font-size: clamp(2.2rem, 5vw, 3.75rem);
+  font-weight: 800;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+/* Una frase por renglón */
+.landing-cierre h2 span {
+  display: block;
+}
+
+.landing-cierre-destacado {
+  color: #93c5fd;
+}
+
+.landing-cierre p:not(.landing-eyebrow) {
+  max-width: 34rem;
+  margin: 1rem 0 0;
+  color: #cbd5e1;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.landing-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
+  padding: 0.95rem 1.75rem;
+  border-radius: 3px;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: var(--l-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.landing-boton:hover {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.landing-boton:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+/* ---------- Pantallas chicas ---------- */
+
+@media (max-width: 900px) {
+  .landing {
+    --l-alto-portada: auto;
+  }
+
+  .slide-contenido {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+    padding: 2.5rem 1.25rem 5.5rem;
+  }
+
+  .slide-collage {
+    justify-self: center;
+    max-width: 420px;
+  }
+
+  .slide-titulo {
+    font-size: clamp(3.25rem, 16vw, 5rem);
+  }
+
+  .tiendas-grilla {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .carrusel-controles {
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  .carrusel-tabs {
+    gap: 0.9rem;
+  }
+
+  .carrusel-tab-barra {
+    width: 44px;
+  }
+}
+
+@media (max-width: 520px) {
+  .landing-franja {
+    font-size: 0.78rem;
+  }
+
+  /* En el celular se cambia deslizando o con los nombres */
+  .carrusel-flecha {
+    display: none;
+  }
+
+  .carrusel-tab {
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+  }
+
+  .slide-sticker {
+    width: 88px;
+    height: 88px;
+    font-size: 0.8rem;
+  }
+
+  .slide-sticker strong {
+    font-size: 1.8rem;
+  }
+
+  .pieza-principal figcaption {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing *,
+  .landing *::before,
+  .landing *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
