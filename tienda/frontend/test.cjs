@@ -234,6 +234,109 @@ async function testsAsync() {
     const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
     assert(api.includes('armarQuery(params)'), 'getProductos no usa armarQuery');
   });
+
+  // --- Landing: cada tienda abre el catálogo con su filtro ---
+
+  const { filtrosDesdeQuery, rutaCatalogo } = await import(
+    pathToFileURL(path.join(__dirname, 'src', 'query.js')).href
+  );
+  const tiendas = await import(pathToFileURL(path.join(__dirname, 'src', 'tiendas.js')).href);
+
+  test('rutaCatalogo arma la ruta del catálogo con el filtro de tienda', () => {
+    assert(rutaCatalogo({ tienda: 3 }) === '/catalogo?tienda=3', `salió "${rutaCatalogo({ tienda: 3 })}"`);
+    assert(rutaCatalogo() === '/catalogo', 'sin filtros debería ser /catalogo');
+    assert(rutaCatalogo({ tienda: '', otro: 'x' }) === '/catalogo', 'no descarta vacíos o desconocidos');
+  });
+
+  test('filtrosDesdeQuery lee solo los filtros conocidos del catálogo', () => {
+    const f = filtrosDesdeQuery('tienda=2&genero=Mujer&pagina=4&texto=');
+    assert(JSON.stringify(f) === JSON.stringify({ genero: 'Mujer', tienda: '2' }), `salió ${JSON.stringify(f)}`);
+    const ida = filtrosDesdeQuery(rutaCatalogo({ tienda: 1, texto: 'air max' }).split('?')[1]);
+    assert(ida.tienda === '1' && ida.texto === 'air max', 'rutaCatalogo y filtrosDesdeQuery no van y vuelven');
+  });
+
+  test('la landing es el inicio y el catálogo recibe los filtros de la URL', () => {
+    const app = fs.readFileSync(path.join(__dirname, 'src', 'App.jsx'), 'utf8');
+    assert(app.includes('<Landing'), 'App no muestra la landing');
+    assert(app.includes("ruta === '/' ?"), 'la landing no está en la ruta /');
+    assert(app.includes('filtrosIniciales={filtrosDesdeQuery(query)}'), 'el catálogo no recibe los filtros de la URL');
+    const home = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Home.jsx'), 'utf8');
+    assert(home.includes('...filtrosIniciales'), 'Home no arranca con los filtros de la URL');
+    const landing = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Landing.jsx'), 'utf8');
+    assert(landing.includes('rutaCatalogo({ tienda: tienda.id })'), 'las tiendas de la landing no llevan al catálogo filtrado');
+  });
+
+  test('la landing ordena las tiendas como Sportline, Newsport y Grid', () => {
+    const orden = tiendas
+      .ordenarTiendas([
+        { id: 1, nombre: 'Grid' },
+        { id: 2, nombre: 'Otra' },
+        { id: 3, nombre: 'Sportline' },
+        { id: 4, nombre: 'Newsport' }
+      ])
+      .map((t) => t.nombre);
+    assert(orden.join(',') === 'Sportline,Newsport,Grid,Otra', `salió ${orden.join(',')}`);
+    assert(tiendas.temaDeTienda({ nombre: 'Grid' }).fondo === '#ffd200', 'Grid no tiene su color');
+    assert(tiendas.temaDeTienda({ nombre: 'Desconocida' }).fondo, 'falta el tema genérico');
+  });
+
+  test('elegirDestacados prioriza zapatillas con imagen y no repite', () => {
+    const productos = [
+      { id: 1, nombre: 'Remera básica', categoria: 'REMERA', imagenUrl: 'r.jpg' },
+      { id: 2, nombre: 'Zapatillas sin foto', categoria: 'CALZADO', imagenUrl: null },
+      { id: 3, nombre: 'Zapatillas Air', categoria: 'CALZADO', imagenUrl: 'z.jpg' },
+      { id: 4, nombre: 'Ojotas', categoria: 'CALZADO', imagenUrl: 'o.jpg' }
+    ];
+    const ids = tiendas.elegirDestacados(productos).map((p) => p.id);
+    assert(ids.join(',') === '3,1,4', `salió ${ids.join(',')}`);
+  });
+
+  test('marcasPrincipales junta mayúsculas y respeta siglas', () => {
+    const marcas = tiendas.marcasPrincipales([
+      { marca: 'ADIDAS' }, { marca: 'adidas' }, { marca: 'NBA' }, { marca: 'NBA' }, { marca: 'NBA' }, { marca: 'Nike' }
+    ]);
+    assert(marcas.join(',') === 'NBA,Adidas,Nike', `salió ${marcas.join(',')}`);
+  });
+
+  test('imagenVtex pide la imagen de VTEX en el tamaño indicado', () => {
+    const url = 'https://sportline.vteximg.com.br/arquivos/ids/1996609/foto_1.jpg?v=1';
+    assert(
+      tiendas.imagenVtex(url, 600) === 'https://sportline.vteximg.com.br/arquivos/ids/1996609-600-600/foto_1.jpg?v=1',
+      'no agrega el tamaño'
+    );
+    assert(
+      tiendas.imagenVtex(tiendas.imagenVtex(url, 600), 300).includes('/1996609-300-300/'),
+      'no reemplaza un tamaño anterior'
+    );
+    assert(tiendas.imagenVtex('https://otra.com/a.jpg', 600) === 'https://otra.com/a.jpg', 'cambia URLs que no son de VTEX');
+  });
+
+  // --- Catálogo: "Mostrar más productos" ---
+
+  const { hayMasPaginas, unirProductos, TAMANO_PAGINA } = await import(
+    pathToFileURL(path.join(__dirname, 'src', 'paginacion.js')).href
+  );
+
+  test('hayMasPaginas sabe si quedan productos por pedir', () => {
+    assert(TAMANO_PAGINA === 20, 'el catálogo pide de a 20');
+    assert(hayMasPaginas(0, 271), 'con 271 productos hay más de una página');
+    assert(!hayMasPaginas(0, 20), 'con 20 productos alcanza la primera página');
+    assert(hayMasPaginas(1, 41) && !hayMasPaginas(1, 40), 'cuenta mal las páginas siguientes');
+    assert(!hayMasPaginas(0, 0), 'sin productos no hay más');
+  });
+
+  test('unirProductos suma la página nueva sin repetir productos', () => {
+    const unidos = unirProductos([{ id: 1 }, { id: 2 }], [{ id: 2 }, { id: 3 }]);
+    assert(unidos.map((p) => p.id).join(',') === '1,2,3', `salió ${unidos.map((p) => p.id).join(',')}`);
+  });
+
+  test('el catálogo tiene el botón "Mostrar más productos" y pide la página siguiente', () => {
+    const home = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Home.jsx'), 'utf8');
+    assert(home.includes('Mostrar más productos'), 'falta el botón');
+    assert(home.includes('parametros(siguiente)'), 'no pide la página siguiente');
+    assert(home.includes('unirProductos('), 'no suma los productos a los que ya estaban');
+    assert(home.includes('hayMasPaginas(pagina, total)'), 'el botón no se oculta cuando no quedan productos');
+  });
 }
 
 testsAsync()

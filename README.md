@@ -36,7 +36,7 @@ Los dos servicios (backend y scraper) no se llaman entre sí: solo se comunican 
 
 - **backend**: catálogo, SOAP de talles, suscripciones/pago Mercado Pago, recomendaciones REST y por cola, similares Ximilar.
 - **scraper** (Node.js): lee los catálogos reales de Sportline y Grid (API pública de VTEX), normaliza categoría, género y talles, publica `ProductoScrapeado` a RabbitMQ una vez por día y guarda snapshots. Ver [tienda/scraper/README.md](tienda/scraper/README.md).
-- **frontend mínimo**: catálogo y detalle públicos, "Ver en tienda", filtros, bloque "Te puede gustar", página Planes con botón "Hacerme premium" que redirige a Mercado Pago.
+- **frontend mínimo**: landing de inicio con una portada por tienda (Sportline, Newsport y Grid; cada una abre el catálogo ya filtrado, ej. `#/catalogo?tienda=1`), catálogo y detalle públicos, "Ver en tienda", filtros, bloque "Te puede gustar", página Planes con botón "Hacerme premium" que redirige a Mercado Pago.
 
 ## Estructura
 

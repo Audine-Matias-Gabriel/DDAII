@@ -21,7 +21,7 @@ export default function Navbar({ route, navigate }) {
                 e.preventDefault()
                 navigate('/')
               }}
-              className={route === '/' || route === '/catalogo' ? 'active' : ''}
+              className={route === '/' ? 'active' : ''}
             >
               Inicio
             </a>

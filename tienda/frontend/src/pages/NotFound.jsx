@@ -3,7 +3,7 @@ export default function NotFound({ navigate }) {
     <section className="page not-found">
       <h1>404</h1>
       <p>Página no encontrada.</p>
-      <button className="btn btn-primary" onClick={() => navigate('/')}>
+      <button className="btn btn-primary" onClick={() => navigate('/catalogo')}>
         Ir al catálogo
       </button>
     </section>
