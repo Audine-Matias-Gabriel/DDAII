@@ -307,28 +307,6 @@ aceptan todos). Si no queda ninguno válido, se reintenta ampliando `k` hasta
 
 **Créditos usados (18/11/2026):** carga inicial de 537 imágenes = **134,25 créditos**, más unas 15 búsquedas de prueba (~4 créditos). En total, unos **138 de los 1.000** del mes. La colección tiene 561 registros: 537 productos y 24 de pruebas anteriores, que la búsqueda ignora porque no tienen `tienda_id`. Evidencia en [docs/evidencias](docs/evidencias/README.md).
 
-## Trabajo por integrante (resumen del plan de 10 días)
-
-- **P1 — Frontend y evidencias:** frontend mínimo, borrado de carrito, filtros, detalle con "Ver en tienda", login simple (header `X-Usuario-Id`), bloque "Te puede gustar", página Planes/premium, Dockerfile del frontend, evidencias en `docs/evidencias/`. Revisa PR de P4.
-- **P2 — Backend core, catálogo y SOAP:** merge prototype→main (Día 1), modelo, borrado de código de compra, entidades/repositorios/DTOs, endpoints catálogo + paginación + seed, Swagger UI (springdoc), SOAP talles (Spring-WS), consumidor de ProductoScrapeado, tests, Dockerfile backend + docker-compose final, README. Revisa PR de P3.
-- **P3 — Scraper y Ximilar:** elegir 2 tiendas argentinas con catálogo público, cuenta Ximilar, proyecto `tienda/scraper/`, snapshot tienda 1 (≥30 prendas), interfaz `ScraperTienda` (Strategy), publicar `ProductoScrapeado` a RabbitMQ, tienda 2, ejecución automática 1 vez/día, `XimilarFacade` y endpoint similares, tests del convertidor sin internet, Dockerfile scraper. Revisa PR de P5.
-- **P4 — IA de recomendaciones y configuración de GitHub:** configurar GitHub el Día 1 (main protegida, etiquetas P1-P5, hitos 1-3, tablero Projects, plantilla de PR, Actions `mvn test` + `npm test`), regla del recomendador (`docs/ia.md`), `EstrategiaRecomendacion` + `RecomendacionPorContenido` (Strategy), `RecomendacionFactory` (Factory), 5 tests unitarios, GET `/api/recomendaciones`, versión por cola (`RecomendacionSolicitada`), segunda estrategia `RecomendacionComplementaria`, tabla de validación con 10 casos. Revisa PR de P1.
-- **P5 — RabbitMQ y Mercado Pago:** `docs/eventos.md`, cuenta desarrollador Mercado Pago (sandbox), topología RabbitMQ (exchange, colas por consumidor, DLQ), entidad Suscripcion, POST `/api/suscripciones`, webhook de pago, consumidor de `SuscripcionActivada` (marca premium), tests de publicador/consumidores, documentar colas y flujo de pago. Revisa PR de P2.
-
-## Flujo de trabajo (GitHub Flow)
-
-Todo se explica en detalle en `GITHUB_FLOW.md`. Resumen:
-
-1. Nadie pushea directamente sobre `main`. Todo entra por Pull Request con 1 aprobación y tests en verde.
-2. Una tarea = un issue = una rama = un PR. Rama: `p<rol>/<tarea-corta>` (ej. `p2/soap-talles`). Vive 1-2 días máximo.
-3. Revisores fijos: P1↔P4, P2 revisa a P3, P3 revisa a P5, P5 revisa a P2.
-4. PR con `Closes #<issue>`, checklist (compila, tests pasan, probado en local, Swagger actualizado si cambió la API).
-5. Merge con **Squash and merge**, se borra la rama.
-
-## Queda para el Integrador (no se toca en estos 10 días)
-
-Try-on y maniquí, outfits, login con Firebase real, más tiendas, pruebas de carga y diagramas completos.
-
 ## Equipo
 
 - **Profesor:** Parkinson, Christian Anibal — cparkinson@uade.edu.ar
