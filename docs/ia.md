@@ -105,7 +105,7 @@ Fecha: 2026-11-18. `limite=4`. Formato del obtenido: nombre (categoría, género
   modelo (las mayúsculas sí se ignoran).
 - **No mira la imagen ni el estilo:** una camiseta de fútbol y una remera básica son "REMERA" igual. El
   parecido visual lo cubre Ximilar en "similares".
-- **Sin personalización:** no hay historial de usuario; todos ven las mismas recomendaciones para un producto.
+- **Personalización parcial (solo premium):** se registran vistas (`POST /api/recomendaciones/vistas/{productoId}`) y favoritos, y se priorizan marcas/categorías con interés reciente (30 días, hasta 50 señales, `bono-marca` 0.15 y `bono-categoria` 0.10). El bonus se suma al puntaje base y se usa como desempate; los invitados y no premium siguen viendo el resultado genérico. No hay filtro collaborative ni por estilo.
 - **Categorías limitadas** a las cuatro que normaliza el scraper; buzos y camperas no entran.
 - **La cola usa siempre la estrategia `contenido`:** el evento `RecomendacionSolicitada` no tiene campo
   de estrategia (es contrato con P5; agregarlo es un cambio aparte).

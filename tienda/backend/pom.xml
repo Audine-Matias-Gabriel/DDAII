@@ -89,6 +89,16 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <!-- Byte Buddy (Mockito) aún no declara soporte oficial para Java 25.
+                 El proyecto compila para Java 17; con este flag los tests corren
+                 también con un JDK más nuevo sin cambiar la versión objetivo. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

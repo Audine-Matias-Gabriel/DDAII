@@ -21,13 +21,16 @@ public class FavoritoService {
     private final FavoritoRepository favoritoRepository;
     private final UsuarioRepository usuarioRepository;
     private final ProductoRepository productoRepository;
+    private final InteresService interesService;
 
     public FavoritoService(FavoritoRepository favoritoRepository,
                            UsuarioRepository usuarioRepository,
-                           ProductoRepository productoRepository) {
+                           ProductoRepository productoRepository,
+                           InteresService interesService) {
         this.favoritoRepository = favoritoRepository;
         this.usuarioRepository = usuarioRepository;
         this.productoRepository = productoRepository;
+        this.interesService = interesService;
     }
 
     /**
@@ -57,8 +60,11 @@ public class FavoritoService {
         Producto producto = productoRepository.findById(productoId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado: " + productoId));
 
-        if (!favoritoRepository.existsByUsuarioIdAndProductoId(usuarioId, productoId)) {
+        boolean nuevo = !favoritoRepository.existsByUsuarioIdAndProductoId(usuarioId, productoId);
+        if (nuevo) {
             favoritoRepository.save(new Favorito(usuario, producto));
+            // El favorito es una señal fuerte de interés para el recomendador (solo si es premium).
+            interesService.registrarFavorito(usuarioId, productoId);
         }
     }
 

@@ -36,7 +36,7 @@ Los dos servicios (backend y scraper) no se llaman entre sí: solo se comunican 
 
 - **backend**: catálogo, SOAP de talles, suscripciones/pago Mercado Pago, recomendaciones REST y por cola, similares Ximilar.
 - **scraper** (Node.js): lee los catálogos reales de Sportline y Grid (API pública de VTEX), normaliza categoría, género y talles, publica `ProductoScrapeado` a RabbitMQ una vez por día y guarda snapshots. Ver [tienda/scraper/README.md](tienda/scraper/README.md).
-- **frontend mínimo**: catálogo y detalle públicos, "Ver en tienda", filtros, bloque "Te puede gustar", página Planes con botón "Hacerme premium" que redirige a Mercado Pago.
+- **frontend mínimo**: landing de inicio con una portada por tienda (Sportline, Newsport y Grid; cada una abre el catálogo ya filtrado, ej. `#/catalogo?tienda=1`), catálogo y detalle públicos, "Ver en tienda", filtros, bloque "Te puede gustar", página Planes con botón "Hacerme premium" que redirige a Mercado Pago.
 
 ## Estructura
 
@@ -195,9 +195,11 @@ Documentación interactiva y ejemplos en Swagger UI. 🔒 = requiere `Authorizat
 | GET | `/api/productos/{id}` | Detalle del producto |
 | GET | `/api/productos/disponibles` | Todos los productos con stock |
 | GET | `/api/productos/{id}/similares?limite=` | Prendas parecidas de otra tienda (Ximilar; `origen` indica si vino de Ximilar o del respaldo) |
+| GET | `/api/productos/{id}/historial-precios` | Serie `[{ "fecha": "2026-11-25", "precio": 1500 }]` con un precio por día (snapshots del scraper). El frontend la grafica solo para usuarios premium |
 | GET | `/api/tiendas` | Tiendas del catálogo |
-| GET | `/api/recomendaciones?productoId=&limite=&estrategia=` | Recomendaciones (IA, sincrónico). `estrategia`: `contenido` (parecidas) o `complementaria` (arma un conjunto). Ver [docs/ia.md](docs/ia.md) |
-| POST | `/api/recomendaciones/solicitudes` | Pide recomendaciones por cola: responde 202 y publica `RecomendacionSolicitada` |
+| GET | `/api/recomendaciones?productoId=&limite=&estrategia=` | Recomendaciones (IA, sincrónico). `estrategia`: `contenido` (parecidas) o `complementaria` (arma un conjunto). Con sesión premium prioriza sus marcas/categorías de interés. Ver [docs/ia.md](docs/ia.md) |
+| POST 🔒 | `/api/recomendaciones/vistas/{productoId}` | Registra una vista del premium para personalizar recomendaciones futuras (403 si no es premium) |
+| POST | `/api/recomendaciones/solicitudes` | Pide recomendaciones por cola: responde 202 y publica `RecomendacionSolicitada` (incluye `usuarioId` si hay sesión) |
 | GET | `/api/recomendaciones/solicitudes/{solicitudId}` | Resultado que guardó el consumidor de la cola (404 mientras no se procesó) |
 | GET | `/api/suscripciones/plan` | Precio del plan premium (el que se cobra en Mercado Pago) |
 | POST 🔒 | `/api/suscripciones` | Crea el pago premium y devuelve la URL de Mercado Pago |
@@ -207,6 +209,7 @@ Documentación interactiva y ejemplos en Swagger UI. 🔒 = requiere `Authorizat
 | POST | `/api/suscripciones/webhook` | Webhook de Mercado Pago (`type=payment&data.id=`): consulta el pago y aprueba la suscripción. Ver [docs/pagos.md](docs/pagos.md) |
 | GET 🔒 / POST 🔒 / DELETE 🔒 | `/api/favoritos`, `/api/favoritos/{productoId}` | Favoritos del usuario |
 | POST 🔒 | `/api/similares/indexar?maximo=` | Sube a Ximilar las imágenes pendientes del catálogo |
+| POST 🔒 (premium) | `/api/premium/busqueda-visual` | `multipart/form-data` con campo `imagen` (PNG/JPG/TIFF, máx. 5 MB) y `limite` opcional. Devuelve `[{ "producto": {...}, "distancia": 0.42 }]` del más parecido al menos parecido. Ver [búsqueda visual](#búsqueda-visual-premium) |
 | POST | `/ws` (SOAP) | Equivalencias de talles (ver abajo) |
 
 **Errores:** todos responden `{ "estado": 404, "error": "No encontrado", "mensaje": "Producto no encontrado: 9", "ruta": "/api/productos/9" }`.
@@ -284,6 +287,37 @@ El pipeline de GitHub Actions corre `mvn test` y los `npm test` del frontend y d
 
 Topes para no pasarse: `XIMILAR_MAXIMO_POR_CORRIDA` (100) y `XIMILAR_MAXIMO_COLECCION` (1.000).
 
+## Búsqueda visual premium
+
+`POST /api/premium/busqueda-visual` recibe la foto que sube el usuario y la envía a la misma colección
+de product-similarity (`visualKNN` con `query_record._base64`, sin publicar la imagen en ninguna URL).
+Solo responde para usuarios con `premium = true`: sin sesión da 401, con sesión no premium da 403.
+En el frontend, el menú muestra **Búsqueda visual** solo cuando el usuario es premium y lo lleva a `#/busqueda-visual`,
+donde puede elegir una foto (JPEG/PNG/TIFF, máx. 5 MB), ver una vista previa y explorar los productos encontrados.
+
+```powershell
+curl.exe -X POST http://localhost:8080/api/premium/busqueda-visual `
+  -H "Authorization: Bearer <token>" `
+  -F "imagen=@C:\ruta\a\foto.jpg" -F "limite=8"
+```
+
+Cada resultado es `{ "producto": { ...ProductoDTO... }, "distancia": 0.42 }` (menor distancia = más parecido),
+en el orden que devolvió Ximilar. Los `_id` de Ximilar se resuelven a productos del catálogo; los registros
+que no son productos se descartan con el filtro `tienda_id`.
+
+**Fotos que no son prendas:** Ximilar devuelve vecinos aunque la imagen no tenga nada que ver, así que se
+descartan los resultados con distancia mayor a `XIMILAR_VISUAL_MAX_DISTANCIA` (default `1.0`; con `0` se
+aceptan todos). Si no queda ninguno válido, se reintenta ampliando `k` hasta
+`XIMILAR_VISUAL_MAX_INTENTOS` (default 3; cada intento gasta créditos) y después se corta con
+**422 `Sin coincidencias`**. En cuanto aparece una coincidencia válida se termina, sin gastar el resto.
+
+| Variable | Default | Para qué sirve |
+|---|---|---|
+| `XIMILAR_VISUAL_MAX_INTENTOS` | `3` | Tope de búsquedas a Ximilar por foto |
+| `XIMILAR_VISUAL_RESULTADOS_POR_INTENTO` | `5` | Vecinos pedidos en el primer intento (crece en cada reintento) |
+| `XIMILAR_VISUAL_MAX_DISTANCIA` | `1.0` | Distancia máxima aceptada como "parecida" |
+| `XIMILAR_VISUAL_MAX_IMAGEN_BYTES` | `5242880` | Tamaño máximo de la imagen (5 MB) |
+
 **Créditos usados (18/11/2026):** carga inicial de 537 imágenes = **134,25 créditos**, más unas 15 búsquedas de prueba (~4 créditos). En total, unos **138 de los 1.000** del mes. La colección tiene 561 registros: 537 productos y 24 de pruebas anteriores, que la búsqueda ignora porque no tienen `tienda_id`. Evidencia en [docs/evidencias](docs/evidencias/README.md).
 
 ## Trabajo por integrante (resumen del plan de 10 días)
@@ -306,7 +340,7 @@ Todo se explica en detalle en `GITHUB_FLOW.md`. Resumen:
 
 ## Queda para el Integrador (no se toca en estos 10 días)
 
-Try-on y maniquí, outfits, login con Firebase real, historial de precios, búsqueda por imagen subida, más tiendas, pruebas de carga y diagramas completos.
+Try-on y maniquí, outfits, login con Firebase real, más tiendas, pruebas de carga y diagramas completos.
 
 ## Equipo
 

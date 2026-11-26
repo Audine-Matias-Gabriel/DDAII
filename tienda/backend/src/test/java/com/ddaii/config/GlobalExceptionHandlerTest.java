@@ -1,6 +1,9 @@
 package com.ddaii.config;
 
+import com.ddaii.exceptions.AccesoPremiumException;
 import com.ddaii.exceptions.RecursoNoEncontradoException;
+import com.ddaii.exceptions.SinCoincidenciasException;
+import com.ddaii.exceptions.XimilarException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -40,6 +43,21 @@ class GlobalExceptionHandlerTest {
         @PostMapping("/p")
         String conCuerpo(@RequestBody Map<String, Object> body) {
             throw new IllegalArgumentException("Ya sos premium: no hace falta volver a pagar.");
+        }
+
+        @GetMapping("/p/premium")
+        String sinPremium() {
+            throw new AccesoPremiumException("La búsqueda visual es exclusiva para usuarios premium.");
+        }
+
+        @GetMapping("/p/sin-coincidencias")
+        String sinCoincidencias() {
+            throw new SinCoincidenciasException("La imagen no se corresponde con ninguna prenda del catálogo.");
+        }
+
+        @GetMapping("/p/ximilar")
+        String ximilarCaido() {
+            throw new XimilarException("No se pudo realizar la búsqueda visual en Ximilar.");
         }
     }
 
@@ -87,6 +105,30 @@ class GlobalExceptionHandlerTest {
         mvc.perform(post("/p").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.mensaje").value("Ya sos premium: no hace falta volver a pagar."));
+    }
+
+    @Test
+    void buscarVisualSinPremiumEs403() throws Exception {
+        mvc.perform(get("/p/premium"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("Acceso premium requerido"))
+                .andExpect(jsonPath("$.mensaje").value("La búsqueda visual es exclusiva para usuarios premium."));
+    }
+
+    @Test
+    void fotoSinCoincidenciasEs422() throws Exception {
+        mvc.perform(get("/p/sin-coincidencias"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("Sin coincidencias"))
+                .andExpect(jsonPath("$.mensaje").value("La imagen no se corresponde con ninguna prenda del catálogo."));
+    }
+
+    @Test
+    void falloDeXimilarEs502() throws Exception {
+        mvc.perform(get("/p/ximilar"))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.error").value("Ximilar no disponible"))
+                .andExpect(jsonPath("$.mensaje").value("No se pudo realizar la búsqueda visual en Ximilar."));
     }
 
     @Test

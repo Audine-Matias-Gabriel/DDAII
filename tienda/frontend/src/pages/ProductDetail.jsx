@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
 import { useFavorites } from '../context/FavoritesContext'
+import { useAuth } from '../context/AuthContext'
 import ProductCard from '../components/ProductCard'
+import PriceHistoryChart from '../components/PriceHistoryChart'
 
 export default function ProductDetail({ id, navigate }) {
   const [producto, setProducto] = useState(null)
@@ -10,12 +12,23 @@ export default function ProductDetail({ id, navigate }) {
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const { toggleFavorite, isFavorite } = useFavorites()
+  const { user } = useAuth()
 
   useEffect(() => {
     cargarProducto()
-    cargarRecomendaciones()
     cargarSimilares()
   }, [id])
+
+  // Se recalcula cuando llega el flag premium (useAuth lo resuelve de forma asíncrona).
+  useEffect(() => {
+    cargarRecomendaciones()
+  }, [id, user?.premium])
+
+  // Cada vista de un premium alimenta su perfil de intereses (marca y categoría).
+  useEffect(() => {
+    if (user?.premium !== true || !id) return
+    api.registrarVista(id).catch(() => {})
+  }, [id, user?.premium])
 
   async function cargarProducto() {
     try {
@@ -98,6 +111,8 @@ export default function ProductDetail({ id, navigate }) {
           </button>
         </div>
       </div>
+
+      {user?.premium === true && <PriceHistoryChart productoId={producto.id} />}
 
       <section className="recomendaciones">
         <h2>Te puede gustar</h2>

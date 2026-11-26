@@ -81,7 +81,7 @@ backend ──RecomendacionSolic.─┘──► suscripcion.activada.queue ─�
 |---|---|---|---|
 | `tipo` | string | no | Siempre `ProductoScrapeado` |
 | `tiendaId` | entero | no | Id de la tienda en `tiendas.js` del scraper. Solo se usa si no viene `tienda` |
-| `tienda` | string | sí | Nombre de la tienda (`Sportline`, `Grid`): es la clave |
+| `tienda` | string | sí | Nombre de la tienda (`Sportline`, `Grid`, `Newsport`): es la clave |
 | `idExterno` | string | sí | Id del producto en la tienda (VTEX `productId`) |
 | `nombre` | string | sí | Hasta 255 caracteres |
 | `descripcion` | string | no | Sin HTML, hasta 1000 caracteres |
@@ -127,7 +127,7 @@ backend ──RecomendacionSolic.─┘──► suscripcion.activada.queue ─�
 - **Publica:** backend (P4), `POST /api/recomendaciones/solicitudes` · **Consume:** backend (P4), `RabbitListeners.consumirRecomendacionSolicitada`
 - **Clase:** `com.ddaii.events.RecomendacionSolicitada`
 - **Cuándo:** cuando se piden recomendaciones por cola (el endpoint responde 202 con el `solicitudId`).
-- **Efecto:** el consumidor calcula las recomendaciones (estrategia por contenido, ver [ia.md](ia.md)) y las guarda; se consultan en `GET /api/recomendaciones/solicitudes/{solicitudId}`.
+- **Efecto:** el consumidor calcula las recomendaciones (estrategia por contenido, ver [ia.md](ia.md)) y las guarda; se consultan en `GET /api/recomendaciones/solicitudes/{solicitudId}`. Si `usuarioId` pertenece a un premium, el resultado prioriza sus marcas/categorías de interés.
 - **Idempotencia:** la clave es `solicitudId`; una solicitud ya procesada no se recalcula.
 
 ```json
@@ -136,6 +136,7 @@ backend ──RecomendacionSolic.─┘──► suscripcion.activada.queue ─�
   "solicitudId": "3f2c9a1e-8b7d-4e2a-9c1f-5d6e7f8a9b0c",
   "productoId": 10,
   "limite": 5,
+  "usuarioId": 7,
   "fecha": "2026-11-18T22:38:52.884"
 }
 ```
@@ -146,6 +147,7 @@ backend ──RecomendacionSolic.─┘──► suscripcion.activada.queue ─�
 | `solicitudId` | string (UUID) | sí | Lo genera el backend al recibir el pedido |
 | `productoId` | entero | sí | Producto de referencia |
 | `limite` | entero | sí | Cantidad máxima de recomendaciones, entre 1 y 20 |
+| `usuarioId` | entero | no | Si viene, el consumidor prioriza las marcas/categorías que el premium ya vio o marcó como favorito |
 | `fecha` | string (fecha-hora) | no | Momento del pedido |
 
 ---

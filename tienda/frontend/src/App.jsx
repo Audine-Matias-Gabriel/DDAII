@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
 import Navbar from './components/Navbar'
+import Landing from './pages/Landing'
 import Home from './pages/Home'
 import ProductDetail from './pages/ProductDetail'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Plans from './pages/Plans'
 import Favorites from './pages/Favorites'
+import BusquedaVisual from './pages/BusquedaVisual'
 import NotFound from './pages/NotFound'
 import PagoResultado from './pages/PagoResultado'
 import { AuthProvider } from './context/AuthContext'
 import { FavoritesProvider } from './context/FavoritesContext'
+import { filtrosDesdeQuery } from './query'
 
 export default function App() {
   const [route, setRoute] = useState(getHashRoute())
@@ -27,6 +30,11 @@ export default function App() {
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
+
+  // Al cambiar de página se arranca desde arriba (la landing es larga)
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [route])
 
   function getHashRoute() {
     // '#/planes' -> '/planes' (se conserva la barra inicial)
@@ -52,34 +60,43 @@ export default function App() {
     }
   }
 
+  // '/catalogo?tienda=1' -> ruta '/catalogo' y query 'tienda=1' (filtros del catálogo)
+  const [ruta, query = ''] = route.split('?')
+
   // Extraer id de producto de rutas tipo /producto/123
-  const productIdMatch = route.match(/^\/producto\/(.+)$/)
+  const productIdMatch = ruta.match(/^\/producto\/(.+)$/)
   const productId = productIdMatch ? productIdMatch[1] : null
 
   // Retorno de Mercado Pago: se decide en el JSX, después de los hooks
   const pagoPath = isPagoPath(pathname) ? pathname : null
+  const esLanding = !pagoPath && ruta === '/'
 
   return (
     <AuthProvider>
       <FavoritesProvider>
-        <Navbar route={route} navigate={navigate} />
-        <main className="container py-4">
+        <Navbar route={ruta} navigate={navigate} />
+        <main className={esLanding ? 'landing-main' : 'container py-4'}>
           {pagoPath ? (
             <PagoResultado exito={pagoPath === '/pago/exito'} navigate={navigate} />
-          ) : route === '/' || route === '/catalogo' ? (
-            <Home navigate={navigate} />
+          ) : ruta === '/' ? (
+            <Landing />
+          ) : ruta === '/catalogo' ? (
+            // key: si cambian los filtros de la URL (ej. desde la landing), el catálogo arranca de nuevo con ellos
+            <Home key={route} navigate={navigate} filtrosIniciales={filtrosDesdeQuery(query)} />
           ) : productId ? (
             <ProductDetail id={productId} navigate={navigate} />
-          ) : route === '/login' ? (
+          ) : ruta === '/login' ? (
             <Login navigate={navigate} />
-          ) : route === '/registro' ? (
+          ) : ruta === '/registro' ? (
             <Register navigate={navigate} />
-          ) : route === '/planes' ? (
+          ) : ruta === '/planes' ? (
             <Plans navigate={navigate} />
-          ) : route === '/favoritos' ? (
+          ) : ruta === '/favoritos' ? (
             <Favorites navigate={navigate} />
+          ) : ruta === '/busqueda-visual' ? (
+            <BusquedaVisual navigate={navigate} />
           ) : (
-            <NotFound />
+            <NotFound navigate={navigate} />
           )}
         </main>
       </FavoritesProvider>

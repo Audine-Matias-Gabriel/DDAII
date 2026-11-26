@@ -5,6 +5,7 @@ import com.ddaii.dto.ProductoDTO;
 import com.ddaii.services.ProductoService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,7 +38,9 @@ public class ProductoController {
             @RequestParam(defaultValue = "20") int tamano) {
         if (pagina < 0) throw new IllegalArgumentException("'pagina' no puede ser negativa");
         if (tamano < 1 || tamano > 100) throw new IllegalArgumentException("'tamano' tiene que estar entre 1 y 100");
-        Pageable pageable = PageRequest.of(pagina, tamano);
+        // Orden fijo por id: sin ORDER BY, Postgres devuelve las filas en cualquier orden (el
+        // scraper las actualiza) y al pedir la página siguiente se repetían o salteaban productos.
+        Pageable pageable = PageRequest.of(pagina, tamano, Sort.by("id"));
         return PageResponse.from(productoService.filtrar(
                 categoria, tienda, genero, precioMin, precioMax, texto, pageable));
     }

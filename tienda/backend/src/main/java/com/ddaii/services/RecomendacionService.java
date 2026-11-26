@@ -4,6 +4,7 @@ import com.ddaii.domain.Producto;
 import com.ddaii.domain.Recomendacion;
 import com.ddaii.dto.RecomendacionDTO;
 import com.ddaii.events.RecomendacionSolicitada;
+import com.ddaii.exceptions.AccesoPremiumException;
 import com.ddaii.exceptions.RecursoNoEncontradoException;
 import com.ddaii.messaging.EventPublisher;
 import com.ddaii.repositories.ProductoRepository;
@@ -39,22 +40,35 @@ public class RecomendacionService {
     private final ProductoRepository productoRepository;
     private final EventPublisher eventPublisher;
     private final RecomendacionRepository recomendacionRepository;
+    private final InteresService interesService;
 
     public RecomendacionService(ProductoRepository productoRepository,
                                 EventPublisher eventPublisher,
-                                RecomendacionRepository recomendacionRepository) {
+                                RecomendacionRepository recomendacionRepository,
+                                InteresService interesService) {
         this.productoRepository = productoRepository;
         this.eventPublisher = eventPublisher;
         this.recomendacionRepository = recomendacionRepository;
+        this.interesService = interesService;
     }
 
     @Transactional(readOnly = true)
     public List<RecomendacionDTO> recomendar(Long productoId, Integer limite) {
-        return recomendar(productoId, limite, "contenido");
+        return recomendar(productoId, limite, "contenido", null);
     }
 
     @Transactional(readOnly = true)
     public List<RecomendacionDTO> recomendar(Long productoId, Integer limite, String estrategia) {
+        return recomendar(productoId, limite, estrategia, null);
+    }
+
+    /**
+     * Igual que {@link #recomendar(Long, Integer, String)} pero, si el usuario es premium, suma un
+     * bono a las prendas de las marcas/categorías que ya vio o marcó como favorito.
+     */
+    @Transactional(readOnly = true)
+    public List<RecomendacionDTO> recomendar(Long productoId, Integer limite, String estrategia,
+                                             Long usuarioId) {
         Producto entrada = productoRepository.findById(productoId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado: " + productoId));
 
@@ -62,7 +76,9 @@ public class RecomendacionService {
                 .filter(p -> !p.getId().equals(entrada.getId()))
                 .collect(Collectors.toList());
 
-        return RecomendacionFactory.crear(estrategia).recomendar(entrada, candidatos, normalizarLimite(limite));
+        PerfilInteres intereses = interesService.perfil(usuarioId);
+        return RecomendacionFactory.crear(estrategia)
+                .recomendar(entrada, candidatos, normalizarLimite(limite), intereses);
     }
 
     static int normalizarLimite(Integer limite) {
@@ -78,12 +94,38 @@ public class RecomendacionService {
      */
     @Transactional
     public String solicitarPorCola(Long productoId, Integer limite) {
+        return solicitarPorCola(productoId, limite, null);
+    }
+
+    /** La solicitud por cola viaja con el usuario (si lo hay) para personalizar también ese camino. */
+    @Transactional
+    public String solicitarPorCola(Long productoId, Integer limite, Long usuarioId) {
         if (!productoRepository.existsById(productoId)) {
             throw new RecursoNoEncontradoException("Producto no encontrado: " + productoId);
         }
         String solicitudId = UUID.randomUUID().toString();
-        eventPublisher.publicarRecomendacionSolicitada(solicitudId, productoId, normalizarLimite(limite));
+        eventPublisher.publicarRecomendacionSolicitada(
+                solicitudId, productoId, normalizarLimite(limite), usuarioId);
         return solicitudId;
+    }
+
+    /** Registra una vista de producto para personalizar recomendaciones futuras (solo premium). */
+    @Transactional
+    public void registrarVista(String usuarioIdStr, Long productoId) {
+        Long usuarioId = parsearUsuario(usuarioIdStr);
+        if (usuarioId == null) {
+            throw new AccesoPremiumException("La personalización es exclusiva para usuarios premium.");
+        }
+        interesService.registrarVista(usuarioId, productoId);
+    }
+
+    public static Long parsearUsuario(String usuarioIdStr) {
+        if (usuarioIdStr == null || usuarioIdStr.isBlank()) return null;
+        try {
+            return Long.valueOf(usuarioIdStr);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /**
@@ -95,8 +137,10 @@ public class RecomendacionService {
             return;
         }
 
-        List<RecomendacionDTO> resultado = recomendar(evento.getProductoId(), evento.getLimite());
-        Recomendacion r = new Recomendacion(evento.getSolicitudId(), evento.getProductoId());
+        List<RecomendacionDTO> resultado = recomendar(
+                evento.getProductoId(), evento.getLimite(), "contenido", evento.getUsuarioId());
+        Recomendacion r = new Recomendacion(
+                evento.getSolicitudId(), evento.getProductoId(), evento.getUsuarioId());
         r.setProductosRecomendados(resultado.stream().map(RecomendacionDTO::getId).toList());
         recomendacionRepository.save(r);
     }
@@ -108,12 +152,15 @@ public class RecomendacionService {
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "La solicitud " + solicitudId + " todavía no se procesó (o no existe)"));
         Producto entrada = productoRepository.findById(r.getProductoId()).orElse(null);
+        PerfilInteres intereses = interesService.perfil(r.getUsuarioId());
         Map<Long, Producto> porId = productoRepository.findAllById(r.getProductosRecomendados()).stream()
                 .collect(Collectors.toMap(Producto::getId, p -> p));
         List<RecomendacionDTO> productos = r.getProductosRecomendados().stream()
                 .map(porId::get)
                 .filter(Objects::nonNull)
-                .map(p -> entrada != null ? toDto(entrada, p, puntaje(entrada, p)) : toDto(p, p, 0))
+                .map(p -> entrada != null
+                        ? toDto(entrada, p, puntajeFinal(entrada, p, intereses))
+                        : toDto(p, p, 0))
                 .toList();
 
         Map<String, Object> body = new LinkedHashMap<>();
@@ -179,20 +226,52 @@ public class RecomendacionService {
         return redondear(score);
     }
 
+    /**
+     * Puntaje final con personalización. El bono no cambia el modelo base (0 a 1) y se limita a 1,
+     * pero se usa además como desempate para que dos prendas con el mismo puntaje respeten el interés.
+     */
+    static double puntajeFinal(Producto entrada, Producto candidata, PerfilInteres intereses) {
+        double bono = intereses == null ? 0.0 : intereses.bono(candidata);
+        return redondear(Math.min(1.0, puntaje(entrada, candidata) + bono));
+    }
+
+    static double puntajeConjuntoFinal(Producto entrada, Producto candidata, PerfilInteres intereses) {
+        double bono = intereses == null ? 0.0 : intereses.bono(candidata);
+        return redondear(Math.min(1.0, puntajeConjunto(entrada, candidata) + bono));
+    }
+
     private static double redondear(double v) {
         return Math.round(v * 100.0) / 100.0;
     }
 
     /** Desempate: mayor puntaje, después el precio más cercano, después el id (orden estable). */
     static Comparator<Producto> orden(Producto entrada, java.util.function.ToDoubleFunction<Producto> score) {
+        return orden(entrada, score, PerfilInteres.vacio());
+    }
+
+    static Comparator<Producto> orden(Producto entrada, java.util.function.ToDoubleFunction<Producto> score,
+                                      PerfilInteres intereses) {
         double precio = entrada.getPrecio() != null ? entrada.getPrecio() : 0.0;
-        return Comparator.comparingDouble(score).reversed()
+        Comparator<Producto> comparador = Comparator.comparingDouble(score).reversed();
+        if (intereses != null && intereses.tieneInteres()) {
+            // Segundo criterio: aunque ambas prendas lleguen a 1.0, gana la de la marca/categoría
+            // que el usuario premium ya miró o marcó como favorito.
+            comparador = comparador.thenComparing(
+                    Comparator.comparingDouble(intereses::bono).reversed());
+        }
+        return comparador
                 .thenComparingDouble(p -> p.getPrecio() != null ? Math.abs(p.getPrecio() - precio) : Double.MAX_VALUE)
                 .thenComparing(Producto::getId, Comparator.nullsLast(Comparator.naturalOrder()));
     }
 
     public interface EstrategiaRecomendacion {
-        List<RecomendacionDTO> recomendar(Producto entrada, List<Producto> candidatos, int limite);
+        /** Las pruebas y el uso anónimo siguen funcionando sin perfil de interés. */
+        default List<RecomendacionDTO> recomendar(Producto entrada, List<Producto> candidatos, int limite) {
+            return recomendar(entrada, candidatos, limite, PerfilInteres.vacio());
+        }
+
+        List<RecomendacionDTO> recomendar(Producto entrada, List<Producto> candidatos, int limite,
+                                          PerfilInteres intereses);
     }
 
     /** Nombre para comparar variantes (la misma prenda en otro color tiene otro id pero el mismo nombre). */
@@ -220,15 +299,19 @@ public class RecomendacionService {
      */
     public static class RecomendacionPorContenido implements EstrategiaRecomendacion {
         @Override
-        public List<RecomendacionDTO> recomendar(Producto entrada, List<Producto> candidatos, int limite) {
+        public List<RecomendacionDTO> recomendar(Producto entrada, List<Producto> candidatos, int limite,
+                                                  PerfilInteres intereses) {
+            PerfilInteres perfil = intereses == null ? PerfilInteres.vacio() : intereses;
             List<Producto> ordenados = candidatos.stream()
-                    .filter(p -> puntaje(entrada, p) > 0)
+                    .filter(p -> !Boolean.FALSE.equals(p.getDisponible()))
+                    // Un producto del interés del usuario entra aunque no se parezca a la prenda actual.
+                    .filter(p -> puntaje(entrada, p) > 0 || perfil.bono(p) > 0)
                     .filter(p -> entrada.getGenero() == null || afinidadGenero(entrada.getGenero(), p.getGenero()) > 0)
-                    .sorted(orden(entrada, p -> puntaje(entrada, p)))
+                    .sorted(orden(entrada, p -> puntajeFinal(entrada, p, perfil), perfil))
                     .toList();
             return sinRepetidos(entrada, ordenados).stream()
                     .limit(limite)
-                    .map(p -> toDto(entrada, p, puntaje(entrada, p)))
+                    .map(p -> toDto(entrada, p, puntajeFinal(entrada, p, perfil)))
                     .collect(Collectors.toList());
         }
     }
@@ -239,7 +322,9 @@ public class RecomendacionService {
      */
     public static class RecomendacionComplementaria implements EstrategiaRecomendacion {
         @Override
-        public List<RecomendacionDTO> recomendar(Producto entrada, List<Producto> candidatos, int limite) {
+        public List<RecomendacionDTO> recomendar(Producto entrada, List<Producto> candidatos, int limite,
+                                                  PerfilInteres intereses) {
+            PerfilInteres perfil = intereses == null ? PerfilInteres.vacio() : intereses;
             String categoria = entrada.getCategoria() != null ? entrada.getCategoria().toUpperCase() : "";
             List<String> combinan = COMPLEMENTARIAS.getOrDefault(categoria,
                     List.of("REMERA", "PANTALON", "CALZADO").stream().filter(c -> !c.equals(categoria)).toList());
@@ -247,9 +332,10 @@ public class RecomendacionService {
             List<List<Producto>> porCategoria = new ArrayList<>();
             for (String c : combinan) {
                 porCategoria.add(sinRepetidos(entrada, candidatos.stream()
+                        .filter(p -> !Boolean.FALSE.equals(p.getDisponible()))
                         .filter(p -> igual(p.getCategoria(), c))
                         .filter(p -> afinidadGenero(entrada.getGenero(), p.getGenero()) > 0)
-                        .sorted(orden(entrada, p -> puntajeConjunto(entrada, p)))
+                        .sorted(orden(entrada, p -> puntajeConjuntoFinal(entrada, p, perfil), perfil))
                         .toList()));
             }
 
@@ -259,7 +345,7 @@ public class RecomendacionService {
                 for (List<Producto> lista : porCategoria) {
                     if (i < lista.size() && resultado.size() < limite) {
                         Producto p = lista.get(i);
-                        resultado.add(toDto(entrada, p, puntajeConjunto(entrada, p)));
+                        resultado.add(toDto(entrada, p, puntajeConjuntoFinal(entrada, p, perfil)));
                         agrego = true;
                     }
                 }

@@ -39,13 +39,47 @@ export const api = {
     return handleResponse(r)
   },
 
-  async getRecomendaciones(productoId, limite = 4) {
-    const r = await fetch(`${API_BASE}/api/recomendaciones?productoId=${productoId}&limite=${limite}`)
+  async getRecomendaciones(productoId, limite = 4, estrategia) {
+    const estrategiaParam = estrategia ? `&estrategia=${encodeURIComponent(estrategia)}` : ''
+    // Con token, el backend personaliza por marcas/categorías de interés (si el usuario es premium).
+    const r = await fetch(
+      `${API_BASE}/api/recomendaciones?productoId=${productoId}&limite=${limite}${estrategiaParam}`,
+      { headers: authHeaders() }
+    )
     return handleResponse(r)
+  },
+
+  // Registra una vista para personalizar recomendaciones futuras (solo premium en el backend).
+  async registrarVista(productoId) {
+    const r = await fetch(`${API_BASE}/api/recomendaciones/vistas/${productoId}`, {
+      method: 'POST',
+      headers: authHeaders()
+    })
+    if (!r.ok) return handleResponse(r)
+    return r.status === 204 ? null : r.json().catch(() => null)
   },
 
   async getSimilares(id, limite = 4) {
     const r = await fetch(`${API_BASE}/api/productos/${id}/similares?limite=${limite}`)
+    return handleResponse(r)
+  },
+
+  // Serie temporal de precios (snapshots diarios). El gráfico solo se muestra a premium.
+  async getHistorialPrecios(id) {
+    const r = await fetch(`${API_BASE}/api/productos/${id}/historial-precios`)
+    return handleResponse(r)
+  },
+
+  // Búsqueda visual premium (multipart: el navegador pone el boundary de Content-Type)
+  async buscarVisual(file, limite = 8) {
+    const form = new FormData()
+    form.append('imagen', file)
+    form.append('limite', String(limite))
+    const r = await fetch(`${API_BASE}/api/premium/busqueda-visual`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: form
+    })
     return handleResponse(r)
   },
 

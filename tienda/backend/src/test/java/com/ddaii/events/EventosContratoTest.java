@@ -97,15 +97,18 @@ class EventosContratoTest {
 
     @Test
     void recomendacionSolicitada_publicaLosCamposDelContratoYSeVuelveALeer() throws Exception {
-        JsonNode enLaCola = publicar(new RecomendacionSolicitada("3f2c9a1e-8b7d-4e2a-9c1f-5d6e7f8a9b0c", 10L, 5));
+        JsonNode enLaCola = publicar(new RecomendacionSolicitada(
+                "3f2c9a1e-8b7d-4e2a-9c1f-5d6e7f8a9b0c", 10L, 5, 7L));
 
-        assertThat(List.of("tipo", "solicitudId", "productoId", "limite", "fecha"))
+        assertThat(List.of("tipo", "solicitudId", "productoId", "limite", "usuarioId", "fecha"))
                 .allMatch(enLaCola::has);
         assertThat(enLaCola.get("tipo").asText()).isEqualTo("RecomendacionSolicitada");
+        assertThat(enLaCola.get("usuarioId").asLong()).isEqualTo(7L);
 
         RecomendacionSolicitada leida = (RecomendacionSolicitada) recibir(enLaCola.toString(), RecomendacionSolicitada.class);
         assertThat(leida.getSolicitudId()).isEqualTo("3f2c9a1e-8b7d-4e2a-9c1f-5d6e7f8a9b0c");
         assertThat(leida.getProductoId()).isEqualTo(10L);
         assertThat(leida.getLimite()).isEqualTo(5);
+        assertThat(leida.getUsuarioId()).isEqualTo(7L);
     }
 }

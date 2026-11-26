@@ -77,10 +77,33 @@ test('existe src/context/FavoritesContext.jsx', () => {
   assert(ctx.includes('toggleFavorite'), 'falta toggleFavorite');
 });
 
+test('FavoritesContext sincroniza los favoritos con el backend', () => {
+  const ctx = fs.readFileSync(path.join(__dirname, 'src', 'context', 'FavoritesContext.jsx'), 'utf8');
+  assert(ctx.includes('api.getFavoritos()'), 'no carga los favoritos del usuario');
+  assert(ctx.includes('api.addFavorito('), 'no guarda favoritos en el backend');
+  assert(ctx.includes('api.removeFavorito('), 'no quita favoritos del backend');
+});
+
 test('existe src/components/Navbar.jsx con botón de cuenta', () => {
   const nav = fs.readFileSync(path.join(__dirname, 'src', 'components', 'Navbar.jsx'), 'utf8');
   assert(nav.includes('Ingresar / Crear cuenta'), 'falta botón de cuenta');
   assert(nav.includes('Cerrar sesión'), 'falta botón cerrar sesión');
+});
+
+test('Navbar tiene una pestaña de Favoritos solo para usuarios logueados', () => {
+  const nav = fs.readFileSync(path.join(__dirname, 'src', 'components', 'Navbar.jsx'), 'utf8');
+  assert(nav.includes('isAuthenticated && ('), 'la pestaña no está condicionada al login');
+  assert(nav.includes('href="#/favoritos"'), 'falta el enlace a /favoritos');
+  assert(nav.includes("navigate('/favoritos')"), 'el enlace no navega a /favoritos');
+  assert(nav.includes("route === '/favoritos'"), 'la pestaña no se marca como activa');
+});
+
+test('Navbar tiene una pestaña de Búsqueda visual solo para premium', () => {
+  const nav = fs.readFileSync(path.join(__dirname, 'src', 'components', 'Navbar.jsx'), 'utf8');
+  assert(nav.includes('user?.premium === true'), 'la pestaña no está condicionada a premium');
+  assert(nav.includes('href="#/busqueda-visual"'), 'falta el enlace a /busqueda-visual');
+  assert(nav.includes("navigate('/busqueda-visual')"), 'el enlace no navega a /busqueda-visual');
+  assert(nav.includes("route === '/busqueda-visual'"), 'la pestaña no se marca como activa');
 });
 
 test('existe src/components/AuthModal.jsx', () => {
@@ -119,6 +142,55 @@ test('existe src/pages/ProductDetail.jsx con recomendaciones y similares', () =>
   const detail = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'ProductDetail.jsx'), 'utf8');
   assert(detail.includes('getRecomendaciones'), 'falta llamadas a recomendaciones');
   assert(detail.includes('getSimilares'), 'falta llamadas a similares');
+});
+
+test('api.js registra vistas para recomendaciones premium', () => {
+  const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+  assert(api.includes('registrarVista('), 'falta registrarVista en api.js');
+  assert(api.includes('/api/recomendaciones/vistas/${productoId}'), 'falta el endpoint de vistas');
+  const detail = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'ProductDetail.jsx'), 'utf8');
+  assert(detail.includes('api.registrarVista(id)'), 'el detalle no registra la vista');
+});
+
+test('api.js expone el historial de precios', () => {
+  const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+  assert(api.includes('getHistorialPrecios'), 'falta getHistorialPrecios en api.js');
+  assert(api.includes('/api/productos/${id}/historial-precios'), 'falta el endpoint de historial');
+});
+
+test('api.js expone la búsqueda visual premium con multipart', () => {
+  const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+  assert(api.includes('buscarVisual('), 'falta buscarVisual en api.js');
+  assert(api.includes('/api/premium/busqueda-visual'), 'falta el endpoint de búsqueda visual');
+  assert(api.includes("form.append('imagen', file)"), 'no se envía la imagen como multipart');
+});
+
+test('App rutea la página de búsqueda visual', () => {
+  const app = fs.readFileSync(path.join(__dirname, 'src', 'App.jsx'), 'utf8');
+  assert(app.includes("from './pages/BusquedaVisual'"), 'falta importar BusquedaVisual');
+  assert(app.includes("ruta === '/busqueda-visual'"), 'falta la ruta /busqueda-visual');
+  assert(app.includes('<BusquedaVisual'), 'la ruta no renderiza la página');
+});
+
+test('la página de búsqueda visual sube una foto y muestra los productos premium', () => {
+  const page = fs.readFileSync(
+    path.join(__dirname, 'src', 'pages', 'BusquedaVisual.jsx'), 'utf8');
+  assert(page.includes('user?.premium === true'), 'la página no está restringida a premium');
+  assert(page.includes('type="file"'), 'falta el selector de imagen');
+  assert(page.includes('name="imagen"'), 'el campo no se llama imagen');
+  assert(page.includes('accept="image/jpeg,image/png,image/tiff"'), 'acepta tipos inválidos');
+  assert(page.includes('api.buscarVisual(archivo, 8)'), 'no llama a la API de búsqueda visual');
+  assert(page.includes('<ProductCard'), 'no muestra los productos encontrados');
+});
+
+test('el gráfico de precios solo se muestra a usuarios premium', () => {
+  const detail = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'ProductDetail.jsx'), 'utf8');
+  assert(detail.includes('user?.premium === true'), 'el gráfico no está condicionado a premium');
+  assert(detail.includes('<PriceHistoryChart'), 'ProductDetail no renderiza el gráfico');
+  const chart = fs.readFileSync(
+    path.join(__dirname, 'src', 'components', 'PriceHistoryChart.jsx'), 'utf8');
+  assert(chart.includes('api.getHistorialPrecios('), 'el gráfico no carga la serie');
+  assert(chart.includes('<svg'), 'el gráfico no dibuja la serie');
 });
 
 test('el catálogo filtra por tienda, precio y género Niña', () => {
@@ -218,6 +290,109 @@ async function testsAsync() {
   test('api.getProductos usa armarQuery', () => {
     const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
     assert(api.includes('armarQuery(params)'), 'getProductos no usa armarQuery');
+  });
+
+  // --- Landing: cada tienda abre el catálogo con su filtro ---
+
+  const { filtrosDesdeQuery, rutaCatalogo } = await import(
+    pathToFileURL(path.join(__dirname, 'src', 'query.js')).href
+  );
+  const tiendas = await import(pathToFileURL(path.join(__dirname, 'src', 'tiendas.js')).href);
+
+  test('rutaCatalogo arma la ruta del catálogo con el filtro de tienda', () => {
+    assert(rutaCatalogo({ tienda: 3 }) === '/catalogo?tienda=3', `salió "${rutaCatalogo({ tienda: 3 })}"`);
+    assert(rutaCatalogo() === '/catalogo', 'sin filtros debería ser /catalogo');
+    assert(rutaCatalogo({ tienda: '', otro: 'x' }) === '/catalogo', 'no descarta vacíos o desconocidos');
+  });
+
+  test('filtrosDesdeQuery lee solo los filtros conocidos del catálogo', () => {
+    const f = filtrosDesdeQuery('tienda=2&genero=Mujer&pagina=4&texto=');
+    assert(JSON.stringify(f) === JSON.stringify({ genero: 'Mujer', tienda: '2' }), `salió ${JSON.stringify(f)}`);
+    const ida = filtrosDesdeQuery(rutaCatalogo({ tienda: 1, texto: 'air max' }).split('?')[1]);
+    assert(ida.tienda === '1' && ida.texto === 'air max', 'rutaCatalogo y filtrosDesdeQuery no van y vuelven');
+  });
+
+  test('la landing es el inicio y el catálogo recibe los filtros de la URL', () => {
+    const app = fs.readFileSync(path.join(__dirname, 'src', 'App.jsx'), 'utf8');
+    assert(app.includes('<Landing'), 'App no muestra la landing');
+    assert(app.includes("ruta === '/' ?"), 'la landing no está en la ruta /');
+    assert(app.includes('filtrosIniciales={filtrosDesdeQuery(query)}'), 'el catálogo no recibe los filtros de la URL');
+    const home = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Home.jsx'), 'utf8');
+    assert(home.includes('...filtrosIniciales'), 'Home no arranca con los filtros de la URL');
+    const landing = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Landing.jsx'), 'utf8');
+    assert(landing.includes('rutaCatalogo({ tienda: tienda.id })'), 'las tiendas de la landing no llevan al catálogo filtrado');
+  });
+
+  test('la landing ordena las tiendas como Sportline, Newsport y Grid', () => {
+    const orden = tiendas
+      .ordenarTiendas([
+        { id: 1, nombre: 'Grid' },
+        { id: 2, nombre: 'Otra' },
+        { id: 3, nombre: 'Sportline' },
+        { id: 4, nombre: 'Newsport' }
+      ])
+      .map((t) => t.nombre);
+    assert(orden.join(',') === 'Sportline,Newsport,Grid,Otra', `salió ${orden.join(',')}`);
+    assert(tiendas.temaDeTienda({ nombre: 'Grid' }).fondo === '#ffd200', 'Grid no tiene su color');
+    assert(tiendas.temaDeTienda({ nombre: 'Desconocida' }).fondo, 'falta el tema genérico');
+  });
+
+  test('elegirDestacados prioriza zapatillas con imagen y no repite', () => {
+    const productos = [
+      { id: 1, nombre: 'Remera básica', categoria: 'REMERA', imagenUrl: 'r.jpg' },
+      { id: 2, nombre: 'Zapatillas sin foto', categoria: 'CALZADO', imagenUrl: null },
+      { id: 3, nombre: 'Zapatillas Air', categoria: 'CALZADO', imagenUrl: 'z.jpg' },
+      { id: 4, nombre: 'Ojotas', categoria: 'CALZADO', imagenUrl: 'o.jpg' }
+    ];
+    const ids = tiendas.elegirDestacados(productos).map((p) => p.id);
+    assert(ids.join(',') === '3,1,4', `salió ${ids.join(',')}`);
+  });
+
+  test('marcasPrincipales junta mayúsculas y respeta siglas', () => {
+    const marcas = tiendas.marcasPrincipales([
+      { marca: 'ADIDAS' }, { marca: 'adidas' }, { marca: 'NBA' }, { marca: 'NBA' }, { marca: 'NBA' }, { marca: 'Nike' }
+    ]);
+    assert(marcas.join(',') === 'NBA,Adidas,Nike', `salió ${marcas.join(',')}`);
+  });
+
+  test('imagenVtex pide la imagen de VTEX en el tamaño indicado', () => {
+    const url = 'https://sportline.vteximg.com.br/arquivos/ids/1996609/foto_1.jpg?v=1';
+    assert(
+      tiendas.imagenVtex(url, 600) === 'https://sportline.vteximg.com.br/arquivos/ids/1996609-600-600/foto_1.jpg?v=1',
+      'no agrega el tamaño'
+    );
+    assert(
+      tiendas.imagenVtex(tiendas.imagenVtex(url, 600), 300).includes('/1996609-300-300/'),
+      'no reemplaza un tamaño anterior'
+    );
+    assert(tiendas.imagenVtex('https://otra.com/a.jpg', 600) === 'https://otra.com/a.jpg', 'cambia URLs que no son de VTEX');
+  });
+
+  // --- Catálogo: "Mostrar más productos" ---
+
+  const { hayMasPaginas, unirProductos, TAMANO_PAGINA } = await import(
+    pathToFileURL(path.join(__dirname, 'src', 'paginacion.js')).href
+  );
+
+  test('hayMasPaginas sabe si quedan productos por pedir', () => {
+    assert(TAMANO_PAGINA === 20, 'el catálogo pide de a 20');
+    assert(hayMasPaginas(0, 271), 'con 271 productos hay más de una página');
+    assert(!hayMasPaginas(0, 20), 'con 20 productos alcanza la primera página');
+    assert(hayMasPaginas(1, 41) && !hayMasPaginas(1, 40), 'cuenta mal las páginas siguientes');
+    assert(!hayMasPaginas(0, 0), 'sin productos no hay más');
+  });
+
+  test('unirProductos suma la página nueva sin repetir productos', () => {
+    const unidos = unirProductos([{ id: 1 }, { id: 2 }], [{ id: 2 }, { id: 3 }]);
+    assert(unidos.map((p) => p.id).join(',') === '1,2,3', `salió ${unidos.map((p) => p.id).join(',')}`);
+  });
+
+  test('el catálogo tiene el botón "Mostrar más productos" y pide la página siguiente', () => {
+    const home = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Home.jsx'), 'utf8');
+    assert(home.includes('Mostrar más productos'), 'falta el botón');
+    assert(home.includes('parametros(siguiente)'), 'no pide la página siguiente');
+    assert(home.includes('unirProductos('), 'no suma los productos a los que ya estaban');
+    assert(home.includes('hayMasPaginas(pagina, total)'), 'el botón no se oculta cuando no quedan productos');
   });
 }
 

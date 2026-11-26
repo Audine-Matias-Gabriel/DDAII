@@ -24,10 +24,13 @@ public class ProductoService {
 
     private final ProductoRepository productoRepository;
     private final TiendaRepository tiendaRepository;
+    private final HistorialPreciosService historialPreciosService;
 
-    public ProductoService(ProductoRepository productoRepository, TiendaRepository tiendaRepository) {
+    public ProductoService(ProductoRepository productoRepository, TiendaRepository tiendaRepository,
+                           HistorialPreciosService historialPreciosService) {
         this.productoRepository = productoRepository;
         this.tiendaRepository = tiendaRepository;
+        this.historialPreciosService = historialPreciosService;
     }
 
     public Page<ProductoDTO> filtrar(String categoria, Long tiendaId, String genero,
@@ -78,7 +81,11 @@ public class ProductoService {
         p.setDisponible(evento.getDisponible());
         p.setTallesDisponibles(evento.getTallesDisponibles() != null ? evento.getTallesDisponibles() : List.of());
 
-        return productoRepository.save(p);
+        Producto guardado = productoRepository.save(p);
+        // Cada evento del scraper es el precio del día: se guarda el snapshot
+        // que después alimenta GET /api/productos/{id}/historial-precios.
+        historialPreciosService.registrarSiCorresponde(guardado);
+        return guardado;
     }
 
     private Tienda resolverTienda(ProductoScrapeado evento) {
