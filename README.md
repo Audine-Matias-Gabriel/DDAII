@@ -1,19 +1,6 @@
 # Web de Ropa — TP Segunda Parte
 
-Agregador de ropa con integración sincrónica y asincrónica. Entrega en 10 días, 6 fases y 3 hitos.
-
-## ¿Qué entrega esta etapa (7 requisitos obligatorios, prioridad 1)
-
-| Requisito | Cómo lo cumplimos | Dueño | Evidencia |
-|---|---|---|---|
-| ≥ 1 servicio SOAP con WSDL | Equivalencias de talles (AR/US/EU) con Spring-WS | P2 | WSDL + request/respuesta de prueba |
-| ≥ 2 servicios REST con OpenAPI | Catálogo, suscripciones, recomendaciones (+Swagger UI) | P2 (Swagger) + cada dueño | Swagger UI con todos los endpoints |
-| Mensajería y colas RabbitMQ | Exchange, colas por consumidor y cola de errores (DLQ) | P5 | Panel de RabbitMQ con mensajes |
-| Productores y consumidores | ProductoScrapeado, SuscripcionActivada, RecomendacionSolicitada | P5 coordina; P2, P3, P4 implementan | Logs de publicación y consumo |
-| Arquitectura SOA / microservicios ligeros | 2 servicios (backend y scraper) comunicados por la cola | P3 y P2 | docker-compose con los servicios |
-| ≥ 1 API externa real | Mercado Pago (pagos, plan premium, sandbox) | P5 | Pago de prueba en sandbox que activa premium |
-| Componente de IA por REST o cola | Recomendaciones por contenido (modelo simple) | P4 | Tests con casos esperados + llamado REST y por cola |
-
+Agregador de ropa con integración sincrónica y asincrónica.
 ## Arquitectura
 
 ```
