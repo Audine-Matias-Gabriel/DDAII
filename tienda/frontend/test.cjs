@@ -98,6 +98,14 @@ test('Navbar tiene una pestaña de Favoritos solo para usuarios logueados', () =
   assert(nav.includes("route === '/favoritos'"), 'la pestaña no se marca como activa');
 });
 
+test('Navbar tiene una pestaña de Búsqueda visual solo para premium', () => {
+  const nav = fs.readFileSync(path.join(__dirname, 'src', 'components', 'Navbar.jsx'), 'utf8');
+  assert(nav.includes('user?.premium === true'), 'la pestaña no está condicionada a premium');
+  assert(nav.includes('href="#/busqueda-visual"'), 'falta el enlace a /busqueda-visual');
+  assert(nav.includes("navigate('/busqueda-visual')"), 'el enlace no navega a /busqueda-visual');
+  assert(nav.includes("route === '/busqueda-visual'"), 'la pestaña no se marca como activa');
+});
+
 test('existe src/components/AuthModal.jsx', () => {
   assert(fs.existsSync(path.join(__dirname, 'src', 'components', 'AuthModal.jsx')), 'AuthModal no existe');
 });
@@ -134,6 +142,47 @@ test('existe src/pages/ProductDetail.jsx con recomendaciones y similares', () =>
   const detail = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'ProductDetail.jsx'), 'utf8');
   assert(detail.includes('getRecomendaciones'), 'falta llamadas a recomendaciones');
   assert(detail.includes('getSimilares'), 'falta llamadas a similares');
+});
+
+test('api.js expone el historial de precios', () => {
+  const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+  assert(api.includes('getHistorialPrecios'), 'falta getHistorialPrecios en api.js');
+  assert(api.includes('/api/productos/${id}/historial-precios'), 'falta el endpoint de historial');
+});
+
+test('api.js expone la búsqueda visual premium con multipart', () => {
+  const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+  assert(api.includes('buscarVisual('), 'falta buscarVisual en api.js');
+  assert(api.includes('/api/premium/busqueda-visual'), 'falta el endpoint de búsqueda visual');
+  assert(api.includes("form.append('imagen', file)"), 'no se envía la imagen como multipart');
+});
+
+test('App rutea la página de búsqueda visual', () => {
+  const app = fs.readFileSync(path.join(__dirname, 'src', 'App.jsx'), 'utf8');
+  assert(app.includes("from './pages/BusquedaVisual'"), 'falta importar BusquedaVisual');
+  assert(app.includes("ruta === '/busqueda-visual'"), 'falta la ruta /busqueda-visual');
+  assert(app.includes('<BusquedaVisual'), 'la ruta no renderiza la página');
+});
+
+test('la página de búsqueda visual sube una foto y muestra los productos premium', () => {
+  const page = fs.readFileSync(
+    path.join(__dirname, 'src', 'pages', 'BusquedaVisual.jsx'), 'utf8');
+  assert(page.includes('user?.premium === true'), 'la página no está restringida a premium');
+  assert(page.includes('type="file"'), 'falta el selector de imagen');
+  assert(page.includes('name="imagen"'), 'el campo no se llama imagen');
+  assert(page.includes('accept="image/jpeg,image/png,image/tiff"'), 'acepta tipos inválidos');
+  assert(page.includes('api.buscarVisual(archivo, 8)'), 'no llama a la API de búsqueda visual');
+  assert(page.includes('<ProductCard'), 'no muestra los productos encontrados');
+});
+
+test('el gráfico de precios solo se muestra a usuarios premium', () => {
+  const detail = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'ProductDetail.jsx'), 'utf8');
+  assert(detail.includes('user?.premium === true'), 'el gráfico no está condicionado a premium');
+  assert(detail.includes('<PriceHistoryChart'), 'ProductDetail no renderiza el gráfico');
+  const chart = fs.readFileSync(
+    path.join(__dirname, 'src', 'components', 'PriceHistoryChart.jsx'), 'utf8');
+  assert(chart.includes('api.getHistorialPrecios('), 'el gráfico no carga la serie');
+  assert(chart.includes('<svg'), 'el gráfico no dibuja la serie');
 });
 
 test('el catálogo filtra por tienda, precio y género Niña', () => {

@@ -37,6 +37,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Endpoints públicos de autenticación
                 .requestMatchers("/api/auth/registro", "/api/auth/login").permitAll()
+                // Premium: requiere sesión; el plan se valida en BusquedaVisualService.
+                .requestMatchers("/api/premium/**").authenticated()
                 // Catálogo y recomendaciones públicos (invitado puede navegar)
                 .requestMatchers("/api/productos/**", "/api/recomendaciones/**").permitAll()
                 .requestMatchers("/api/productos/{id}/similares").permitAll()

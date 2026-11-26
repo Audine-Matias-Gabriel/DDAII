@@ -1,7 +1,10 @@
 package com.ddaii.config;
 
+import com.ddaii.exceptions.AccesoPremiumException;
 import com.ddaii.exceptions.MercadoPagoException;
 import com.ddaii.exceptions.RecursoNoEncontradoException;
+import com.ddaii.exceptions.SinCoincidenciasException;
+import com.ddaii.exceptions.XimilarException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +18,8 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.LinkedHashMap;
@@ -46,6 +51,33 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<Map<String, Object>> noEncontrado(RecursoNoEncontradoException ex, HttpServletRequest req) {
         return respuesta(HttpStatus.NOT_FOUND, "No encontrado", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(AccesoPremiumException.class)
+    public ResponseEntity<Map<String, Object>> accesoPremium(AccesoPremiumException ex, HttpServletRequest req) {
+        return respuesta(HttpStatus.FORBIDDEN, "Acceso premium requerido", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(SinCoincidenciasException.class)
+    public ResponseEntity<Map<String, Object>> sinCoincidencias(SinCoincidenciasException ex, HttpServletRequest req) {
+        return respuesta(HttpStatus.UNPROCESSABLE_ENTITY, "Sin coincidencias", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(XimilarException.class)
+    public ResponseEntity<Map<String, Object>> ximilar(XimilarException ex, HttpServletRequest req) {
+        log.warn("Ximilar falló en {}: {}", req.getRequestURI(), ex.getMessage());
+        return respuesta(HttpStatus.BAD_GATEWAY, "Ximilar no disponible", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<Map<String, Object>> faltaArchivo(MissingServletRequestPartException ex, HttpServletRequest req) {
+        return respuesta(HttpStatus.BAD_REQUEST, "Solicitud inválida",
+                "Falta el archivo '" + ex.getRequestPartName() + "'", req);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> archivoGrande(MaxUploadSizeExceededException ex, HttpServletRequest req) {
+        return respuesta(HttpStatus.BAD_REQUEST, "Solicitud inválida", "La imagen supera el tamaño máximo permitido.", req);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

@@ -34,6 +34,9 @@ class ProductoServiceTest {
     @Mock
     private TiendaRepository tiendaRepository;
 
+    @Mock
+    private HistorialPreciosService historialPreciosService;
+
     @InjectMocks
     private ProductoService productoService;
 
@@ -62,6 +65,7 @@ class ProductoServiceTest {
         assertEquals("EXT-001", resultado.getIdExterno());
         assertEquals("Remera test", resultado.getNombre());
         verify(productoRepository, times(1)).save(any(Producto.class));
+        verify(historialPreciosService).registrarSiCorresponde(resultado);
     }
 
     @Test

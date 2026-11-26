@@ -18,6 +18,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  servlet:
+    multipart:
+      # Imagen subida para POST /api/premium/busqueda-visual
+      max-file-size: 5MB
+      max-request-size: 6MB
   rabbitmq:
     host: ${RABBIT_URI_HOST:localhost}
     port: ${RABBIT_URI_PORT:5672}
@@ -64,6 +69,13 @@ ximilar:
   # Tope de imágenes por corrida (0,25 créditos cada una) y de registros en la colección (plan gratuito: 1.000)
   maximo-por-corrida: ${XIMILAR_MAXIMO_POR_CORRIDA:100}
   maximo-coleccion: ${XIMILAR_MAXIMO_COLECCION:1000}
+  # Búsqueda visual premium: cada intento consume créditos, por eso hay un tope.
+  visual-search:
+    max-intentos: ${XIMILAR_VISUAL_MAX_INTENTOS:3}
+    resultados-por-intento: ${XIMILAR_VISUAL_RESULTADOS_POR_INTENTO:5}
+    # Distancia máxima aceptada (menor = más parecido). Con 0 se acepta cualquier resultado.
+    max-distancia: ${XIMILAR_VISUAL_MAX_DISTANCIA:1.0}
+    max-imagen-bytes: ${XIMILAR_VISUAL_MAX_IMAGEN_BYTES:5242880}
 
 # CORS (frontend)
 app:

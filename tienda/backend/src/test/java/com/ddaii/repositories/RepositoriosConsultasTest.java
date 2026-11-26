@@ -20,6 +20,7 @@ class RepositoriosConsultasTest {
     private static final List<Class<?>> REPOSITORIOS = List.of(
             FavoritoRepository.class,
             ProductoRepository.class,
+            ProductoSnapshotRepository.class,
             RecomendacionRepository.class,
             SesionUsuarioRepository.class,
             SuscripcionRepository.class,

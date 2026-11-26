@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -67,6 +68,9 @@ public class XimilarClient {
 
     /** Resultado de un insert: ids subidos (o que ya estaban) y fallidos. */
     public record ResultadoInsert(Set<Long> subidos, Set<Long> fallidos) {}
+
+    /** Producto devuelto por una búsqueda visual y su distancia (menor = más parecido). */
+    public record Coincidencia(Long productoId, Double distancia) {}
 
     public boolean configurado() {
         return apiKey != null && !apiKey.isBlank() && collectionId != null && !collectionId.isBlank();
@@ -188,6 +192,50 @@ public class XimilarClient {
         } catch (Exception e) {
             log.warn("Ximilar visualKNN falló para el producto {}: {}", productoId, e.getMessage());
             return List.of();
+        }
+    }
+
+    /**
+     * Búsqueda visual con una imagen subida por el usuario (no hace falta publicarla en una URL).
+     * Ximilar acepta el campo {@code _base64} con el prefijo data URI. Se pide el orden por
+     * distancia y solo se devuelven registros del catálogo (tienen {@code tienda_id}).
+     * A diferencia de {@link #buscarSimilares}, un fallo se propaga para no confundirlo con
+     * "sin coincidencias" y poder responder 502.
+     */
+    public List<Coincidencia> buscarPorImagen(byte[] imagen, String contentType, int k) {
+        if (!configurado()) {
+            throw new IllegalStateException("Ximilar no está configurado");
+        }
+        if (imagen == null || imagen.length == 0) {
+            throw new IllegalArgumentException("La imagen está vacía");
+        }
+        String mime = contentType == null || contentType.isBlank() ? "image/jpeg" : contentType;
+        String base64 = "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(imagen);
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("query_record", Map.of("_base64", base64));
+        body.put("k", Math.max(1, Math.min(k, 30)));
+        body.put("fields_to_return", List.of("_id", "product_id"));
+        body.put("filter", Map.of("tienda_id", Map.of("$exists", true)));
+
+        try {
+            JsonNode respuesta = post("/visualKNN", body);
+            JsonNode registros = respuesta.path("answer_records");
+            JsonNode distancias = respuesta.path("answer_distances");
+            List<Coincidencia> coincidencias = new ArrayList<>();
+            Set<Long> vistos = new HashSet<>();
+            for (int i = 0; i < registros.size(); i++) {
+                Long id = productoDeRegistro(registros.get(i));
+                if (id == null || !vistos.add(id)) continue;
+                Double distancia = null;
+                if (distancias.isArray() && i < distancias.size() && distancias.get(i).isNumber()) {
+                    distancia = distancias.get(i).asDouble();
+                }
+                coincidencias.add(new Coincidencia(id, distancia));
+            }
+            return coincidencias;
+        } catch (Exception e) {
+            throw new IllegalStateException("Ximilar visualKNN falló: " + e.getMessage(), e);
         }
     }
 

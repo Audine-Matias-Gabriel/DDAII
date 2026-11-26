@@ -1,6 +1,7 @@
 package com.ddaii.integrations;
 
 import com.ddaii.domain.Producto;
+import com.ddaii.exceptions.XimilarException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +45,22 @@ public class XimilarFacade {
         Long tiendaId = producto.getTienda() != null ? producto.getTienda().getId() : null;
         return ximilarClient.buscarSimilares(
                 producto.getId(), producto.getImagenUrl(), producto.indexadoEnXimilar(), tiendaId, limite);
+    }
+
+    /**
+     * Búsqueda visual a partir de una imagen del usuario. Devuelve ids del catálogo en orden
+     * de parecido junto con su distancia. Si Ximilar no está activo o falla, se propaga el error:
+     * acá no hay respaldo local porque la foto no pertenece a ningún producto del catálogo.
+     */
+    public List<XimilarClient.Coincidencia> buscarPorImagen(byte[] imagen, String contentType, int k) {
+        if (!activo()) {
+            throw new XimilarException("La búsqueda visual no está disponible: Ximilar no está configurado o está en modo mock.");
+        }
+        try {
+            return ximilarClient.buscarPorImagen(imagen, contentType, k);
+        } catch (Exception e) {
+            throw new XimilarException("No se pudo realizar la búsqueda visual en Ximilar.", e);
+        }
     }
 
     /**

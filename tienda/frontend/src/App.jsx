@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Plans from './pages/Plans'
 import Favorites from './pages/Favorites'
+import BusquedaVisual from './pages/BusquedaVisual'
 import NotFound from './pages/NotFound'
 import PagoResultado from './pages/PagoResultado'
 import { AuthProvider } from './context/AuthContext'
@@ -92,6 +93,8 @@ export default function App() {
             <Plans navigate={navigate} />
           ) : ruta === '/favoritos' ? (
             <Favorites navigate={navigate} />
+          ) : ruta === '/busqueda-visual' ? (
+            <BusquedaVisual navigate={navigate} />
           ) : (
             <NotFound navigate={navigate} />
           )}

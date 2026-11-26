@@ -49,6 +49,25 @@ export const api = {
     return handleResponse(r)
   },
 
+  // Serie temporal de precios (snapshots diarios). El gráfico solo se muestra a premium.
+  async getHistorialPrecios(id) {
+    const r = await fetch(`${API_BASE}/api/productos/${id}/historial-precios`)
+    return handleResponse(r)
+  },
+
+  // Búsqueda visual premium (multipart: el navegador pone el boundary de Content-Type)
+  async buscarVisual(file, limite = 8) {
+    const form = new FormData()
+    form.append('imagen', file)
+    form.append('limite', String(limite))
+    const r = await fetch(`${API_BASE}/api/premium/busqueda-visual`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: form
+    })
+    return handleResponse(r)
+  },
+
   // Auth
   async register({ nombre, email, password }) {
     const r = await fetch(`${API_BASE}/api/auth/registro`, {

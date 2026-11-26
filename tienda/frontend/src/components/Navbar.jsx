@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import AuthModal from './AuthModal'
 
 export default function Navbar({ route, navigate }) {
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, loading, logout } = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
 
   return (
@@ -55,6 +55,18 @@ export default function Navbar({ route, navigate }) {
                 className={route === '/favoritos' ? 'active' : ''}
               >
                 Favoritos
+              </a>
+            )}
+            {!loading && user?.premium === true && (
+              <a
+                href="#/busqueda-visual"
+                onClick={(e) => {
+                  e.preventDefault()
+                  navigate('/busqueda-visual')
+                }}
+                className={route === '/busqueda-visual' ? 'active' : ''}
+              >
+                Búsqueda visual
               </a>
             )}
           </div>

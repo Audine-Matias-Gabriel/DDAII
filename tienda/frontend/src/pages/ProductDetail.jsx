@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
 import { useFavorites } from '../context/FavoritesContext'
+import { useAuth } from '../context/AuthContext'
 import ProductCard from '../components/ProductCard'
+import PriceHistoryChart from '../components/PriceHistoryChart'
 
 export default function ProductDetail({ id, navigate }) {
   const [producto, setProducto] = useState(null)
@@ -10,6 +12,7 @@ export default function ProductDetail({ id, navigate }) {
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const { toggleFavorite, isFavorite } = useFavorites()
+  const { user } = useAuth()
 
   useEffect(() => {
     cargarProducto()
@@ -98,6 +101,8 @@ export default function ProductDetail({ id, navigate }) {
           </button>
         </div>
       </div>
+
+      {user?.premium === true && <PriceHistoryChart productoId={producto.id} />}
 
       <section className="recomendaciones">
         <h2>Te puede gustar</h2>

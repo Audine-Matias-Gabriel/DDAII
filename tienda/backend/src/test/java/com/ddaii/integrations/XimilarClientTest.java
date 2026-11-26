@@ -9,6 +9,8 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
@@ -102,6 +104,60 @@ class XimilarClientTest {
     }
 
     @Test
+    void buscaPorImagenSubidaEnBase64YDevuelveIdsConDistancias() {
+        XimilarClient cliente = cliente("token");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(cliente.restTemplate()).build();
+        server.expect(requestTo(BASE + "/similarity/products-new/v2/visualKNN"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("Authorization", "Token token"))
+                .andExpect(jsonPath("$.query_record._base64", startsWith("data:image/jpeg;base64,")))
+                .andExpect(jsonPath("$.k").value(10))
+                .andExpect(jsonPath("$.fields_to_return[0]").value("_id"))
+                .andExpect(jsonPath("$.filter.tienda_id.$exists").value(true))
+                .andRespond(withSuccess("""
+                        {"status":{"code":200,"text":"OK"},
+                         "answer_records":[{"_id":"producto-11","product_id":"11"},
+                                           {"_id":"producto-12","product_id":"12"},
+                                           {"_id":"producto-11","product_id":"11"},
+                                           {"_id":"registro-viejo"}],
+                         "answer_distances":[0.2,0.7,0.2,0.1]}
+                        """, MediaType.APPLICATION_JSON));
+
+        List<XimilarClient.Coincidencia> resultado =
+                cliente.buscarPorImagen("contenido".getBytes(), "image/jpeg", 10);
+
+        // El registro viejo no es producto y el duplicado no se repite; se conserva el orden.
+        assertThat(resultado).hasSize(2);
+        assertThat(resultado.get(0).productoId()).isEqualTo(11L);
+        assertThat(resultado.get(0).distancia()).isEqualTo(0.2);
+        assertThat(resultado.get(1).productoId()).isEqualTo(12L);
+        assertThat(resultado.get(1).distancia()).isEqualTo(0.7);
+        server.verify();
+    }
+
+    @Test
+    void buscarPorImagenSinResultadosDevuelveListaVacia() {
+        XimilarClient cliente = cliente("token");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(cliente.restTemplate()).build();
+        server.expect(requestTo(BASE + "/similarity/products-new/v2/visualKNN"))
+                .andRespond(withSuccess("{\"answer_records\":[],\"answer_distances\":[]}", MediaType.APPLICATION_JSON));
+
+        assertThat(cliente.buscarPorImagen("contenido".getBytes(), "image/png", 5)).isEmpty();
+        server.verify();
+    }
+
+    @Test
+    void buscarPorImagenPropagaElFalloParaNoConfundirloConSinCoincidencias() {
+        XimilarClient cliente = cliente("token");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(cliente.restTemplate()).build();
+        server.expect(requestTo(BASE + "/similarity/products-new/v2/visualKNN")).andRespond(withServerError());
+
+        assertThatThrownBy(() -> cliente.buscarPorImagen("contenido".getBytes(), "image/png", 5))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Ximilar visualKNN falló");
+    }
+
+    @Test
     void sinCredencialesNoLlamaALaApi() {
         XimilarClient cliente = cliente("");
         MockRestServiceServer server = MockRestServiceServer.bindTo(cliente.restTemplate()).build();
@@ -109,6 +165,8 @@ class XimilarClientTest {
         assertThat(cliente.configurado()).isFalse();
         assertThat(cliente.buscarSimilares(1L, "u", true, 1L, 4)).isEmpty();
         assertThat(cliente.insertar(List.of(new XimilarClient.Registro(5L, "u", 1L))).subidos()).isEmpty();
+        assertThatThrownBy(() -> cliente.buscarPorImagen("u".getBytes(), "image/png", 5))
+                .isInstanceOf(IllegalStateException.class);
         server.verify(); // ninguna llamada
     }
 }
