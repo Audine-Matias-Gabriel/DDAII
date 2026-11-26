@@ -9,10 +9,11 @@ Tienda 1 ──< Producto >── talle_disponible (lista de talles)
                 │
 Usuario 1 ──< Favorito >── 1 Producto
    │
+   ├──< InteresProducto >── 1 Producto   (vistas y favoritos del premium, para personalizar)
    ├──< Suscripcion        (pago del plan premium en Mercado Pago)
    └──< SesionUsuario      (token de sesión)
 
-Recomendacion ──> productoId + productosRecomendados (ids), resultado de una solicitud por cola
+Recomendacion ──> productoId + usuarioId + productosRecomendados (ids), resultado de una solicitud por cola
 ```
 
 ## Producto (`producto`)
@@ -74,6 +75,19 @@ Al aprobarse se publica `SuscripcionActivada` y el consumidor marca al usuario c
 
 `usuario` + `producto` (únicos juntos) y `fecha`.
 
+## InteresProducto (`interes_producto`)
+
+Historial de interés del premium para personalizar recomendaciones (distinto de `favorito`, que es el
+estado actual y se puede desmarcar). Único por `usuario` + `producto` + `tipo`:
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `usuario` | Usuario, obligatorio | Solo se registra si `premium = true` |
+| `producto` | Producto, obligatorio | Prenda vista o marcada como favorito |
+| `tipo` | `VISTA` o `FAVORITO` | |
+| `peso` | int | Cada vista suma 1 y cada favorito 3; tope 20 |
+| `fecha` | LocalDateTime | Se actualiza en cada señal; vence según `recomendaciones.intereses.dias-vigencia` |
+
 ## SesionUsuario (`sesion_usuario`)
 
 `usuario`, `token` (único) y `expiraEn`. El token va en `Authorization: Bearer <token>`.
@@ -81,4 +95,5 @@ Al aprobarse se publica `SuscripcionActivada` y el consumidor marca al usuario c
 ## Recomendacion (`recomendacion`)
 
 Resultado de una solicitud por cola (`RecomendacionSolicitada`): `solicitudId` (único), `productoId`,
-`fecha` y `productosRecomendados` (tabla `recomendacion_producto`).
+`usuarioId` (opcional, para recalcular el puntaje personalizado al consultar), `fecha` y
+`productosRecomendados` (tabla `recomendacion_producto`).

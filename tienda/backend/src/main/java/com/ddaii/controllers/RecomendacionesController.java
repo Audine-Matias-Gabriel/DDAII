@@ -6,6 +6,7 @@ import com.ddaii.dto.RecomendacionSolicitudResponse;
 import com.ddaii.services.RecomendacionService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,12 +30,23 @@ public class RecomendacionesController {
     /**
      * estrategia = contenido (por defecto: prendas parecidas) o complementaria (arma un conjunto:
      * arriba, abajo y calzado). limite entre 1 y 20 (5 por defecto).
+     * Si hay sesión premium, se priorizan sus marcas/categorías de interés; si no, es anónimo.
      */
     @GetMapping
     public List<RecomendacionDTO> recomendar(@RequestParam Long productoId,
                                              @RequestParam(required = false) Integer limite,
-                                             @RequestParam(required = false, defaultValue = "contenido") String estrategia) {
-        return recomendacionService.recomendar(productoId, limite, estrategia);
+                                             @RequestParam(required = false, defaultValue = "contenido") String estrategia,
+                                             @AuthenticationPrincipal String usuarioIdStr) {
+        return recomendacionService.recomendar(
+                productoId, limite, estrategia, RecomendacionService.parsearUsuario(usuarioIdStr));
+    }
+
+    /** Registra que el usuario premium vio una prenda (para personalizar recomendaciones futuras). */
+    @PostMapping("/vistas/{productoId}")
+    public ResponseEntity<Void> registrarVista(@AuthenticationPrincipal String usuarioIdStr,
+                                               @PathVariable Long productoId) {
+        recomendacionService.registrarVista(usuarioIdStr, productoId);
+        return ResponseEntity.ok().build();
     }
 
     /** Resultado que guardó el consumidor de la cola para una solicitud (404 mientras no se procesó). */
@@ -45,9 +57,11 @@ public class RecomendacionesController {
 
     @PostMapping("/solicitudes")
     public ResponseEntity<RecomendacionSolicitudResponse> solicitarPorCola(
-            @Valid @RequestBody RecomendacionSolicitudRequest request) {
+            @Valid @RequestBody RecomendacionSolicitudRequest request,
+            @AuthenticationPrincipal String usuarioIdStr) {
         String solicitudId = recomendacionService.solicitarPorCola(
-                request.getProductoId(), request.getLimite());
+                request.getProductoId(), request.getLimite(),
+                RecomendacionService.parsearUsuario(usuarioIdStr));
         return ResponseEntity.accepted().body(
                 new RecomendacionSolicitudResponse("Solicitud de recomendación recibida", solicitudId));
     }

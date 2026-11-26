@@ -77,6 +77,17 @@ ximilar:
     max-distancia: ${XIMILAR_VISUAL_MAX_DISTANCIA:1.0}
     max-imagen-bytes: ${XIMILAR_VISUAL_MAX_IMAGEN_BYTES:5242880}
 
+# Recomendaciones personalizadas (solo usuarios premium)
+recomendaciones:
+  intereses:
+    # Cuánto tiempo sirve una vista/favorito para priorizar marcas y categorías
+    dias-vigencia: ${RECOMENDACIONES_INTERESES_DIAS:30}
+    # Tope de señales recientes que se suman al perfil
+    max-registros: ${RECOMENDACIONES_INTERESES_MAX:50}
+    # Peso extra (0 a 1) por coincidir con una marca / categoría de interés
+    bono-marca: ${RECOMENDACIONES_BONO_MARCA:0.15}
+    bono-categoria: ${RECOMENDACIONES_BONO_CATEGORIA:0.10}
+
 # CORS (frontend)
 app:
   cors-origins: ${CORS_ORIGINS:http://localhost:5173}

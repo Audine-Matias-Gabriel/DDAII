@@ -98,8 +98,9 @@ Documentación interactiva y ejemplos en Swagger UI. 🔒 = requiere `Authorizat
 | GET | `/api/productos/{id}/similares?limite=` | Prendas parecidas de otra tienda (Ximilar; `origen` indica si vino de Ximilar o del respaldo) |
 | GET | `/api/productos/{id}/historial-precios` | Serie `[{ "fecha": "2026-11-25", "precio": 1500 }]` con un precio por día (snapshots del scraper). El frontend la grafica solo para usuarios premium |
 | GET | `/api/tiendas` | Tiendas del catálogo |
-| GET | `/api/recomendaciones?productoId=&limite=&estrategia=` | Recomendaciones (IA, sincrónico). `estrategia`: `contenido` (parecidas) o `complementaria` (arma un conjunto). Ver [docs/ia.md](docs/ia.md) |
-| POST | `/api/recomendaciones/solicitudes` | Pide recomendaciones por cola: responde 202 y publica `RecomendacionSolicitada` |
+| GET | `/api/recomendaciones?productoId=&limite=&estrategia=` | Recomendaciones (IA, sincrónico). `estrategia`: `contenido` (parecidas) o `complementaria` (arma un conjunto). Con sesión premium prioriza sus marcas/categorías de interés. Ver [docs/ia.md](docs/ia.md) |
+| POST 🔒 | `/api/recomendaciones/vistas/{productoId}` | Registra una vista del premium para personalizar recomendaciones futuras (403 si no es premium) |
+| POST | `/api/recomendaciones/solicitudes` | Pide recomendaciones por cola: responde 202 y publica `RecomendacionSolicitada` (incluye `usuarioId` si hay sesión) |
 | GET | `/api/recomendaciones/solicitudes/{solicitudId}` | Resultado que guardó el consumidor de la cola (404 mientras no se procesó) |
 | GET | `/api/suscripciones/plan` | Precio del plan premium (el que se cobra en Mercado Pago) |
 | POST 🔒 | `/api/suscripciones` | Crea el pago premium y devuelve la URL de Mercado Pago |

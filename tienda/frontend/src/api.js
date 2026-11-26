@@ -39,9 +39,24 @@ export const api = {
     return handleResponse(r)
   },
 
-  async getRecomendaciones(productoId, limite = 4) {
-    const r = await fetch(`${API_BASE}/api/recomendaciones?productoId=${productoId}&limite=${limite}`)
+  async getRecomendaciones(productoId, limite = 4, estrategia) {
+    const estrategiaParam = estrategia ? `&estrategia=${encodeURIComponent(estrategia)}` : ''
+    // Con token, el backend personaliza por marcas/categorías de interés (si el usuario es premium).
+    const r = await fetch(
+      `${API_BASE}/api/recomendaciones?productoId=${productoId}&limite=${limite}${estrategiaParam}`,
+      { headers: authHeaders() }
+    )
     return handleResponse(r)
+  },
+
+  // Registra una vista para personalizar recomendaciones futuras (solo premium en el backend).
+  async registrarVista(productoId) {
+    const r = await fetch(`${API_BASE}/api/recomendaciones/vistas/${productoId}`, {
+      method: 'POST',
+      headers: authHeaders()
+    })
+    if (!r.ok) return handleResponse(r)
+    return r.status === 204 ? null : r.json().catch(() => null)
   },
 
   async getSimilares(id, limite = 4) {

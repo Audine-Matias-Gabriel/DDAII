@@ -44,5 +44,16 @@ class EventPublisherTest {
         assertThat(e.getSolicitudId()).isEqualTo("sol-1");
         assertThat(e.getProductoId()).isEqualTo(36L);
         assertThat(e.getLimite()).isEqualTo(3);
+        assertThat(e.getUsuarioId()).isNull();
+    }
+
+    @Test
+    void laSolicitudPorColaLlevaElUsuarioPremium() {
+        publisher.publicarRecomendacionSolicitada("sol-2", 36L, 3, 7L);
+
+        ArgumentCaptor<Object> evento = ArgumentCaptor.forClass(Object.class);
+        verify(rabbit).convertAndSend(eq("tienda.exchange"), eq("recomendacion.solicitada"), evento.capture());
+        RecomendacionSolicitada e = (RecomendacionSolicitada) evento.getValue();
+        assertThat(e.getUsuarioId()).isEqualTo(7L);
     }
 }

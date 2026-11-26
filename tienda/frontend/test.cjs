@@ -144,6 +144,14 @@ test('existe src/pages/ProductDetail.jsx con recomendaciones y similares', () =>
   assert(detail.includes('getSimilares'), 'falta llamadas a similares');
 });
 
+test('api.js registra vistas para recomendaciones premium', () => {
+  const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
+  assert(api.includes('registrarVista('), 'falta registrarVista en api.js');
+  assert(api.includes('/api/recomendaciones/vistas/${productoId}'), 'falta el endpoint de vistas');
+  const detail = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'ProductDetail.jsx'), 'utf8');
+  assert(detail.includes('api.registrarVista(id)'), 'el detalle no registra la vista');
+});
+
 test('api.js expone el historial de precios', () => {
   const api = fs.readFileSync(path.join(__dirname, 'src', 'api.js'), 'utf8');
   assert(api.includes('getHistorialPrecios'), 'falta getHistorialPrecios en api.js');

@@ -32,7 +32,13 @@ public class EventPublisher {
     }
 
     public void publicarRecomendacionSolicitada(String solicitudId, Long productoId, int limite) {
-        RecomendacionSolicitada evento = new RecomendacionSolicitada(solicitudId, productoId, limite);
+        publicarRecomendacionSolicitada(solicitudId, productoId, limite, null);
+    }
+
+    public void publicarRecomendacionSolicitada(String solicitudId, Long productoId, int limite,
+                                                 Long usuarioId) {
+        RecomendacionSolicitada evento =
+                new RecomendacionSolicitada(solicitudId, productoId, limite, usuarioId);
         rabbitTemplate.convertAndSend(exchange, "recomendacion.solicitada", evento);
     }
 }

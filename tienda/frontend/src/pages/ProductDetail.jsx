@@ -16,9 +16,19 @@ export default function ProductDetail({ id, navigate }) {
 
   useEffect(() => {
     cargarProducto()
-    cargarRecomendaciones()
     cargarSimilares()
   }, [id])
+
+  // Se recalcula cuando llega el flag premium (useAuth lo resuelve de forma asíncrona).
+  useEffect(() => {
+    cargarRecomendaciones()
+  }, [id, user?.premium])
+
+  // Cada vista de un premium alimenta su perfil de intereses (marca y categoría).
+  useEffect(() => {
+    if (user?.premium !== true || !id) return
+    api.registrarVista(id).catch(() => {})
+  }, [id, user?.premium])
 
   async function cargarProducto() {
     try {

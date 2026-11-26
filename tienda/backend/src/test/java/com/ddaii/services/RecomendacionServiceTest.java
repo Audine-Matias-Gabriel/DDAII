@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -200,6 +201,68 @@ class RecomendacionServiceTest {
                 .recomendar(entrada, List.of(mismaOtroColor, lakers1, lakers2), 5);
 
         assertEquals(List.of(lakers1.getId()), r.stream().map(RecomendacionDTO::getId).toList());
+    }
+
+    @Test
+    void laMarcaDeInteresDelPremiumOrdenaPrimeroAunqueTengaElMismoPuntajeBase() {
+        Producto entrada = conId("REMERA", "Mujer", "Otra", 1000.0);
+        Producto deOtraMarca = conId("PANTALON", "Mujer", "Adidas", 1000.0);
+        Producto deLaMarcaFavorita = conId("PANTALON", "Mujer", "Nike", 1000.0);
+        PerfilInteres perfil = new PerfilInteres(Map.of("NIKE", 1.0), Map.of(), 0.15, 0.10);
+
+        List<RecomendacionDTO> r = new RecomendacionService.RecomendacionPorContenido()
+                .recomendar(entrada, List.of(deOtraMarca, deLaMarcaFavorita), 2, perfil);
+
+        assertEquals(List.of(deLaMarcaFavorita.getId(), deOtraMarca.getId()),
+                r.stream().map(RecomendacionDTO::getId).toList());
+        assertTrue(r.get(0).getPuntaje() > r.get(1).getPuntaje());
+    }
+
+    @Test
+    void laCategoriaDeInteresDelPremiumTambienSuma() {
+        Producto entrada = conId("REMERA", "Hombre", "Otra", 1000.0);
+        Producto pantalon = conId("PANTALON", "Hombre", "Otra", 1000.0);
+        Producto calzado = conId("CALZADO", "Hombre", "Otra", 1000.0);
+        PerfilInteres perfil = new PerfilInteres(Map.of(), Map.of("CALZADO", 1.0), 0.15, 0.10);
+
+        List<RecomendacionDTO> r = new RecomendacionService.RecomendacionPorContenido()
+                .recomendar(entrada, List.of(pantalon, calzado), 2, perfil);
+
+        assertEquals(calzado.getId(), r.get(0).getId());
+    }
+
+    @Test
+    void sinPerfilElRecomendadorSigueSiendoElDeSiempre() {
+        Producto entrada = conId("REMERA", "Hombre", "Otra", 1000.0);
+        Producto pantalon = conId("PANTALON", "Hombre", "Otra", 1000.0);
+        Producto calzado = conId("CALZADO", "Hombre", "Otra", 1000.0);
+
+        List<RecomendacionDTO> r = new RecomendacionService.RecomendacionPorContenido()
+                .recomendar(entrada, List.of(calzado, pantalon), 2);
+
+        // Empate: gana el id menor (pantalón), sin sesgo de intereses.
+        assertEquals(List.of(pantalon.getId(), calzado.getId()),
+                r.stream().map(RecomendacionDTO::getId).toList());
+    }
+
+    @Test
+    void elInteresNoResucitaProductosSinStock() {
+        Producto entrada = conId("REMERA", "Mujer", "Otra", 1000.0);
+        Producto sinStock = conId("PANTALON", "Mujer", "Nike", 1000.0);
+        sinStock.setDisponible(false);
+        PerfilInteres perfil = new PerfilInteres(Map.of("NIKE", 1.0), Map.of(), 0.15, 0.10);
+
+        List<RecomendacionDTO> r = new RecomendacionService.RecomendacionPorContenido()
+                .recomendar(entrada, List.of(sinStock), 5, perfil);
+
+        assertTrue(r.isEmpty());
+    }
+
+    @Test
+    void elPrincipalSeConvierteEnUsuarioIdSoloSiEsValido() {
+        assertEquals(7L, RecomendacionService.parsearUsuario("7"));
+        assertNull(RecomendacionService.parsearUsuario(null));
+        assertNull(RecomendacionService.parsearUsuario("no-es-un-id"));
     }
 
     @Test
